@@ -21,6 +21,18 @@ PostgreSQL 17, Django 6.0.
 > `from golden_erp.settings.prod import *` and `include("golden_erp.urls")`.
 > Both names stay as they are so existing deployments and plugins keep working.
 
+![The engagements list: every open deal with its stage, next action and value](https://raw.githubusercontent.com/Logos-Flux/fincas/main/docs/images/screenshots/crm-engagements.png)
+
+<table>
+  <tr>
+    <td width="33%"><a href="https://raw.githubusercontent.com/Logos-Flux/fincas/main/docs/images/screenshots/crm-my-day.png"><img src="https://raw.githubusercontent.com/Logos-Flux/fincas/main/docs/images/screenshots/crm-my-day.png" alt="My day: overdue and due-today tasks with one-click complete, snooze and reschedule"></a><br><sub>My day: what is overdue and due today</sub></td>
+    <td width="33%"><a href="https://raw.githubusercontent.com/Logos-Flux/fincas/main/docs/images/screenshots/crm-engagement.png"><img src="https://raw.githubusercontent.com/Logos-Flux/fincas/main/docs/images/screenshots/crm-engagement.png" alt="An engagement: next action, deal stage, contacts, documents and stage history"></a><br><sub>An engagement: next action, deal, contacts</sub></td>
+    <td width="33%"><a href="https://raw.githubusercontent.com/Logos-Flux/fincas/main/docs/images/screenshots/storefront.png"><img src="https://raw.githubusercontent.com/Logos-Flux/fincas/main/docs/images/screenshots/storefront.png" alt="The example Qwik City storefront running on the Fincas API"></a><br><sub>The example storefront on the Fincas API</sub></td>
+  </tr>
+</table>
+
+<sub>Back office: a local install with `make seed` demo data. Storefront: its built-in demo catalog.</sub>
+
 ## Install
 
 ### From PyPI (to run Fincas)

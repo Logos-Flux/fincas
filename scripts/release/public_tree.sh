@@ -32,6 +32,12 @@ PUBLIC_EMAIL="lf@logosflux.io"
 # negative ships a handoff to the public.
 WORKING_DOC_RE='(^|/)(HANDOFF|TODO|TODOS|RELEASE_CHECKLIST[^/]*|REPO-REVIEW|NOTES|SCRATCH)\.md$|^docs/.*(handoff|findings|persona|perf/|sweep|hardening|testing-plan|testing-gaps|decisions-pending|rehearsal|baseline|visual-baselines|/pin/).*|^docs/.*\.(png|jpg|jpeg|webp)$|(^|/)fly\.toml$|^deploy/|^\.gitleaksignore$|^CLAUDE\.md$|(^|/)\.agents/|(^|/)\.claude/'
 
+# Published on purpose, so never a working document: images the README and
+# the docs embed (README screenshots are fetched from docs/images/ on GitHub
+# and PyPI). Anything else under docs/ with an image extension still needs a
+# dev-only line or a move here.
+PUBLIC_ASSET_RE='^docs/images/'
+
 usage() { sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
 
 pathspecs() { grep -vE '^\s*(#|$)' "$LIST"; }
@@ -54,7 +60,7 @@ check() {
   # 1. Working documents not on the list.
   local missing=()
   while IFS= read -r -d '' f; do
-    if [[ "$f" =~ $WORKING_DOC_RE ]] && [[ -z "${is_covered[$f]:-}" ]]; then
+    if [[ "$f" =~ $WORKING_DOC_RE ]] && ! [[ "$f" =~ $PUBLIC_ASSET_RE ]] && [[ -z "${is_covered[$f]:-}" ]]; then
       missing+=("$f")
     fi
   done < <(git ls-files -z)

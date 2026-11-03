@@ -1,0 +1,80 @@
+{
+  "klaviyo": {
+    "consents": [
+      {
+        "occurred_at": "2026-02-01T10:00:00Z",
+        "party": "ada",
+        "state": "granted"
+      }
+    ],
+    "marketable": [
+      "ada",
+      "adam"
+    ],
+    "profiles": [
+      {
+        "address": "ada@example.com",
+        "list": "XFIX01",
+        "lists": [],
+        "party": "ada",
+        "source_id": "01FIXTUREPROFILEADA0000000",
+        "state": "subscribed"
+      }
+    ],
+    "saved_filters": [
+      {
+        "id": "5e9f1c2a-7b3d-4c8e-9a10-0f1e2d3c4b5a",
+        "owner": "rep",
+        "params": {
+          "q": "Ada"
+        }
+      }
+    ]
+  },
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "3b: a granted member of a mapped segment (a tenant saved filter on the parties list) is subscribed to the segment's list; a member without consent is never sent.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      },
+      {
+        "email": "adam@example.net",
+        "family": "Smith",
+        "given": "Adam",
+        "key": "adam"
+      }
+    ],
+    "staff": [
+      {
+        "email": "rep@example.org",
+        "key": "rep"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "enqueue": {
+        "consumer": "klaviyo.profile",
+        "key": "sync:ada:1",
+        "object": "party:ada"
+      }
+    },
+    {
+      "drain": true
+    },
+    {
+      "enqueue": {
+        "consumer": "klaviyo.profile",
+        "key": "sync:adam:1",
+        "object": "party:adam"
+      }
+    },
+    {
+      "drain": true
+    }
+  ]
+}

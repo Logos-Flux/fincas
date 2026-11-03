@@ -1,0 +1,21 @@
+{
+  "payload": {
+    "messages": [
+      {
+        "id": "19b0000000000019",
+        "threadId": "19b0000000000019"
+      }
+    ],
+    "resultSizeEstimate": 1
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages",
+    "query": {
+      "maxResults": "50",
+      "q": "after:1764687600"
+    }
+  },
+  "schema_version": 1
+}

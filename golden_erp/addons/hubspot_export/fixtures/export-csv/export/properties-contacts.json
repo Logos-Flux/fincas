@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/properties/contacts",
+    "query": {},
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "name": "hs_object_id",
+        "label": "Record ID",
+        "type": "number",
+        "fieldType": "number",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hubspot_owner_id",
+        "label": "Owner",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "firstname",
+        "label": "First Name",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "lastname",
+        "label": "Last Name",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "email",
+        "label": "Email",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_additional_emails",
+        "label": "Additional email addresses",
+        "type": "enumeration",
+        "fieldType": "checkbox",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "phone",
+        "label": "Phone Number",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "mobilephone",
+        "label": "Mobile Phone Number",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "address",
+        "label": "Street Address",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "city",
+        "label": "City",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "state",
+        "label": "State/Region",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "zip",
+        "label": "Postal Code",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "country",
+        "label": "Country/Region",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "jobtitle",
+        "label": "Job Title",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "associatedcompanyid",
+        "label": "Primary Associated Company ID",
+        "type": "number",
+        "fieldType": "number",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "lifecyclestage",
+        "label": "Lifecycle Stage",
+        "type": "enumeration",
+        "fieldType": "radio",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "Lead",
+            "value": "lead",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "Opportunity",
+            "value": "opportunity",
+            "displayOrder": 1,
+            "hidden": false
+          },
+          {
+            "label": "Customer",
+            "value": "customer",
+            "displayOrder": 2,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "hs_marketable_status",
+        "label": "Marketing contact status",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "Marketing contact",
+            "value": "true",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "Non-marketing contact",
+            "value": "false",
+            "displayOrder": 1,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "hs_email_optout",
+        "label": "Unsubscribed from all email",
+        "type": "bool",
+        "fieldType": "booleancheckbox",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "True",
+            "value": "true",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "False",
+            "value": "false",
+            "displayOrder": 1,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "hs_email_hard_bounce_reason_enum",
+        "label": "Email hard bounce reason",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "Unknown user",
+            "value": "UNKNOWN_USER",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "Mailbox full",
+            "value": "MAILBOX_FULL",
+            "displayOrder": 1,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "hs_merged_object_ids",
+        "label": "Merged Contact IDs",
+        "type": "enumeration",
+        "fieldType": "checkbox",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "createdate",
+        "label": "Create Date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "lastmodifieddate",
+        "label": "Last Modified Date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "lead_type",
+        "label": "Lead type",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "custom",
+        "hubspotDefined": false,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "client_status",
+        "label": "Client status",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "custom",
+        "hubspotDefined": false,
+        "hidden": false,
+        "options": [
+          {
+            "label": "Active Client",
+            "value": "active_client",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "Former Client",
+            "value": "former_client",
+            "displayOrder": 1,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "internal_scratch",
+        "label": "Internal scratch",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "custom",
+        "hubspotDefined": false,
+        "hidden": false,
+        "options": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{% extends "documents/base_document.html" %}
+{% load humanize %}
+
+{# PO counterpart to sales_quote.html. Overrides the same blocks. #}
+
+{% block doc_type %}PURCHASE ORDER{% endblock %}
+
+{% block doc_number %}{{ po.po_number }}{% endblock %}
+
+{% block doc_dates %}
+  <div>Date: {{ po.po_date|date:"M j, Y" }}</div>
+  {% if po.requested_delivery_date %}<div>Deliver by: {{ po.requested_delivery_date|date:"M j, Y" }}</div>{% endif %}
+{% endblock %}
+
+{% block order_details %}
+  <div>PO #: {{ po.po_number }}</div>
+  {% if po.vendor_order_number %}<div>Vendor Order #: {{ po.vendor_order_number }}</div>{% endif %}
+  {% if payment_terms %}<div>Terms: {{ payment_terms }}</div>{% endif %}
+  {% if shipping_terms %}<div>Shipping: {{ shipping_terms }}</div>{% endif %}
+  {% if po.carrier %}<div>Carrier: {{ po.carrier }}</div>{% endif %}
+{% endblock %}
+
+{% block status_banner %}
+  {% if po.status == 'draft' %}
+    <div class="doc-status-banner status-draft">DRAFT — NOT YET ISSUED</div>
+  {% elif po.status == 'cancelled' %}
+    <div class="doc-status-banner status-cancelled">CANCELED</div>
+  {% endif %}
+{% endblock %}
+
+{% block payment_section %}
+  {% if po.vendor_notes %}
+    <div class="terms-box">
+      <h4>Notes to Vendor</h4>
+      {{ po.vendor_notes|linebreaks }}
+    </div>
+  {% endif %}
+{% endblock %}

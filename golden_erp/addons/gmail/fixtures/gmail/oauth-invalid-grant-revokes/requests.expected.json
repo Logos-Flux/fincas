@@ -1,0 +1,31 @@
+[
+  {
+    "form": {
+      "client_id": "fixture-client-id",
+      "client_secret": "<redacted:oauth_client>",
+      "grant_type": "refresh_token",
+      "refresh_token": "<redacted:oauth_refresh>"
+    },
+    "headers": {
+      "accept": "application/json"
+    },
+    "json": null,
+    "method": "POST",
+    "path": "/token",
+    "query": {}
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:oauth_access>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/gmail/v1/users/me/history",
+    "query": {
+      "historyTypes": "messageAdded",
+      "maxResults": "50",
+      "startHistoryId": "2000"
+    }
+  }
+]

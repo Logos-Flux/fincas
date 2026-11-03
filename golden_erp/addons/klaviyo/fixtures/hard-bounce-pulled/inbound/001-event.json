@@ -1,0 +1,31 @@
+{
+  "payload": {
+    "event": {
+      "attributes": {
+        "datetime": "2026-03-01T13:00:00Z",
+        "event_properties": {
+          "Bounce Type": "hard"
+        },
+        "timestamp": 0
+      },
+      "id": "01FIXTUREEVENTBOUNCE00001",
+      "type": "event"
+    },
+    "metric": {
+      "attributes": {
+        "name": "Bounced Email"
+      },
+      "id": "MBOUNCEDE",
+      "type": "metric"
+    },
+    "profile": {
+      "attributes": {
+        "email": "ada@example.com"
+      },
+      "id": "01FIXTUREPROFILEADA0000000",
+      "type": "profile"
+    }
+  },
+  "provider": "klaviyo",
+  "schema_version": 1
+}

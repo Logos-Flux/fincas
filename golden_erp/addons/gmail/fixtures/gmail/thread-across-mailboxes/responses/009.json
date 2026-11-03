@@ -1,0 +1,86 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000010",
+    "internalDate": "1772462700000",
+    "labelIds": [
+      "INBOX"
+    ],
+    "payload": {
+      "body": {
+        "size": 0
+      },
+      "filename": "",
+      "headers": [
+        {
+          "name": "From",
+          "value": "ada@example.com"
+        },
+        {
+          "name": "To",
+          "value": "boss@example.org"
+        },
+        {
+          "name": "Cc",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "Subject",
+          "value": "Re: Site visit"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<CAF-ada-0010@mail.example.com>"
+        },
+        {
+          "name": "In-Reply-To",
+          "value": "<boss-0009@mail.example.org>"
+        },
+        {
+          "name": "References",
+          "value": "<CAF-ada-0008@mail.example.com> <boss-0009@mail.example.org>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        }
+      ],
+      "mimeType": "multipart/mixed",
+      "parts": [
+        {
+          "body": {
+            "size": 0
+          },
+          "filename": "",
+          "headers": [],
+          "mimeType": "multipart/alternative",
+          "partId": "0",
+          "parts": [
+            {
+              "body": {
+                "data": "R3JlYXQu",
+                "size": 6
+              },
+              "filename": "",
+              "headers": [],
+              "mimeType": "text/plain",
+              "partId": "0.0"
+            }
+          ]
+        }
+      ]
+    },
+    "sizeEstimate": 4200,
+    "snippet": "Great.",
+    "threadId": "19b0000000000010"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000010",
+    "query": {
+      "format": "full"
+    }
+  },
+  "schema_version": 1
+}

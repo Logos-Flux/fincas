@@ -1,0 +1,41 @@
+from django.urls import path
+
+from .erp_views import (
+    OrderPeopleView,
+    QuoteCreateView,
+    QuoteDetailView,
+    QuoteEngagementOptionsView,
+    QuoteListView,
+    QuotePDFView,
+    QuotePeopleView,
+    QuoteReviseView,
+    QuoteUpdateView,
+    SalesOrderCreateView,
+    SalesOrderListView,
+    SalesOrderUpdateView,
+    SendOrderEmailView,
+    SendQuoteEmailView,
+    SendShippingEmailView,
+    ShippingRatesView,
+    UpdateSubOrderTrackingView,
+)
+
+urlpatterns = [
+    path("", SalesOrderListView.as_view(), name="erp-order-list"),
+    path("new/", SalesOrderCreateView.as_view(), name="erp-order-create"),
+    path("<uuid:pk>/edit/", SalesOrderUpdateView.as_view(), name="erp-order-edit"),
+    path("<uuid:pk>/people/", OrderPeopleView.as_view(), name="erp-order-people"),
+    path("<uuid:pk>/send-email/", SendOrderEmailView.as_view(), name="erp-order-send-email"),
+    path("sub-orders/<uuid:pk>/send-shipping-email/", SendShippingEmailView.as_view(), name="erp-suborder-send-shipping-email"),
+    path("sub-orders/<uuid:pk>/update-tracking/", UpdateSubOrderTrackingView.as_view(), name="erp-suborder-update-tracking"),
+    path("shipping-rates/", ShippingRatesView.as_view(), name="erp-shipping-rates"),
+    path("quotes/", QuoteListView.as_view(), name="erp-quote-list"),
+    path("quotes/new/", QuoteCreateView.as_view(), name="erp-quote-create"),
+    path("quotes/engagement-options/", QuoteEngagementOptionsView.as_view(), name="erp-quote-engagement-options"),
+    path("quotes/<uuid:pk>/edit/", QuoteUpdateView.as_view(), name="erp-quote-edit"),
+    path("quotes/<uuid:pk>/", QuoteDetailView.as_view(), name="erp-quote-detail"),
+    path("quotes/<uuid:pk>/pdf/", QuotePDFView.as_view(), name="erp-quote-pdf"),
+    path("quotes/<uuid:pk>/people/", QuotePeopleView.as_view(), name="erp-quote-people"),
+    path("quotes/<uuid:pk>/send/", SendQuoteEmailView.as_view(), name="erp-quote-send"),
+    path("quotes/<uuid:pk>/revise/", QuoteReviseView.as_view(), name="erp-quote-revise"),
+]

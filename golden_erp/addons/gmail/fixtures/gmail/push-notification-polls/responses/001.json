@@ -1,0 +1,27 @@
+{
+  "payload": {
+    "keys": [
+      {
+        "alg": "RS256",
+        "e": "AQAB",
+        "kid": "fixture-key-1",
+        "kty": "RSA",
+        "n": "wO65NwEyM5Bnp66TUrViWbe5mLjVMs8ye_NODBHFJhl4g1hux6_7CrMRX6w0OIGSkSGnCRFDbw_gjotMxSIq5aOaGJYugeZAiGrR0m-e3zeOB5mCBagFactKCyT6hyte4L45jMaMNnJdqhe4vJvKtXS1huD7UCv3XJX5fkf0SHKdmHjjFNJDwZD5kNAETppNGtgO6t-caECEVt_AMTalba67wDLeMkGx1VdR6eXj_O2nz6mjOF2spDFlLplwLAHFVh4ArRmsMKiy3EY6L1ZIPlsmoIVjH4cfLbnwMkMP9wraP2U7k1V1Nd9m-KPZLDhdPwwhiJP9MF3Icy0KDd9J6w",
+        "use": "sig"
+      }
+    ]
+  },
+  "provider": "gmail",
+  "repeatable": true,
+  "request": {
+    "method": "GET",
+    "path": "/oauth2/v3/certs"
+  },
+  "response": {
+    "headers": {
+      "Cache-Control": "public, max-age=19800"
+    },
+    "status": 200
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,34 @@
+{
+  "counts": {
+    "association": 3,
+    "communication": 2,
+    "company": 2,
+    "consent": 3,
+    "contact": 3,
+    "deal": 2,
+    "owner": 2,
+    "pipeline": 2,
+    "property_def": 2,
+    "relationship": 1,
+    "task": 2
+  },
+  "coverage": {
+    "association": "complete",
+    "communication": "complete",
+    "company": "complete",
+    "consent": "complete",
+    "contact": "complete",
+    "deal": "complete",
+    "owner": "complete",
+    "pipeline": "complete",
+    "property_def": "complete",
+    "relationship": "complete",
+    "task": "complete"
+  },
+  "errors": [],
+  "ok": true,
+  "schema_version": 1,
+  "source": "examplecrm:4242",
+  "suppressed": 0,
+  "warnings": []
+}

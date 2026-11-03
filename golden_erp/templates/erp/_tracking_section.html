@@ -1,0 +1,44 @@
+{# Reusable tracking section for SubOrder — include with: sub_order, has_customer_email #}
+{% if sub_order %}
+<div class="tracking-section" data-suborder-id="{{ sub_order.pk }}">
+  <div class="row align-items-end">
+    <div class="col-md-3 mb-2">
+      <label class="form-label text-sm">Carrier</label>
+      <select class="form-control form-control-sm tracking-carrier">
+        <option value="">— Select —</option>
+        <option value="ups" {% if sub_order.carrier == "ups" %}selected{% endif %}>UPS</option>
+        <option value="fedex" {% if sub_order.carrier == "fedex" %}selected{% endif %}>FedEx</option>
+        <option value="usps" {% if sub_order.carrier == "usps" %}selected{% endif %}>USPS</option>
+        <option value="other" {% if sub_order.carrier and sub_order.carrier != "ups" and sub_order.carrier != "fedex" and sub_order.carrier != "usps" %}selected{% endif %}>Other</option>
+      </select>
+    </div>
+    <div class="col-md-3 mb-2">
+      <label class="form-label text-sm">Tracking #</label>
+      <input type="text" class="form-control form-control-sm tracking-number"
+             value="{{ sub_order.tracking_number }}" placeholder="Enter tracking number">
+    </div>
+    <div class="col-md-4 mb-2">
+      <label class="form-label text-sm">Tracking URL</label>
+      <input type="text" class="form-control form-control-sm tracking-url"
+             value="{{ sub_order.tracking_url }}" placeholder="Auto-generated for known carriers"
+             {% if sub_order.carrier == "ups" or sub_order.carrier == "fedex" or sub_order.carrier == "usps" or not sub_order.carrier %}readonly{% endif %}>
+    </div>
+    <div class="col-md-2 mb-2 d-flex gap-1">
+      <button type="button" class="btn bg-gradient-primary btn-sm btn-save-tracking" title="Save tracking">
+        <i class="fas fa-save"></i>
+      </button>
+      <button type="button" class="btn bg-gradient-info btn-sm btn-send-shipping-email"
+              title="{% if not has_customer_email %}No customer email on order{% else %}Send shipping notification{% endif %}"
+              {% if not has_customer_email %}disabled{% endif %}>
+        <i class="fas fa-envelope"></i>
+      </button>
+    </div>
+  </div>
+  {% if sub_order.shipping_notification_sent_at %}
+  <div class="text-xs text-muted mt-1">
+    <i class="fas fa-check-circle text-success me-1"></i>
+    Sent {{ sub_order.shipping_notification_sent_at|date:"M j, Y g:i A" }}
+  </div>
+  {% endif %}
+</div>
+{% endif %}

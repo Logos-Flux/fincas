@@ -1,0 +1,34 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "The same call.ended delivered twice is acknowledged twice (200) with one inbound row and one communication: the outbox key is the event plus the call id.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada",
+        "phone": "+1 202-555-0143"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.org",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "status": 200,
+      "webhook": "inbound/001.json"
+    },
+    {
+      "status": 200,
+      "webhook": "inbound/001.json"
+    },
+    {
+      "drain": true
+    }
+  ]
+}

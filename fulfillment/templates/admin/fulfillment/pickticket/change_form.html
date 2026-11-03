@@ -1,0 +1,143 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block object-tools-items %}
+  {{ block.super }}
+
+  {% if original %}
+    <li>
+      {% if has_label %}
+        <a href="#"
+           class="viewlink"
+           id="btn-reprint-label"
+           data-pk="{{ original.pk }}"
+           title="Reprint label for {{ tracking_number }}">
+          🖨️ Reprint Label ({{ tracking_number }})
+        </a>
+      {% else %}
+        <a href="#"
+           class="addlink"
+           id="btn-print-label"
+           data-pk="{{ original.pk }}">
+          🖨️ Print Shipping Label
+        </a>
+      {% endif %}
+    </li>
+
+    {% if has_label %}
+      <li>
+        <a href="#"
+           class="deletelink"
+           id="btn-void-label"
+           data-pk="{{ original.pk }}"
+           title="Void label and request EasyPost refund">
+          🚫 Void Label
+        </a>
+      </li>
+    {% endif %}
+  {% endif %}
+{% endblock %}
+
+{% block admin_change_form_document_ready %}
+  {{ block.super }}
+  <script>
+  (function() {
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    function showStatus(msg, isError) {
+      // Remove any existing status bar
+      const existing = document.getElementById('label-status-bar');
+      if (existing) existing.remove();
+
+      const bar = document.createElement('div');
+      bar.id = 'label-status-bar';
+      bar.style.cssText = [
+        'position:fixed', 'top:60px', 'right:20px', 'z-index:9999',
+        'padding:12px 20px', 'border-radius:6px', 'font-weight:bold',
+        'font-size:14px', 'box-shadow:0 2px 8px rgba(0,0,0,0.3)',
+        isError
+          ? 'background:#f44336;color:#fff;'
+          : 'background:#4caf50;color:#fff;'
+      ].join(';');
+      bar.textContent = msg;
+      document.body.appendChild(bar);
+      setTimeout(() => bar.remove(), isError ? 8000 : 5000);
+    }
+
+    function apiCall(url, callback) {
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Content-Type': 'application/json',
+        },
+      })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => callback(ok, data))
+      .catch(err => showStatus('Network error: ' + err, true));
+    }
+
+    // Print label button
+    const printBtn = document.getElementById('btn-print-label') || document.getElementById('btn-reprint-label');
+    if (printBtn) {
+      printBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const pk = this.dataset.pk;
+        printBtn.textContent = '⏳ Creating label...';
+        printBtn.style.pointerEvents = 'none';
+
+        apiCall(`/admin/fulfillment/pickticket/${pk}/print-label/`, function(ok, data) {
+          if (ok && data.success) {
+            showStatus(
+              `✓ Label created — ${data.tracking_number} ($${data.postage_cost.toFixed(2)})`,
+              false
+            );
+            // Reload to reflect new tracking number in page
+            setTimeout(() => location.reload(), 1500);
+          } else {
+            showStatus('Label error: ' + (data.error || 'Unknown error'), true);
+            printBtn.textContent = '🖨️ Print Shipping Label';
+            printBtn.style.pointerEvents = '';
+          }
+        });
+      });
+    }
+
+    // Void label button
+    const voidBtn = document.getElementById('btn-void-label');
+    if (voidBtn) {
+      voidBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!confirm('Void this label and request an EasyPost refund?')) return;
+        const pk = this.dataset.pk;
+        voidBtn.textContent = '⏳ Voiding...';
+        voidBtn.style.pointerEvents = 'none';
+
+        apiCall(`/admin/fulfillment/pickticket/${pk}/void-label/`, function(ok, data) {
+          if (ok && data.success) {
+            showStatus('✓ Label voided — ' + (data.message || ''), false);
+            setTimeout(() => location.reload(), 1500);
+          } else {
+            showStatus('Void error: ' + (data.error || 'Unknown error'), true);
+            voidBtn.textContent = '🚫 Void Label';
+            voidBtn.style.pointerEvents = '';
+          }
+        });
+      });
+    }
+  })();
+  </script>
+{% endblock %}

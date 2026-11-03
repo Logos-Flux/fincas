@@ -1,0 +1,56 @@
+{
+  "payload": {
+    "partialFailureError": {
+      "code": 3,
+      "details": [
+        {
+          "errors": [
+            {
+              "errorCode": {
+                "conversionUploadError": "CLICK_NOT_FOUND"
+              },
+              "location": {
+                "fieldPathElements": [
+                  {
+                    "fieldName": "conversions",
+                    "index": 0
+                  }
+                ]
+              },
+              "message": "click for ada@example.com not found"
+            },
+            {
+              "errorCode": {
+                "databaseError": "CONCURRENT_MODIFICATION"
+              },
+              "location": {
+                "fieldPathElements": [
+                  {
+                    "fieldName": "conversions",
+                    "index": 1
+                  }
+                ]
+              },
+              "message": "retry"
+            }
+          ]
+        }
+      ],
+      "message": "Multiple errors in details. Ada Lovelace ada@example.com"
+    },
+    "results": [
+      {},
+      {},
+      {}
+    ]
+  },
+  "provider": "google_ads",
+  "request": {
+    "method": "POST",
+    "path": "/v25/customers/1234567890:uploadClickConversions"
+  },
+  "response": {
+    "status": 200
+  },
+  "schema_version": 1
+}

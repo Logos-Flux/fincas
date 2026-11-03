@@ -1,0 +1,42 @@
+{
+  "communications": [
+    {
+      "direction": "outbound",
+      "engagement": null,
+      "kind": "call",
+      "occurred_at": "2026-03-02T14:20:00Z",
+      "participants": [
+        {
+          "address": "+12025550144",
+          "party": "party:grace",
+          "role": "callee"
+        },
+        {
+          "address": "+12025550100",
+          "party": null,
+          "role": "caller"
+        }
+      ],
+      "party": "party:grace",
+      "provider": "aircall",
+      "status": "completed",
+      "subject": "",
+      "thread_key": ""
+    }
+  ],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {},
+      "object_type": "call",
+      "source": "aircall",
+      "source_id": "1002",
+      "source_url": "https://dashboard.aircall.io/conversations/1002",
+      "target": "communications.communication:<new>"
+    }
+  ],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load static erp_tags labels crm_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "list", "entity": "Party"}'>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+       <div class="w-100">
+        <div class="row align-items-center">
+          <div class="col-lg-6 col-7">
+            <h6 class="mb-0">{{ page_title }}</h6>
+          </div>
+          <div class="col-lg-6 col-5 text-end">
+            {% if perms.parties.merge_party %}
+            <a href="{% url 'erp-party-merge-review' %}" class="btn btn-outline-primary btn-sm mb-0" id="party-merge-review-link">
+              <i class="fas fa-code-merge me-1" aria-hidden="true"></i> Duplicates
+            </a>
+            {% endif %}
+            <a href="{% url 'erp-party-create' %}" class="btn bg-gradient-primary btn-sm mb-0">
+              <i class="fas fa-plus me-1" aria-hidden="true"></i> New {{ entity_label }}
+            </a>
+            {% include "erp/_list_export.html" %}
+            {% include "erp/_column_chooser.html" %}
+          </div>
+        </div>
+
+        {% include "erp/_saved_filters.html" %}
+
+        <details class="erp-filters mt-3" open>
+        <summary class="btn btn-outline-secondary btn-sm mb-2">Filters{% if active_filter_count %} ({{ active_filter_count }} active){% endif %}</summary>
+        <form method="get" class="row g-2 align-items-start" id="party-filters">
+          <div class="col-md-3">
+            <div class="input-group mb-2">
+              <span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span>
+              <input type="search" name="q" value="{{ search_query }}" class="form-control form-control-sm"
+                     aria-label="Search {{ entity_label_plural|lower }} by name, email or phone"
+                     placeholder="Name, exact email or phone">
+            </div>
+          </div>
+          {% for filter in party_filters %}
+          <div class="col-md-auto col-6">
+            <select name="{{ filter.field }}" class="form-control form-control-sm mb-2"
+                    aria-label="Filter by {{ filter.label|lower }}" data-auto-submit>
+              <option value="">{{ filter.label }}: all</option>
+              {% if filter.groups %}
+              {% for value, text in filter.options %}
+              <option value="{{ value }}"{% for k, v in active_filters.items %}{% if k == filter.field and v == value %} selected{% endif %}{% endfor %}>{{ text }}</option>
+              {% endfor %}
+              {% for group_label, pairs in filter.groups %}
+              <optgroup label="{{ group_label }}">
+                {% for value, text in pairs %}<option value="{{ value }}"{% for k, v in active_filters.items %}{% if k == filter.field and v == value %} selected{% endif %}{% endfor %}>{{ text }}</option>{% endfor %}
+              </optgroup>
+              {% endfor %}
+              {% else %}
+              {% for value, text in filter.choices %}
+              <option value="{{ value }}"{% for k, v in active_filters.items %}{% if k == filter.field and v == value %} selected{% endif %}{% endfor %}>{{ text }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+          {% endfor %}
+          {% if show_all %}<input type="hidden" name="show" value="all">{% endif %}
+          {% include "erp/_list_sort_inputs.html" %}
+          <div class="col-md-auto col-12">
+            <button type="submit" class="btn btn-outline-primary btn-sm mb-2">Apply</button>
+            <a href="?{{ show_toggle_query }}" class="btn btn-link btn-sm mb-2 text-primary">
+              {% if show_all %}Hide merged and erased{% else %}Show merged and erased{% endif %}
+            </a>
+          </div>
+        </form>
+        </details>
+       </div>
+      </div>
+
+      <div class="card-body px-0 pt-0 pb-2">
+        {% include "erp/_list_live_region.html" %}
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0" id="party-list-table">
+            {% include "erp/_list_caption.html" %}
+            <thead>
+              <tr>
+                {% for col in header_columns %}
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder {% if forloop.first %}ps-3{% else %}ps-2{% endif %} {{ col.priority_class }}"{% if col.aria_sort %} aria-sort="{{ col.aria_sort }}"{% endif %}>
+                  {% if col.id == "organisation" %}{% label "parties.organisation" as col_text %}{% else %}{% firstof col.label as col_text %}{% endif %}
+                  {% if col.sortable %}
+                  <a href="?{{ col.sort_query }}" class="text-reset erp-sort-link">{{ col_text }}{% if col.aria_sort == "ascending" %}<i class="fas fa-sort-up text-primary ms-1" aria-hidden="true"></i>{% elif col.aria_sort == "descending" %}<i class="fas fa-sort-down text-primary ms-1" aria-hidden="true"></i>{% else %}<i class="fas fa-sort text-secondary ms-1" style="opacity:0.3" aria-hidden="true"></i>{% endif %}</a>
+                  {% elif col.source == "definition" %}<span title="Not sortable">{{ col_text }}</span>
+                  {% else %}{{ col_text }}{% endif %}
+                </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for party in object_list %}
+              <tr>
+                {% for col in visible_columns %}
+                {% if col.id == "display_name" %}
+                <td class="ps-3 {{ col.priority_class }}">
+                  {% if party.kind == "organisation" %}
+                  <i class="fas fa-building text-secondary me-1" aria-hidden="true"></i><span class="visually-hidden">{% label "parties.organisation" %}:</span>
+                  {% else %}
+                  <i class="fas fa-user text-secondary me-1" aria-hidden="true"></i><span class="visually-hidden">{% label "parties.person" %}:</span>
+                  {% endif %}
+                  <a href="{% url 'erp-party-detail' party.pk %}" class="text-sm font-weight-bold text-primary">{{ party.display_name }}</a>
+                  {% if party.merged_into_id %}<span class="badge badge-sm bg-gradient-secondary ms-1">Merged</span>{% endif %}
+                  {% if party.erased_at %}<span class="badge badge-sm bg-gradient-secondary ms-1">Erased</span>{% endif %}
+                </td>
+                {% elif col.id == "roles" %}
+                <td class="{{ col.priority_class }}">
+                  {% for name, text in party.role_badges %}<span class="badge badge-sm bg-gradient-info me-1">{{ text }}</span>{% endfor %}
+                  {% if party.more_roles %}<span class="text-xs text-secondary">+{{ party.more_roles }}</span>{% endif %}
+                </td>
+                {% elif col.id == "email" %}
+                <td class="{{ col.priority_class }}"><span class="text-sm">{{ party.primary_email_normalized|default:"—" }}</span></td>
+                {% elif col.id == "phone" %}
+                <td class="{{ col.priority_class }}"><span class="text-sm">{{ party.phone_display|default:"—" }}</span></td>
+                {% elif col.id == "organisation" %}
+                <td class="{{ col.priority_class }}">
+                  {% if party.organisation %}
+                  <a href="{% url 'erp-party-detail' party.organisation.pk %}" class="text-sm text-primary">{{ party.organisation.display_name }}</a>
+                  {% else %}<span class="text-sm">—</span>{% endif %}
+                </td>
+                {% elif col.id == "owner" %}
+                <td class="{{ col.priority_class }}"><span class="text-sm">{{ party.owner|profile_name:"—" }}</span></td>
+                {% elif col.id == "owner_team" %}
+                <td class="{{ col.priority_class }}"><span class="text-sm">{% if party.owner_team %}{{ party.owner_team.name }}{% if not party.owner_team.is_active %} (archived){% endif %}{% else %}—{% endif %}</span></td>
+                {% elif col.id == "lifecycle_stage" %}
+                <td class="{{ col.priority_class }}"><span class="text-sm">{% if party.lifecycle_text %}{{ party.lifecycle_text }}{% else %}<span aria-hidden="true">—</span><span class="visually-hidden">unknown</span>{% endif %}</span></td>
+                {% elif col.id == "contact_type" %}
+                <td class="{{ col.priority_class }}"><span class="text-sm">{% if party.contact_type_text %}{{ party.contact_type_text }}{% else %}<span aria-hidden="true">—</span><span class="visually-hidden">not set</span>{% endif %}</span></td>
+                {% elif col.id == "email_consent" %}
+                <td class="{{ col.priority_class }}"><span class="text-sm">{% if party.email_marketing == "granted" %}Granted{% elif party.email_marketing == "withdrawn" %}Withdrawn{% else %}Unknown{% endif %}</span></td>
+                {% elif col.id == "updated_at" or col.id == "created_at" %}
+                {% with when=party|get_field:col.path %}
+                <td class="{{ col.priority_class }}"><span class="text-sm" title="{{ when|date:'Y-m-d H:i' }}">{{ when|timesince }} ago</span></td>
+                {% endwith %}
+                {% elif col.id == "kind" %}
+                <td class="{{ col.priority_class }}"><span class="text-sm">{{ party.get_kind_display }}</span></td>
+                {% elif col.id == "origin" %}
+                <td class="{{ col.priority_class }}"><span class="text-sm">{{ party.get_origin_display }}</span></td>
+                {% else %}
+                <td class="{{ col.priority_class }}">{% list_cell party col %}</td>
+                {% endif %}
+                {% endfor %}
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="{{ visible_columns|length }}" class="text-center py-4 text-sm text-secondary">No {{ entity_label_plural|lower }} found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {% if is_paginated %}
+      <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <p class="text-sm text-secondary mb-0">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }}</p>
+        <nav aria-label="Pages">
+          <ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?{% if page_query %}{{ page_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous page"><i class="fas fa-angle-left" aria-hidden="true"></i></a></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+              {% if num == page_obj.number %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+              <li class="page-item"><a class="page-link" href="?{% if page_query %}{{ page_query }}&amp;{% endif %}page={{ num }}">{{ num }}</a></li>
+              {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?{% if page_query %}{{ page_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next page"><i class="fas fa-angle-right" aria-hidden="true"></i></a></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% include "erp/_list_responsive.html" %}
+{% endblock %}
+
+{% block javascripts %}
+{% include "erp/_list_a11y_script.html" %}
+<script>
+(function() {
+{% include "erp/_list_tools_js.html" %}
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,5 @@
+Date,Transaction Type,Num,Account,Debit,Credit
+01/15/2025,Invoice,1001,Sales,"$1,234.56",
+01/16/2025,Invoice,1002,Sales,(500.00),
+01/17/2025,Invoice,1003,Sales,-42.00,
+01/18/2025,Invoice,1004,Sales,,100.00

@@ -1,0 +1,59 @@
+{% extends "registration/auth_base.html" %}
+{% load static %}
+{% comment %}
+  Shell for the 403 / 404 / 500 pages (core.error_views). Extends the sign-in
+  shell on purpose: static CSS only, no context processors, no database, so
+  the 500 page renders while the database is the thing that is down. Every
+  value used here is passed explicitly by core.error_views._render
+  (request_path, csrf_token, reason); never add a {{ request.* }} read.
+
+  Blocks: code (the status number), heading, lede, back_href/back_label.
+{% endcomment %}
+{% block stylesheets %}
+<style>
+  .error-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 3.2rem;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    color: var(--brand-t-accent);
+    margin-bottom: 12px;
+  }
+  .error-path {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--brand-t-text);
+    opacity: 0.8;
+    word-break: break-all;
+    margin-bottom: 20px;
+  }
+  .error-actions { margin-top: 8px; }
+  .error-actions form { margin: 0; }
+  .error-actions .btn-login { text-align: center; text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block header %}
+  <div class="login-header">
+    <img src="{% static 'assets/img/logo.svg' %}" alt="Fincas" class="login-logo" style="max-height: 48px;">
+    <div class="login-title">Fincas</div>
+  </div>
+{% endblock %}
+
+{% block card %}
+  <div class="error-code" aria-hidden="true">{% block code %}{% endblock %}</div>
+  <h1 class="login-card-title">{% block heading %}{% endblock %}</h1>
+  <p class="login-lede">{% block lede %}{% endblock %}</p>
+  {% if reason %}
+  <div class="login-error" role="alert"><p>{{ reason }}</p></div>
+  {% endif %}
+  {% block details %}{% endblock %}
+  <div class="error-actions">
+    <a class="btn-login" href="{% block back_href %}/erp/{% endblock %}">{% block back_label %}Back to the back office{% endblock %}</a>
+    <form method="post" action="{% url 'erp-logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn-login btn-sso">Sign out</button>
+    </form>
+  </div>
+{% endblock %}

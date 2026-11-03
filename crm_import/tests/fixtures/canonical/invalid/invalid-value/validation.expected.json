@@ -1,0 +1,24 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "invalid_value",
+      "file": "pipelines.jsonl",
+      "line": 2,
+      "field": "data.stages[1].key"
+    },
+    {
+      "code": "invalid_value",
+      "file": "deals.jsonl",
+      "line": 1,
+      "field": "data.currency"
+    },
+    {
+      "code": "invalid_value",
+      "file": "deals.jsonl",
+      "line": 2,
+      "field": "data.closed_at"
+    }
+  ],
+  "warnings": []
+}

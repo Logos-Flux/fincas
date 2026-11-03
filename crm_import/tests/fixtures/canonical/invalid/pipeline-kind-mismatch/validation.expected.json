@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "pipeline_kind_mismatch",
+      "file": "relationships.jsonl",
+      "line": 1,
+      "field": "data.pipeline_ref"
+    }
+  ],
+  "warnings": []
+}

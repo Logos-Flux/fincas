@@ -1,0 +1,17 @@
+{# Complete + Snooze for one open task. Context: task, next (url to return to). #}
+<div class="d-flex flex-wrap gap-1 align-items-center">
+  <form method="post" action="{% url 'erp-crm-task-complete' task.pk %}">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="btn bg-gradient-success btn-sm mb-0" aria-label="Complete {{ task.title }}">Complete</button>
+  </form>
+  <form method="post" action="{% url 'erp-crm-task-reschedule' task.pk %}" class="d-flex flex-wrap gap-1 align-items-center">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <label for="snooze-{{ task.pk }}" class="visually-hidden">Snooze {{ task.title }} until</label>
+    <select id="snooze-{{ task.pk }}" name="when" class="form-control form-control-sm w-auto">
+      <option value="tomorrow">Tomorrow</option><option value="next_week">Next week</option><option value="date">Pick a date</option>
+    </select>
+    <label for="snooze-date-{{ task.pk }}" class="visually-hidden">Date for {{ task.title }}</label>
+    <input id="snooze-date-{{ task.pk }}" type="date" name="date" class="form-control form-control-sm w-auto">
+    <button type="submit" class="btn btn-outline-primary btn-sm mb-0">Snooze</button>
+  </form>
+</div>

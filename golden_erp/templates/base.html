@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="icon" type="image/svg+xml" href="{% static 'assets/img/favicon.svg' %}">
+  <link rel="alternate icon" type="image/png" href="{% static 'assets/img/favicon.png' %}">
+  <title>{% block title %}Dashboard{% endblock %} — Fincas</title>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="{% static 'assets/css/tabler-icons.css' %}" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  {% comment %}
+    Stylesheet order is load-bearing — framework → theme tokens → binding
+    layer → compat → local overrides. Two constraints in particular:
+
+      * erp-compat.css MUST come after tabler.min.css. Several of its rules
+        (.opacity-5 and the rest of the opacity scale) tie on specificity and
+        win on source order alone. Move it up and they silently lose.
+      * themes/eva-01.css defines the --brand-t-* tokens that
+        tabler-bindings.css maps onto --tblr-*, so it must precede it.
+
+    Swapping themes is one href change on #theme-css; swapping frameworks is
+    one on #framework. That is the whole seam.
+
+    #theme-css is registry-driven (settings.ERP_THEMES via the
+    core.context_processors.erp_themes context processor): the server renders
+    the DEFAULT theme's stylesheet, and the pre-paint snippet at the end of
+    <head> re-points it to the visitor's stored choice before first paint.
+    A registry entry with css=None means "no theme stylesheet" — the link
+    element stays in the DOM but disabled (link.disabled is the standard
+    stylesheet on/off switch; an empty href would be invalid HTML).
+  {% endcomment %}
+  <link id="framework" href="{% static 'assets/css/tabler.min.css' %}" rel="stylesheet" />
+  {% if erp_default_theme_entry.css_url %}
+  <link id="theme-css" href="{{ erp_default_theme_entry.css_url }}" rel="stylesheet" />
+  {% else %}
+  <link id="theme-css" rel="stylesheet" disabled />
+  {% endif %}
+  <link href="{% static 'assets/css/tabler-bindings.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/erp-compat.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/erp-custom.css' %}" rel="stylesheet" />
+  {% block stylesheets %}{% endblock %}
+  {# ERP chat assistant — page context. Templates override this block #}
+  {# to tell the assistant which record the user is currently viewing. #}
+  {% block chat_context %}{% endblock %}
+  {# Theme registry as XSS-safe JSON — read by the pre-paint snippet below #}
+  {# and by the picker JS in includes/scripts.html.                         #}
+  {{ erp_themes|json_script:"erp-themes-data" }}
+  <script>
+    // Apply the stored theme before paint to prevent flash. MUST stay
+    // synchronous, in <head>, after both #theme-css and #erp-themes-data.
+    // Tabler keys colour mode off [data-bs-theme] on the root element.
+    // (The ATTRIBUTE keeps Bootstrap's name; the VARIABLES are --tblr-*.)
+    //
+    // localStorage['erp-theme'] holds a registry NAME (settings.ERP_THEMES).
+    // Legacy values ('dark', 'light') are migrated below. Unknown/missing →
+    // default.
+    (function() {
+      var themes;
+      try {
+        themes = JSON.parse(document.getElementById('erp-themes-data').textContent);
+      } catch (e) { return; }
+      function find(name) {
+        for (var i = 0; i < themes.length; i++) {
+          if (themes[i].name === name) return themes[i];
+        }
+        return null;
+      }
+      var stored = localStorage.getItem('erp-theme');
+      // One-time legacy migrations: the old binary toggle stored 'dark', and
+      // the pre-2026-10 registry's stock-Tabler light theme was named 'light'.
+      var legacy = { dark: 'eva-01', light: 'golden' };
+      if (legacy[stored]) {
+        stored = legacy[stored];
+        localStorage.setItem('erp-theme', stored);
+      }
+      var entry = find(stored) || find('{{ erp_default_theme|escapejs }}');
+      if (!entry) return;
+      document.documentElement.setAttribute('data-bs-theme', entry.mode);
+      if (entry.bg) document.documentElement.style.backgroundColor = entry.bg;
+      var link = document.getElementById('theme-css');
+      if (link) {
+        if (entry.css_url) {
+          if (link.getAttribute('href') !== entry.css_url) link.setAttribute('href', entry.css_url);
+          link.disabled = false;
+        } else {
+          link.disabled = true;
+        }
+      }
+    })();
+  </script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% comment %}
+    Tabler layout shell. Structure is load-bearing, not cosmetic:
+      .page                      root flex wrapper
+      └ aside.navbar-vertical    the sidebar
+        └ [class^=container]     REQUIRED — .navbar-vertical.navbar-expand-lg
+                                 > [class^=container] sets flex-direction:column.
+                                 Without it, brand + nav lay out in a ROW.
+      └ .page-wrapper            sibling of aside; the
+                                 .navbar-expand-lg.navbar-vertical ~ .page-wrapper
+                                 rule gives it margin-left:15rem. Nesting it
+                                 inside the aside silently kills the offset.
+    Dropped from the Soft UI shell: .g-sidenav-show, .bg-gray-100 (fought the
+    theme's body background and forced its only !important), .main-content,
+    .border-radius-lg, .max-height-vh-100.
+  {% endcomment %}
+  <div class="page">
+
+    {% include "includes/sidebar.html" %}
+
+    <div class="page-wrapper">
+
+      {% include "includes/navigation.html" %}
+
+      <div class="page-body">
+        <div class="container-fluid">
+          {% if messages %}
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          {% endfor %}
+          {% endif %}
+
+          {% block content %}{% endblock %}
+        </div>
+      </div>
+
+      {% comment %}
+        Outside .page-body: Tabler's .footer uses margin-top:auto to sink to
+        the bottom of .page-wrapper. Nested in the content container it would
+        float directly under the content instead.
+      {% endcomment %}
+      {% include "includes/footer.html" %}
+
+    </div>
+  </div>
+
+  {% include "includes/scripts.html" %}
+  {% include "includes/submit_guard.html" %}
+  {% include "includes/scroll_regions.html" %}
+  {% block javascripts %}{% endblock %}
+
+  {# ERP chat assistant drawer — only renders for authenticated users #}
+  {% if user.is_authenticated %}
+    {% include "chat/drawer.html" %}
+  {% endif %}
+
+</body>
+</html>

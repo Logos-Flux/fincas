@@ -1,0 +1,15 @@
+# Repo-level gitleaks config: extend the default rules and allow-list the
+# recorded/invented fixture trees. Everything under these paths is test data
+# by policy (see docs/crm/phase5-importer.md §5 and docs/crm/phase6-adapters.md
+# "fixture strategy"): invented tokens, example.com addresses, 555-01xx numbers.
+# A real credential must never be committed there either; the tripwire and
+# the no-network test guard keep fixtures from reaching a live service.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Invented fixture data (recorded provider payloads and canonical import samples)"
+paths = [
+  '''^golden_erp/addons/[^/]+/fixtures/.*''',
+  '''^crm_import/tests/fixtures/.*''',
+]

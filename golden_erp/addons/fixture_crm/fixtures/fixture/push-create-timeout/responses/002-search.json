@@ -1,0 +1,15 @@
+{
+  "payload": {
+    "data": [
+      {
+        "id": "fx_ct_0003"
+      }
+    ]
+  },
+  "provider": "fixture",
+  "request": {
+    "method": "GET",
+    "path": "/v1/contacts"
+  },
+  "schema_version": 1
+}

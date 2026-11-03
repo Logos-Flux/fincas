@@ -1,0 +1,54 @@
+{
+  "payload": {
+    "calls": [
+      {
+        "answered_at": 1772463205,
+        "archived": false,
+        "asset": null,
+        "comments": [],
+        "direct_link": "https://api.aircall.io/v1/calls/1012",
+        "direction": "inbound",
+        "duration": null,
+        "ended_at": null,
+        "id": 1012,
+        "missed_call_reason": null,
+        "number": {
+          "digits": "+1 202-555-0100",
+          "id": 5101,
+          "name": "Sales line"
+        },
+        "raw_digits": "+1 202-555-0143",
+        "recording": null,
+        "started_at": 1772463200,
+        "status": "answered",
+        "tags": [],
+        "user": {
+          "email": "sam@example.org",
+          "id": 7201,
+          "name": "Sam Seller"
+        },
+        "voicemail": null
+      }
+    ],
+    "meta": {
+      "count": 1,
+      "current_page": 2,
+      "next_page_link": null,
+      "per_page": 50,
+      "previous_page_link": "https://api.aircall.io/v1/calls?page=1",
+      "total": 2
+    }
+  },
+  "provider": "aircall",
+  "request": {
+    "method": "GET",
+    "path": "/v1/calls",
+    "query": {
+      "from": "1769871600",
+      "order": "asc",
+      "page": "2",
+      "per_page": "50"
+    }
+  },
+  "schema_version": 1
+}

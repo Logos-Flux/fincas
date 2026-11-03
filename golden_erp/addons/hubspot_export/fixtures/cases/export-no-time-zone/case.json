@@ -1,0 +1,8 @@
+{
+  "description": "A CSV export without --time-zone: refused, because its date-times have no offset (2.13 row 9).",
+  "base": "export-csv",
+  "kwargs": {
+    "time_zone": null
+  },
+  "refuses": "--time-zone"
+}

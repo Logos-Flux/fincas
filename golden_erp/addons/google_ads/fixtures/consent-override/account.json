@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "settings": {
+    "ad_user_data_consent": "DENIED",
+    "conversion_actions": {
+      "sales": "555000111"
+    },
+    "customer_id": "123-456-7890"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "payload": {
+    "ECODE": "APP_002",
+    "err": "Rate limit reached"
+  },
+  "provider": "clickup",
+  "request": {
+    "method": "PUT",
+    "path": "/api/v2/task/86a0fx01"
+  },
+  "response": {
+    "headers": {
+      "Retry-After": "120"
+    },
+    "status": 429
+  },
+  "schema_version": 1
+}

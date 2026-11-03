@@ -1,0 +1,16 @@
+{
+  "payload": {
+    "access_token": "fixture-access-1",
+    "expires_in": 3600,
+    "token_type": "Bearer"
+  },
+  "provider": "google_ads",
+  "request": {
+    "method": "POST",
+    "path": "/token"
+  },
+  "response": {
+    "status": 200
+  },
+  "schema_version": 1
+}

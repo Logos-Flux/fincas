@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Email Verification{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-body text-center py-5">
+        {% if success %}
+        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+        <h5>Email Verified</h5>
+        <p class="text-sm">Your email address has been verified, {{ verified_user.get_full_name|default:verified_user.username }}.</p>
+        <a href="{% url 'erp-login' %}" class="btn bg-gradient-dark mt-2">Go to Login</a>
+        {% else %}
+        <i class="fas fa-times-circle text-danger fa-3x mb-3"></i>
+        <h5>Verification Failed</h5>
+        <p class="text-sm">This verification link is invalid or has expired.</p>
+        <a href="{% url 'erp-login' %}" class="btn bg-gradient-dark mt-2">Go to Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

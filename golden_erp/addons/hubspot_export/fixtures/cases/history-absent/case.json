@@ -1,0 +1,11 @@
+{
+  "description": "No deal history pages: deals stay complete, the manifest's history omits dealstage (2.13 row 4).",
+  "base": "crawl-small",
+  "remove": [
+    "crawl/history/deals"
+  ],
+  "added": {},
+  "history": {
+    "deal": []
+  }
+}

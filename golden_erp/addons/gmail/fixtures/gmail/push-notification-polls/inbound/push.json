@@ -1,0 +1,18 @@
+{
+  "payload": {
+    "message": {
+      "data": "eyJlbWFpbEFkZHJlc3MiOiAicmVwQGV4YW1wbGUub3JnIiwgImhpc3RvcnlJZCI6IDEwMTB9",
+      "messageId": "2070443601311540",
+      "message_id": "2070443601311540",
+      "publishTime": "2026-03-02T14:59:58Z"
+    },
+    "subscription": "projects/fixture-project/subscriptions/gmail-push"
+  },
+  "provider": "gmail",
+  "request": {
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImZpeHR1cmUta2V5LTEiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJmaXh0dXJlLXdlYmhvb2stc2VjcmV0LTEiLCJhenAiOiIxMDAwMDAwMDAwMDAwMDAwMDAwMDEiLCJlbWFpbCI6InB1c2hAZml4dHVyZS1wcm9qZWN0LmV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MjQ2NzE5NSwiaWF0IjoxNzcyNDYzNTk1LCJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDAwMDAwMDAwMDAwMDAwMDAwMDEifQ.A-dUN-iSpZqYKy5G-XFI763DCEaF6ViG-Kkq46Txiz4GlCG0zqviXTg2v9g0iZOappLDGNPs1D4_b476i6yCiJTY_Y6QMzJEtYUrenTE4wlPGUBeamDdACAWqgRfZMfLMnem2exJYx0-bzHVHWGVzxRaeglqifIg9BAxnSNloiAla3tR4FFq9znzg1fdvEr5Ko_BQhDK3ilGM9gDiovYXgja5mLj5jfbSMCj2RoM988b2wQED6YNyT64RZS4gyaVZJNtU0XlzNHFifyhPVoQHwxFlqcfpDTKSgOfxcEVTZgmAqjx5NAFZ0BhIRF71fW4equW6yMQfw6sREHpC3vwvA"
+    }
+  },
+  "schema_version": 1
+}

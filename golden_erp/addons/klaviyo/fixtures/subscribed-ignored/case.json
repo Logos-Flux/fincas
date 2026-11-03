@@ -1,0 +1,34 @@
+{
+  "klaviyo": {
+    "marketable": [
+      "grace"
+    ]
+  },
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A Klaviyo-side subscribe is never golden consent: no ConsentRecord, only a counted marker, and the following push still sends nothing for a party without a golden grant.",
+  "seed": {
+    "parties": [
+      {
+        "email": "grace@example.net",
+        "family": "Hopper",
+        "given": "Grace",
+        "key": "grace"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001-event.json"
+    },
+    {
+      "enqueue": {
+        "consumer": "klaviyo.profile",
+        "key": "sync:grace:1",
+        "object": "party:grace"
+      }
+    },
+    {
+      "drain": true
+    }
+  ]
+}

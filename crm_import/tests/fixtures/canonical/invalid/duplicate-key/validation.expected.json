@@ -1,0 +1,18 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "duplicate_key",
+      "file": "pipelines.jsonl",
+      "line": 2,
+      "field": "data.key"
+    },
+    {
+      "code": "duplicate_key",
+      "file": "property_defs.jsonl",
+      "line": 2,
+      "field": "data.name"
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,27 @@
+[
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:api_key>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/v1/messages",
+    "query": {
+      "after": "",
+      "since": "2026-01-31T15:00:00+00:00"
+    }
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:api_key>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/v1/messages",
+    "query": {
+      "after": "fx_msg_0010"
+    }
+  }
+]

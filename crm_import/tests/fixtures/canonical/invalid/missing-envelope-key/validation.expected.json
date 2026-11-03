@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "missing_key",
+      "file": "contacts.jsonl",
+      "line": 2,
+      "field": "source"
+    }
+  ],
+  "warnings": []
+}

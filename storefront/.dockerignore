@@ -1,0 +1,13 @@
+node_modules
+dist
+server
+lib
+lib-types
+test-results
+playwright-report
+.cache
+.rollup.cache
+tsconfig.tsbuildinfo
+.env
+*.local
+*.log

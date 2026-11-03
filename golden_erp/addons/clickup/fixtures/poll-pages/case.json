@@ -1,0 +1,52 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "The backstop poll reads every mapped list page by page (first sync suppressed, since the initial horizon) and mirrors the linked tasks only.",
+  "second_run_requests": [
+    {
+      "form": null,
+      "headers": {
+        "authorization": "<redacted:api_key>"
+      },
+      "json": null,
+      "method": "GET",
+      "path": "/api/v2/list/901/task",
+      "query": {
+        "date_updated_gt": "1772463540000",
+        "include_closed": "true",
+        "include_markdown_description": "true",
+        "order_by": "updated",
+        "page": "0",
+        "reverse": "true",
+        "subtasks": "true"
+      }
+    }
+  ],
+  "seed": {
+    "engagements": [
+      {
+        "key": "deal",
+        "number": "EN-00042",
+        "party": "ada"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.com",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "poll": true
+    }
+  ]
+}

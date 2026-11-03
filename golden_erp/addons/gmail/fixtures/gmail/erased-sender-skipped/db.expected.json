@@ -1,0 +1,17 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [],
+  "outbox": [],
+  "suppressions": [
+    {
+      "channel": "email",
+      "hint": "",
+      "lifted": false,
+      "reason": "erasure",
+      "source": "erp"
+    }
+  ],
+  "tasks": [],
+  "touchpoints": []
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Basic <redacted:api_key>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/v1/calls",
+    "query": {
+      "from": "1769871600",
+      "order": "asc",
+      "page": "1",
+      "per_page": "50"
+    }
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Basic <redacted:api_key>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/v1/calls",
+    "query": {
+      "from": "1769871600",
+      "order": "asc",
+      "page": "2",
+      "per_page": "50"
+    }
+  }
+]

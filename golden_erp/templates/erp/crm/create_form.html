@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load erp_tags labels %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+{# CRM create screens (crm.erp_views._CreatePage): the task list's New task and the lead list's New lead. #}
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <div class="card mb-4">
+    <div class="card-header pb-0">
+      <div>
+      <h1 class="h6 mb-0">{{ page_title }}</h1>
+      {% if intro == "lead" %}
+      <p class="text-xs text-secondary mb-0">Saving runs intake, as for a web form: the person is matched to {% label "parties.party" article=True case="lower" %} (or added as one) and, unless it is a support request, the {% label "crm.lead" case="lower" %} opens or joins {% label "crm.engagement" article=True case="lower" %} with a "Respond to inquiry" {% label "crm.task" case="lower" %}.</p>
+      {% elif intro == "task" %}
+      <p class="text-xs text-secondary mb-0">Put it on {% label "crm.engagement" article=True case="lower" %}, {% label "parties.party" article=True case="lower" %}, both or neither.</p>
+      {% endif %}
+      </div>
+    </div>
+    <div class="card-body">
+      {% if form.non_field_errors %}<div class="alert alert-danger text-sm" role="alert">{% for e in form.non_field_errors %}<p class="mb-0">{{ e }}</p>{% endfor %}</div>{% endif %}
+      {% for section_title, fields in form_sections %}
+      <fieldset class="mb-2">
+        <legend class="text-xs text-uppercase text-secondary font-weight-bolder mb-2">{{ section_title }}</legend>
+        <div class="row">
+          {% for field in fields %}
+          <div class="{% if field.name == 'message' %}col-12{% else %}col-md-6{% endif %} mb-3">
+            <label for="{{ field.id_for_label }}" class="form-label text-sm">{{ field.label }}{% if field.field.required %} <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span>{% endif %}</label>
+            {% if field.name == "party" %}
+            <div class="d-flex flex-wrap gap-2 align-items-start">
+              <div class="flex-grow-1" style="min-width:12rem">{{ field|add_class:"form-control form-control-sm" }}</div>
+              {% include "erp/crm/_new_party_link.html" %}
+            </div>
+            {% else %}
+            {{ field|add_class:"form-control form-control-sm" }}
+            {% endif %}
+            {% if field.errors %}<div class="text-danger text-xs mt-1">{{ field.errors.0 }}</div>{% endif %}
+            {% if field.help_text %}<small class="form-text text-secondary text-xs">{{ field.help_text }}</small>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+      {% endfor %}
+      {% if form.definition_sections or form.hidden_definitions %}
+      {% include "erp/_definition_fieldsets.html" %}
+      {% endif %}
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{{ cancel_url }}" class="btn btn-outline-secondary btn-sm mb-0">Cancel</a>
+        <button type="submit" class="btn bg-gradient-primary btn-sm mb-0">Save</button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block javascripts %}
+{% include "erp/_party_search_js.html" %}
+{% endblock %}

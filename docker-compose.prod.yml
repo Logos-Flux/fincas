@@ -1,0 +1,123 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: golden_erp_prod_db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-golden_erp}
+      POSTGRES_USER: ${POSTGRES_USER:-golden}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-golden} -d ${POSTGRES_DB:-golden_erp}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: valkey/valkey:7.2-alpine
+    container_name: golden_erp_prod_redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: golden_erp_prod_web
+    restart: always
+    # Every setting golden_erp.settings reads comes from .env, as-is. Listing
+    # names here instead dropped any setting the list forgot (TRUSTED_PROXIES,
+    # GOLDEN_PORTAL_COMPANY: web crash-looped on parties.E001, 2026-10-09), and
+    # a `${NAME:-}` passthrough turns "unset" into "empty", which silently
+    # overrides a settings default (SECURE_SSL_REDIRECT off, int("") for
+    # SECURE_HSTS_SECONDS, GOLDEN_PORTAL_SIGNUP_RATE disabled).
+    # core/tests/test_prod_compose.py guards both.
+    env_file:
+      - path: .env
+        required: false
+    # Only values compose derives or must refuse to start without. These win
+    # over the same names in .env.
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      DATABASE_URL: postgres://${POSTGRES_USER:-golden}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-golden_erp}
+      REDIS_URL: redis://redis:6379/0
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Django secret key required}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?Allowed hosts required}
+      # Bare `migrate` on every start. Before an upgrade across golden#88
+      # (communications.0003 on a database with EmailLog rows), migrate the
+      # other apps first, then the rest:
+      #   docker compose -f docker-compose.prod.yml run --rm --no-deps -e AUTO_MIGRATE=0 web \
+      #     sh -c 'for a in customers core parties crm crm_import unify; do python manage.py migrate $a --noinput; done; python manage.py migrate --noinput'
+      AUTO_MIGRATE: "1"
+    ports:
+      - "${PORT:-8000}:8000"
+    # No volume over /app/staticfiles: static files are collected into the
+    # image at build time, and a named volume would mask every later build
+    # with the first deploy's copy (staging served stale CSS for weeks).
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Healthy only once uvicorn answers, and the entrypoint starts uvicorn only
+    # after `migrate` finishes: outbox waits on this, so a deploy that adds
+    # outbox tables no longer crashes the worker once on a missing relation
+    # (staging, 2026-10-14). The Host is the first ALLOWED_HOSTS entry (a
+    # leading-dot wildcard stripped), so the probe is not a DisallowedHost
+    # error; X-Forwarded-Proto skips the HTTPS redirect, so -f sees the page's
+    # own status. start_period covers long migrations; `up` blocks until then and,
+    # if web never gets healthy, fails and leaves outbox unstarted: re-run `up -d`.
+    healthcheck:
+      test: ["CMD-SHELL", "h=$${ALLOWED_HOSTS%%,*}; h=$${h#.}; case \"$$h\" in ''|'*') h=localhost;; esac; curl -fsS -o /dev/null --max-time 5 -H \"Host: $$h\" -H 'X-Forwarded-Proto: https' http://127.0.0.1:8000/erp/login/"]
+      interval: 10s
+      timeout: 6s
+      retries: 6
+      start_period: 300s
+
+  # Delivers the outbox (webhooks, adapter syncs): `process_outbox --loop`
+  # runs handlers outside any request and outside any transaction
+  # (docs/deployment.md section 8). Same image and settings as web; it never
+  # migrates (web does, so it starts once web is healthy), and several replicas may run at once.
+  outbox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: golden_erp_prod_outbox
+    restart: always
+    command: ["python", "manage.py", "process_outbox", "--loop"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      DATABASE_URL: postgres://${POSTGRES_USER:-golden}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-golden_erp}
+      REDIS_URL: redis://redis:6379/0
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Django secret key required}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?Allowed hosts required}
+      AUTO_MIGRATE: "0"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      # Not service_started: web migrates at start-up (see its healthcheck).
+      web:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  media_data:
+    driver: local

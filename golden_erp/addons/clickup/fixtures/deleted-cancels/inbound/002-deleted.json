@@ -1,0 +1,24 @@
+{
+  "payload": {
+    "event": "taskDeleted",
+    "history_items": [
+      {
+        "date": "1772463600000",
+        "id": "hi_0001",
+        "user": {
+          "email": "sam@example.com",
+          "id": 81000001
+        }
+      }
+    ],
+    "task_id": "86a0fx05",
+    "webhook_id": "wh_fixture_0001"
+  },
+  "provider": "clickup",
+  "request": {
+    "headers": {
+      "x-signature": "6022bb31f1e0eab490a682ca93e07eeb120342a3cc259d7e3b64b92491b67883"
+    }
+  },
+  "schema_version": 1
+}

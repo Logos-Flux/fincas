@@ -1,0 +1,6 @@
+{% extends "errors/base.html" %}
+{% block title %}Page not found{% endblock %}
+{% block code %}404{% endblock %}
+{% block heading %}Page not found{% endblock %}
+{% block lede %}There is no page at this address. The record may have been removed, or the link may be out of date.{% endblock %}
+{% block details %}{% if request_path %}<div class="error-path">{{ request_path }}</div>{% endif %}{% endblock %}

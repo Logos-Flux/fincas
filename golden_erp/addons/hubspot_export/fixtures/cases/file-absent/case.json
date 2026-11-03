@@ -1,0 +1,12 @@
+{
+  "description": "No email pages at all (a missing export of an object): communications are partial, file_absent.",
+  "base": "crawl-small",
+  "remove": [
+    "crawl/emails"
+  ],
+  "added": {
+    "communication": [
+      "file_absent"
+    ]
+  }
+}

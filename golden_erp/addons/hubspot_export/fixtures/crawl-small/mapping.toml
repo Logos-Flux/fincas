@@ -1,0 +1,42 @@
+# Mapping file for the invented portal 1234567 (docs/crm/phase5-importer.md 2.12).
+source = "hubspot:1234567"
+default_currency = "USD"
+default_phone_region = "US"
+
+[contact.properties]
+lead_type = "sidecar"
+client_status = "sidecar"
+jobtitle = "column:relationship.title"
+internal_scratch = "drop"
+
+[deal.properties]
+package = "sidecar"
+sales_followup_date = "follow_up"
+
+[deal.loss_reasons]
+"Went with competitor" = "competitor"
+
+[pipelines.12345678]
+key = "partner_referral"
+
+[pipelines.0]
+key = "partners"
+
+[pipelines.0.stages]
+"1" = "new"
+"2" = "onboarding"
+"3" = "active"
+"4" = "ended"
+
+[task.kinds]
+LINKED_IN = "linkedin"
+
+[tickets]
+relationship_kind = "partnership"
+ended_stages = ["ended"]
+
+[roles.contact.client_status]
+"active_client" = "client"
+
+[associations.contact_company]
+"Billing contact" = "contact_for"

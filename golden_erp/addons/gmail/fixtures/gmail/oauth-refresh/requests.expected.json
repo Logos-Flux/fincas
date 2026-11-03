@@ -1,0 +1,65 @@
+[
+  {
+    "form": {
+      "client_id": "fixture-client-id",
+      "client_secret": "<redacted:oauth_client>",
+      "grant_type": "refresh_token",
+      "refresh_token": "<redacted:oauth_refresh>"
+    },
+    "headers": {
+      "accept": "application/json"
+    },
+    "json": null,
+    "method": "POST",
+    "path": "/token",
+    "query": {}
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:oauth_access>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/gmail/v1/users/me/history",
+    "query": {
+      "historyTypes": "messageAdded",
+      "maxResults": "50",
+      "startHistoryId": "1000"
+    }
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:oauth_access>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/gmail/v1/users/me/labels",
+    "query": {}
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:oauth_access>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000021",
+    "query": {
+      "format": "metadata"
+    }
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:oauth_access>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000021",
+    "query": {
+      "format": "full"
+    }
+  }
+]

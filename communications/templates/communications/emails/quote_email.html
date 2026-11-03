@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: 'Source Sans 3', Arial, sans-serif; color: #222; line-height: 1.5; max-width: 600px; margin: 0 auto;">
+  <div style="background: #042e0d; padding: 20px 24px; text-align: center;">
+    <span style="font-family: Barlow, Arial, sans-serif; font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.3px;">{{ brand.company_name|default:"Commerce" }}</span>
+  </div>
+  <div style="padding: 24px;">
+    <p>Dear {{ customer_name }},</p>
+    <p>{{ message_body }}</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+      <tr style="background: #fafbfc;">
+        <td style="padding: 10px 16px; font-weight: 600; color: #555;">Quote #</td>
+        <td style="padding: 10px 16px;">{{ quote_number }}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 16px; font-weight: 600; color: #555;">Date</td>
+        <td style="padding: 10px 16px;">{{ quote_date }}</td>
+      </tr>
+      {% if expiration_date %}
+      <tr style="background: #fafbfc;">
+        <td style="padding: 10px 16px; font-weight: 600; color: #555;">Valid until</td>
+        <td style="padding: 10px 16px;">{{ expiration_date }}</td>
+      </tr>
+      {% endif %}
+      <tr{% if not expiration_date %} style="background: #fafbfc;"{% endif %}>
+        <td style="padding: 10px 16px; font-weight: 600; color: #555;">Total</td>
+        <td style="padding: 10px 16px;">${{ grand_total }}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 16px; font-weight: 600; color: #555;">Status</td>
+        <td style="padding: 10px 16px; font-weight: 700; color: {% if status == 'accepted' %}#278040{% else %}#042e0d{% endif %};">{{ status_display }}</td>
+      </tr>
+    </table>
+    <p>A PDF copy of your quote is attached to this email.</p>
+    <p>Reply to this email to accept the quote or ask any questions.</p>
+    <p style="margin-top: 24px;">Thank you for the opportunity.</p>
+    <p style="color: #777; font-size: 12px; margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee;">
+      {{ brand.company_name|default:"Commerce" }} &bull; {{ brand.address_line1|default:"" }}{% if brand.address_line2 %}, {{ brand.address_line2 }}{% endif %}<br>
+      {{ brand.email|default:"" }}{% if brand.phone %} &bull; {{ brand.phone }}{% endif %}{% if brand.website %} &bull; {{ brand.website }}{% endif %}
+    </p>
+  </div>
+</body>
+</html>

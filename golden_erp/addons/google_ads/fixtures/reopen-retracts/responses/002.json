@@ -1,0 +1,16 @@
+{
+  "payload": {
+    "results": [
+      {}
+    ]
+  },
+  "provider": "google_ads",
+  "request": {
+    "method": "POST",
+    "path": "/v25/customers/1234567890:uploadConversionAdjustments"
+  },
+  "response": {
+    "status": 200
+  },
+  "schema_version": 1
+}

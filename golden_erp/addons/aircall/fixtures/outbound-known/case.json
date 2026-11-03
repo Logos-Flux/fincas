@@ -1,0 +1,33 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "An answered outbound call to a known number: the party is the callee, the Aircall line the caller.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada",
+        "phone": "+1 202-555-0143"
+      },
+      {
+        "email": "grace@example.net",
+        "family": "Hopper",
+        "given": "Grace",
+        "key": "grace",
+        "phone": "+1 202-555-0144"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.org",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001.json"
+    }
+  ]
+}

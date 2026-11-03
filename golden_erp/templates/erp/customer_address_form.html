@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load static erp_tags %}
+
+{% block title %}{{ page_title }} — {{ customer }}{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger text-sm">
+    {% for error in form.non_field_errors %}
+    <p class="mb-0">{{ error }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Address Details #}
+  <div class="card mb-4">
+    <div class="card-header pb-0">
+      <h6 class="mb-0">Address Details</h6>
+    </div>
+    <div class="card-body pt-0">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="{{ form.address_type.id_for_label }}" class="form-label text-sm">{{ form.address_type.label }}</label>
+          {{ form.address_type|add_class:"form-control form-control-sm" }}
+          {% if form.address_type.errors %}<div class="text-danger text-xs mt-1">{{ form.address_type.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="form-check mt-4">
+            {{ form.is_default }}
+            <label for="{{ form.is_default.id_for_label }}" class="form-check-label text-sm">{{ form.is_default.label }}</label>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="{{ form.label.id_for_label }}" class="form-label text-sm">{{ form.label.label }}</label>
+          {{ form.label|add_class:"form-control form-control-sm" }}
+          {% if form.label.errors %}<div class="text-danger text-xs mt-1">{{ form.label.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="{{ form.first_name.id_for_label }}" class="form-label text-sm">{{ form.first_name.label }}</label>
+          {{ form.first_name|add_class:"form-control form-control-sm" }}
+          {% if form.first_name.errors %}<div class="text-danger text-xs mt-1">{{ form.first_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="{{ form.last_name.id_for_label }}" class="form-label text-sm">{{ form.last_name.label }}</label>
+          {{ form.last_name|add_class:"form-control form-control-sm" }}
+          {% if form.last_name.errors %}<div class="text-danger text-xs mt-1">{{ form.last_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-md-12 mb-3">
+          <label for="{{ form.company_name.id_for_label }}" class="form-label text-sm">{{ form.company_name.label }}</label>
+          {{ form.company_name|add_class:"form-control form-control-sm" }}
+          {% if form.company_name.errors %}<div class="text-danger text-xs mt-1">{{ form.company_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-md-12 mb-3">
+          <label for="{{ form.address_line_1.id_for_label }}" class="form-label text-sm">{{ form.address_line_1.label }} <span class="text-danger">*</span></label>
+          {{ form.address_line_1|add_class:"form-control form-control-sm" }}
+          {% if form.address_line_1.errors %}<div class="text-danger text-xs mt-1">{{ form.address_line_1.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-md-12 mb-3">
+          <label for="{{ form.address_line_2.id_for_label }}" class="form-label text-sm">{{ form.address_line_2.label }}</label>
+          {{ form.address_line_2|add_class:"form-control form-control-sm" }}
+          {% if form.address_line_2.errors %}<div class="text-danger text-xs mt-1">{{ form.address_line_2.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="{{ form.city.id_for_label }}" class="form-label text-sm">{{ form.city.label }} <span class="text-danger">*</span></label>
+          {{ form.city|add_class:"form-control form-control-sm" }}
+          {% if form.city.errors %}<div class="text-danger text-xs mt-1">{{ form.city.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="{{ form.state_province.id_for_label }}" class="form-label text-sm">{{ form.state_province.label }} <span class="text-danger">*</span></label>
+          {{ form.state_province|add_class:"form-control form-control-sm" }}
+          {% if form.state_province.errors %}<div class="text-danger text-xs mt-1">{{ form.state_province.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="{{ form.postal_code.id_for_label }}" class="form-label text-sm">{{ form.postal_code.label }} <span class="text-danger">*</span></label>
+          {{ form.postal_code|add_class:"form-control form-control-sm" }}
+          {% if form.postal_code.errors %}<div class="text-danger text-xs mt-1">{{ form.postal_code.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="{{ form.country.id_for_label }}" class="form-label text-sm">{{ form.country.label }}</label>
+          {{ form.country|add_class:"form-control form-control-sm" }}
+          {% if form.country.errors %}<div class="text-danger text-xs mt-1">{{ form.country.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="{{ form.phone.id_for_label }}" class="form-label text-sm">{{ form.phone.label }}</label>
+          {{ form.phone|add_class:"form-control form-control-sm" }}
+          {% if form.phone.errors %}<div class="text-danger text-xs mt-1">{{ form.phone.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Shipping Flags #}
+  <div class="card mb-4">
+    <div class="card-header pb-0">
+      <h6 class="mb-0">Shipping Flags</h6>
+    </div>
+    <div class="card-body pt-0">
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <div class="form-check">
+            {{ form.is_residential }}
+            <label for="{{ form.is_residential.id_for_label }}" class="form-check-label text-sm">{{ form.is_residential.label }}</label>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="form-check">
+            {{ form.has_loading_dock }}
+            <label for="{{ form.has_loading_dock.id_for_label }}" class="form-check-label text-sm">{{ form.has_loading_dock.label }}</label>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="form-check">
+            {{ form.has_forklift }}
+            <label for="{{ form.has_forklift.id_for_label }}" class="form-check-label text-sm">{{ form.has_forklift.label }}</label>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="form-check">
+            {{ form.requires_liftgate }}
+            <label for="{{ form.requires_liftgate.id_for_label }}" class="form-check-label text-sm">{{ form.requires_liftgate.label }}</label>
+          </div>
+        </div>
+      </div>
+      <div class="row mt-2">
+        <div class="col-12">
+          <label for="{{ form.delivery_instructions.id_for_label }}" class="form-label text-sm">{{ form.delivery_instructions.label }}</label>
+          {{ form.delivery_instructions|add_class:"form-control form-control-sm" }}
+          {% if form.delivery_instructions.errors %}<div class="text-danger text-xs mt-1">{{ form.delivery_instructions.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Action Bar #}
+  <div class="erp-action-bar">
+    <div class="d-flex justify-content-end gap-2">
+      <a href="{% url 'erp-customer-detail' customer.pk %}#addresses" class="btn btn-outline-secondary btn-sm">Cancel</a>
+      <button type="submit" class="btn bg-gradient-primary btn-sm">
+        <i class="fas fa-save me-1"></i> Save Address
+      </button>
+    </div>
+  </div>
+</form>
+{% endblock %}

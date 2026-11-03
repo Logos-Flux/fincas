@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <div class="row align-items-end g-2">
+          <div class="col-lg-6">
+            <h1 class="h6 mb-0">Duplicate parties</h1>
+            {% if company %}
+            <p class="text-xs text-secondary mb-0">
+              {{ counts.candidates }} candidates · {{ counts.approved }} approved · {{ counts.dismissed }} dismissed ·
+              {{ counts.review }} to review · {{ counts.merged }} merged{% if counts.failed %} · {{ counts.failed }} failed or stale{% endif %}
+              <br>Last scan: {% if last_scan %}{{ last_scan|date:"Y-m-d H:i" }}{% else %}never{% endif %}
+            </p>
+            {% endif %}
+          </div>
+          {% if company and can_merge %}
+          <div class="col-lg-6 text-lg-end">
+            <form method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="return_query" value="{{ filter_query }}">
+              {% if request.GET.company %}<input type="hidden" name="company" value="{{ company.pk }}">{% endif %}
+              <button type="submit" name="action" value="scan" class="btn btn-sm btn-outline-dark mb-0">Scan now</button>
+              <button type="submit" name="action" value="apply" class="btn btn-sm bg-gradient-primary mb-0"{% if not counts.approved %} disabled{% endif %}>Apply approved ({{ counts.approved }})</button>
+            </form>
+            {% if last_undoable %}
+            <form method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="return_query" value="{{ filter_query }}">
+              {% if request.GET.company %}<input type="hidden" name="company" value="{{ company.pk }}">{% endif %}
+              <input type="hidden" name="run" value="{{ last_undoable.pk }}">
+              <input type="hidden" name="undo_token" value="{{ last_undoable.undo_token }}">
+              <button type="submit" name="action" value="undo-run" class="btn btn-sm btn-outline-secondary mb-0">Undo last run</button>
+            </form>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card-body">
+        {% if messages %}
+        <div role="status">
+          {% for message in messages %}
+          <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-warning{% endif %} text-sm mb-2">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if not company %}
+        <p class="text-sm">No company is linked to your account, so there is no merge queue to show.{% if request.user.is_superuser %} Add <code>?company=&lt;id&gt;</code> to the address.{% endif %}</p>
+        {% else %}
+
+        {% if not can_merge %}
+        <p class="text-sm text-secondary">You can review this queue. Approving, dismissing and undoing merges needs the “Can merge and unmerge parties” permission.</p>
+        {% endif %}
+
+        {% if runs %}
+        <h2 class="h6 mt-2">Apply runs</h2>
+        {% for run in runs %}
+        <div class="row g-2 align-items-center mb-2">
+          <div class="col-md-5 text-sm">
+            {{ run.created_at|date:"Y-m-d H:i" }} · {{ run.get_status_display }} · by {{ run.actor }} ·
+            {{ run.applied }} merged{% if run.failed %}, {{ run.failed }} failed{% endif %}{% if run.pending %}, {{ run.pending }} pending{% endif %}
+          </div>
+          <div class="col-md-3">
+            <div class="progress" role="progressbar" aria-label="Run progress" aria-valuenow="{{ run.percent }}" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-gradient-primary" style="width: {{ run.percent }}%"></div>
+            </div>
+          </div>
+          {% if can_merge and run.pending and run.status != "cancelled" %}
+          <div class="col-md-4">
+            <form method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="return_query" value="{{ filter_query }}">
+              {% if request.GET.company %}<input type="hidden" name="company" value="{{ company.pk }}">{% endif %}
+              <input type="hidden" name="run" value="{{ run.pk }}">
+              <button type="submit" name="action" value="apply-chunk" class="btn btn-sm btn-outline-dark mb-0">Apply next chunk</button>
+              <button type="submit" name="action" value="cancel-run" class="btn btn-sm btn-outline-secondary mb-0">Cancel</button>
+            </form>
+            <p class="text-xs text-secondary mb-0">Large runs: <code>manage.py unify_apply --run {{ run.pk }}</code></p>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="get" class="row g-2 align-items-center my-3" aria-label="Filter candidates">
+          {% if request.GET.company %}<input type="hidden" name="company" value="{{ company.pk }}">{% endif %}
+          <div class="col-auto">
+            <select name="state" aria-label="Candidate state" class="form-control form-control-sm" data-auto-submit>
+              {% for value, label in states %}
+              <option value="{{ value }}" {% if state == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-auto">
+            <select name="band" aria-label="Confidence band" class="form-control form-control-sm" data-auto-submit>
+              <option value="">All confidence</option>
+              <option value="high" {% if band == "high" %}selected{% endif %}>≥ 0.95</option>
+              <option value="mid" {% if band == "mid" %}selected{% endif %}>0.70 – 0.95</option>
+              <option value="low" {% if band == "low" %}selected{% endif %}>&lt; 0.70</option>
+            </select>
+          </div>
+          <div class="col-auto">
+            <select name="order" aria-label="Sort order" class="form-control form-control-sm" data-auto-submit>
+              <option value="desc" {% if order == "desc" %}selected{% endif %}>Highest confidence first</option>
+              <option value="asc" {% if order == "asc" %}selected{% endif %}>Lowest confidence first</option>
+            </select>
+          </div>
+          <div class="col-auto form-check">
+            <input class="form-check-input" type="checkbox" name="flagged" value="1" id="flagged" {% if flagged %}checked{% endif %}>
+            <label class="form-check-label text-sm" for="flagged">Needs individual review</label>
+          </div>
+          <div class="col-auto"><button type="submit" class="btn btn-sm btn-outline-primary mb-0">Apply</button></div>
+        </form>
+
+        {% if can_merge %}
+        <form method="post" id="bulk-form" class="mb-3">
+          {% csrf_token %}
+          <input type="hidden" name="return_query" value="{{ filter_query }}">
+          {% if request.GET.company %}<input type="hidden" name="company" value="{{ company.pk }}">{% endif %}
+          <button type="submit" name="action" value="bulk-approve" class="btn btn-sm btn-outline-dark mb-0">Approve selected</button>
+          <span class="text-xs text-secondary ms-2">Only clusters at ≥ 0.95 with no flag, no block and no domain-only link can be selected.</span>
+        </form>
+        {% endif %}
+
+        {% for c in clusters %}
+        <section class="border rounded p-3 mb-3" id="cluster-{{ c.row.pk }}" aria-labelledby="cluster-{{ c.row.pk }}-title">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            {% if can_merge and c.bulk and c.row.mapping_state == "proposed" %}
+            <input type="checkbox" name="rows" value="{{ c.row.pk }}" form="bulk-form" aria-label="Select cluster for bulk approval">
+            {% endif %}
+            <h3 class="h6 mb-0" id="cluster-{{ c.row.pk }}-title">{{ c.members|length }} parties · confidence {{ c.row.mapping_confidence }}</h3>
+            <span class="badge badge-sm bg-gradient-secondary">{{ c.row.get_mapping_state_display }}</span>
+            {% if c.flags %}<span class="badge badge-sm bg-gradient-warning">Needs individual review</span>{% endif %}
+            {% if c.stale %}<span class="badge badge-sm bg-gradient-secondary">Stale: a party was merged or removed</span>{% endif %}
+          </div>
+          <ul class="text-sm mb-2">
+            {% for sentence in c.evidence %}<li>{{ sentence }}</li>{% endfor %}
+          </ul>
+
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="row" value="{{ c.row.pk }}">
+            <input type="hidden" name="return_query" value="{{ filter_query }}">
+            {% if request.GET.company %}<input type="hidden" name="company" value="{{ company.pk }}">{% endif %}
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-2">
+                <thead>
+                  <tr>
+                    <th scope="col" class="text-xxs text-uppercase text-secondary">Field</th>
+                    {% for p in c.members %}
+                    <th scope="col" class="text-sm">
+                      <label class="d-flex align-items-center gap-1 mb-0">
+                        <input type="radio" name="survivor" value="{{ p.pk }}" {% if c.survivor == p.pk|stringformat:"s" %}checked{% endif %} {% if not can_merge %}disabled{% endif %}>
+                        Keep {{ p.display_name }}
+                      </label>
+                    </th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for line in c.table %}
+                  <tr>
+                    <th scope="row" class="text-xs text-secondary">{{ line.label }}</th>
+                    {% for value in line.values %}
+                    <td class="text-xs {% if line.differs %}fw-bold{% else %}text-secondary{% endif %}">{{ value|default:"—" }}</td>
+                    {% endfor %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            {% if c.picks and can_merge %}
+            <fieldset class="mb-2">
+              <legend class="text-xs text-uppercase text-secondary mb-1">Values that differ: keep</legend>
+              {% for pick in c.picks %}
+              <div class="row g-2 align-items-center mb-1">
+                <label class="col-auto text-sm mb-0" for="pick-{{ c.row.pk }}-{{ pick.field }}">{{ pick.label|capfirst }}</label>
+                <div class="col-auto">
+                  <select class="form-control form-control-sm" name="{{ pick.name }}" id="pick-{{ c.row.pk }}-{{ pick.field }}">
+                    <option value="">The survivor's</option>
+                    {% for party_id, value in pick.options %}<option value="{{ party_id }}">{{ value }}</option>{% endfor %}
+                  </select>
+                </div>
+              </div>
+              {% endfor %}
+            </fieldset>
+            {% endif %}
+
+            {% if c.blocked %}
+            <div class="alert alert-secondary text-sm mb-2" role="note">
+              <strong>Cannot be merged here.</strong>
+              {% for reason in c.blocked %} {{ reason }}{% endfor %}
+            </div>
+            {% endif %}
+
+            {% if can_merge %}
+            <div class="btn-group btn-group-sm" role="group" aria-label="Decide this cluster">
+              {% if not c.blocked and not c.stale %}
+              <button type="submit" name="action" value="approve" class="btn bg-gradient-primary mb-0">{% if c.row.mapping_state == "approved" %}Update approval{% else %}Merge{% endif %}</button>
+              {% endif %}
+              <button type="submit" name="action" value="dismiss" class="btn btn-outline-dark mb-0">Not a duplicate</button>
+              {% if c.next_id %}<a class="btn btn-outline-secondary mb-0" href="#cluster-{{ c.next_id }}">Skip</a>{% endif %}
+            </div>
+            {% endif %}
+          </form>
+        </section>
+        {% empty %}
+        <p class="text-sm text-secondary">No duplicate candidates. Last scan {% if last_scan %}{{ last_scan|date:"Y-m-d H:i" }}{% else %}never{% endif %}.</p>
+        {% endfor %}
+
+        {% if page.has_other_pages %}
+        <nav aria-label="Candidate pages">
+          <ul class="pagination pagination-sm">
+            {% if page.has_previous %}<li class="page-item"><a class="page-link" href="?{{ filter_query }}&amp;page={{ page.previous_page_number }}">Previous</a></li>{% endif %}
+            <li class="page-item disabled"><span class="page-link">Page {{ page.number }} of {{ page.paginator.num_pages }}</span></li>
+            {% if page.has_next %}<li class="page-item"><a class="page-link" href="?{{ filter_query }}&amp;page={{ page.next_page_number }}">Next</a></li>{% endif %}
+          </ul>
+        </nav>
+        {% endif %}
+
+        <h2 class="h6 mt-4">Recent merges</h2>
+        {% for m in recent_merges %}
+        <div class="row g-2 align-items-center mb-2">
+          <div class="col-md-8 text-sm">
+            {{ m.at|date:"Y-m-d H:i" }} · {% for loser in m.losers %}{{ loser.display_name }}{% if not forloop.last %}, {% endif %}{% endfor %} → {{ m.survivor.display_name }} · by {{ m.actor }}
+          </div>
+          {% if can_merge %}
+          <div class="col-md-4">
+            <form method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="return_query" value="{{ filter_query }}">
+              {% if request.GET.company %}<input type="hidden" name="company" value="{{ company.pk }}">{% endif %}
+              <input type="hidden" name="merge_id" value="{{ m.merge_id }}">
+              <button type="submit" name="action" value="undo-merge" class="btn btn-sm btn-outline-secondary mb-0">Undo</button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+        {% empty %}
+        <p class="text-sm text-secondary">No merges yet.</p>
+        {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% include "erp/_list_a11y_script.html" %}
+{% endblock %}

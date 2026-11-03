@@ -1,0 +1,29 @@
+{
+  "payload": {
+    "event": {
+      "attributes": {
+        "datetime": "2026-03-01T13:00:00Z",
+        "event_properties": {},
+        "timestamp": 0
+      },
+      "id": "01FIXTUREEVENTUNSUB000003",
+      "type": "event"
+    },
+    "metric": {
+      "attributes": {
+        "name": "Unsubscribed"
+      },
+      "id": "MUNSUBSCR",
+      "type": "metric"
+    },
+    "profile": {
+      "attributes": {
+        "email": "gone@example.com"
+      },
+      "id": "01FIXTUREPROFILEERASED0000",
+      "type": "profile"
+    }
+  },
+  "provider": "klaviyo",
+  "schema_version": 1
+}

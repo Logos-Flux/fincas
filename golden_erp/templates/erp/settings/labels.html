@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <div>
+    <h1 class="h5 mb-0">{{ page_title }}</h1>
+    <p class="text-xs text-secondary mb-0">What this company calls each kind of record on staff screens. A rewording changes the words people see, never the API, exports, documents or emails. Leave the singular empty to go back to the default.</p>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body px-0 pt-2 pb-2">
+    <div class="table-responsive p-0" tabindex="0" role="region" aria-label="Labels">
+      <table class="table align-items-center mb-0">
+        <caption class="visually-hidden">Labels</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-3">Key</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">Default</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">Shown here</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">From</th>
+            {% if can_manage %}<th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">Reword</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr id="label-{{ row.key|cut:"."|slugify }}">
+            <th scope="row" class="ps-3"><code class="text-xs">{{ row.key }}</code></th>
+            <td class="ps-2 text-sm">{{ row.default.singular }} <span class="text-secondary">/ {{ row.default.plural }}</span></td>
+            <td class="ps-2 text-sm"><span class="font-weight-bold" data-testid="label-effective-{{ row.key }}">{{ row.effective.singular }}</span> <span class="text-secondary">/ {{ row.effective.plural }}</span></td>
+            <td class="ps-2 text-sm">{{ row.source }}</td>
+            {% if can_manage %}
+            <td class="ps-2">
+              <form method="post" class="d-flex flex-wrap gap-2 align-items-center" aria-label="Reword {{ row.key }}">
+                {% csrf_token %}
+                <input type="hidden" name="key" value="{{ row.key }}">
+                <input type="text" name="singular" class="form-control form-control-sm" style="max-width: 10rem" value="{% if row.stored %}{{ row.stored.singular }}{% endif %}" placeholder="Singular" aria-label="Singular for {{ row.key }}" maxlength="60">
+                <input type="text" name="plural" class="form-control form-control-sm" style="max-width: 10rem" value="{% if row.stored %}{{ row.stored.plural }}{% endif %}" placeholder="Plural" aria-label="Plural for {{ row.key }}" maxlength="60">
+                <select name="article" class="form-select form-select-sm" style="max-width: 11rem" aria-label="Article for {{ row.key }}">
+                  {% for value, text in articles %}<option value="{{ value }}"{% if row.stored and row.stored.article == value %} selected{% endif %}>{{ text }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="btn btn-outline-primary btn-sm mb-0">Save</button>
+              </form>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% if not can_manage %}<p class="text-xs text-secondary">{% if has_company %}Rewording needs the “Can change label override” permission.{% else %}Your account has no company, so there is no tenant to reword labels for.{% endif %}</p>{% endif %}
+{% endblock %}

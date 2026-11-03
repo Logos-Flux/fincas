@@ -1,0 +1,20 @@
+{
+  "name": "Fincas",
+  "short_name": "Fincas",
+  "description": "One system. Built your way.",
+  "icons": [
+    {
+      "src": "android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#F7F5FF",
+  "background_color": "#F7F5FF",
+  "display": "standalone"
+}

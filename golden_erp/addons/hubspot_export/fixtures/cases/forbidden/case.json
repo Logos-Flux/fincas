@@ -1,0 +1,12 @@
+{
+  "description": "A 403 on the tickets endpoint: relationships are unknown, never zero (2.13 row 2).",
+  "base": "crawl-small",
+  "remove": [
+    "crawl/tickets"
+  ],
+  "added": {
+    "relationship": [
+      "forbidden"
+    ]
+  }
+}

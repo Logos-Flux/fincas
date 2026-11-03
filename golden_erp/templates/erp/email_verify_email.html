@@ -1,0 +1,11 @@
+Hello {{ user.get_full_name|default:user.username }},
+
+A Fincas account has been created for you.
+
+Please verify your email address by clicking the link below:
+
+{{ verify_url }}
+
+This link will expire in 7 days.
+
+— Fincas

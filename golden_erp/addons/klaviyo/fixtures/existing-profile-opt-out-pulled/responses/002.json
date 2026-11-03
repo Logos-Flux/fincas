@@ -1,0 +1,32 @@
+{
+  "payload": {
+    "data": {
+      "attributes": {
+        "email": "ada@example.com",
+        "subscriptions": {
+          "email": {
+            "marketing": {
+              "can_receive_email_marketing": false,
+              "consent": "UNSUBSCRIBED",
+              "suppression": []
+            }
+          }
+        }
+      },
+      "id": "01FIXTUREPROFILEADA0000000",
+      "type": "profile"
+    }
+  },
+  "provider": "klaviyo",
+  "request": {
+    "method": "GET",
+    "path": "/api/profiles/01FIXTUREPROFILEADA0000000/",
+    "query": {
+      "additional-fields[profile]": "subscriptions"
+    }
+  },
+  "response": {
+    "status": 200
+  },
+  "schema_version": 1
+}

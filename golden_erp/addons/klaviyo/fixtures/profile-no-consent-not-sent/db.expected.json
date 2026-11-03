@@ -1,0 +1,41 @@
+{
+  "communications": [],
+  "consents": [
+    {
+      "channel": "email",
+      "occurred_at": "2026-01-01T10:00:00Z",
+      "party": "party:grace",
+      "purpose": "marketing",
+      "source": "portal",
+      "state": "granted"
+    },
+    {
+      "channel": "email",
+      "occurred_at": "2026-02-01T10:00:00Z",
+      "party": "party:grace",
+      "purpose": "marketing",
+      "source": "portal",
+      "state": "withdrawn"
+    }
+  ],
+  "external_refs": [],
+  "outbox": [
+    {
+      "consumer": "klaviyo.profile",
+      "event": "push",
+      "idempotency_key": "sync:ada:1",
+      "object": "party:ada",
+      "state": "done"
+    },
+    {
+      "consumer": "klaviyo.profile",
+      "event": "push",
+      "idempotency_key": "sync:grace:1",
+      "object": "party:grace",
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

@@ -1,0 +1,127 @@
+{% load static %}
+
+{# Embedded ERP chat assistant — included from templates/base.html. #}
+{# Loads its own CSS/JS so the rest of the ERP doesn't pay the cost on pages #}
+{# where the drawer is never opened. #}
+
+<link href="{% static 'chat/chat.css' %}" rel="stylesheet">
+
+{# Floating action button — always visible bottom-right #}
+<button type="button"
+        id="erp-chat-fab"
+        class="erp-chat-fab"
+        aria-label="Open assistant"
+        title="ERP Assistant">
+  <i class="fas fa-comments"></i>
+</button>
+
+{# Drawer — hidden until the FAB is clicked #}
+<aside id="erp-chat-drawer" class="erp-chat-drawer" aria-hidden="true" inert>
+  <header class="erp-chat-header">
+    <div class="d-flex align-items-center gap-2">
+      <button type="button"
+              id="erp-chat-history-toggle"
+              class="btn btn-sm btn-link text-secondary p-1"
+              title="Past chats">
+        <i class="fas fa-clock-rotate-left"></i>
+      </button>
+      <i class="fas fa-robot text-primary"></i>
+      <strong>ERP Assistant</strong>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      {# Picker left, served-model readout right. Direct mode: registry models. #}
+      {# Gateway mode: lanes (LLMModel rows) — shown once there is a choice.   #}
+      {% if not chat_gateway or chat_models|length > 1 %}
+        <select id="erp-chat-model" class="form-select form-select-sm"
+                title="{% if chat_gateway %}Gateway lane{% else %}Model{% endif %}" aria-label="Chat model">
+          {# Populated from the registry by chat.js on load #}
+        </select>
+      {% endif %}
+      {% if chat_gateway %}
+        {# A lane is a logical name; this is the concrete model last seen answering on it. #}
+        <span id="erp-chat-model-name"
+              class="erp-chat-model-name text-secondary small text-truncate"
+              title="{% if chat_served_at %}Last observed {{ chat_served_at|date:'M j, H:i' }}{% else %}Not observed yet{% endif %} — the gateway lane decides the model">{% if chat_served_model %}served: {{ chat_served_model }}{% else %}{{ chat_models.0.label }}{% endif %}</span>
+      {% endif %}
+      <button type="button"
+              id="erp-chat-new"
+              class="btn btn-sm btn-link text-secondary p-1"
+              title="New chat">
+        <i class="fas fa-plus"></i>
+      </button>
+      <button type="button"
+              id="erp-chat-close"
+              class="btn btn-sm btn-link text-secondary p-1"
+              title="Close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="erp-chat-body">
+    {# Left rail: past sessions. Hidden by default; toggle from header. #}
+    <aside id="erp-chat-history" class="erp-chat-history" aria-hidden="true" inert>
+      <div class="erp-chat-history-header">
+        <strong>Past chats</strong>
+      </div>
+      <div id="erp-chat-history-list" class="erp-chat-history-list">
+        <div class="text-center text-secondary p-3">
+          <small>Loading…</small>
+        </div>
+      </div>
+    </aside>
+
+    <div id="erp-chat-transcript" class="erp-chat-transcript">
+      <div class="erp-chat-empty text-center text-secondary py-5">
+        <i class="fas fa-robot fa-2x mb-3 d-block opacity-50"></i>
+        <p class="mb-1">Ask me anything about the ERP.</p>
+        <small class="text-muted">
+          Try: <em>"Show me the 5 most recent orders"</em>
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <form id="erp-chat-form" class="erp-chat-input-row">
+    <textarea id="erp-chat-input"
+              class="form-control"
+              rows="1"
+              placeholder="Ask the ERP… (Enter to send, Shift+Enter for newline)"
+              autocomplete="off"></textarea>
+    <button type="submit" id="erp-chat-send" class="btn btn-primary">
+      <i class="fas fa-paper-plane"></i>
+    </button>
+  </form>
+
+  <div id="erp-chat-status" class="erp-chat-status text-secondary"></div>
+</aside>
+
+{# Inline config bridge so chat.js doesn't have to make an extra request #}
+{# for the model registry. Server renders this once per page load. #}
+<script id="erp-chat-config" type="application/json">
+{
+  "endpoints": {
+    "stream": "{% url 'chat:stream' %}",
+    "sessions": "{% url 'chat:sessions' %}",
+    "session_new": "{% url 'chat:session_new' %}"
+  },
+  "gateway": {% if chat_gateway %}true{% else %}false{% endif %},
+  "models": [
+    {% for m in chat_models %}
+    {
+      "key": "{{ m.key }}",
+      "label": "{{ m.label|escapejs }}",
+      "default": {% if m.default %}true{% else %}false{% endif %},
+      "cost_hint": "{{ m.cost_hint|escapejs }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ],
+  "observed": {
+    {% for key, obs in chat_observed.items %}
+    "{{ key|escapejs }}": {"model": "{{ obs.model|escapejs }}", "at": "{{ obs.at|date:'c' }}"}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  }
+}
+</script>
+
+<script src="{% static 'chat/chat.js' %}" defer></script>

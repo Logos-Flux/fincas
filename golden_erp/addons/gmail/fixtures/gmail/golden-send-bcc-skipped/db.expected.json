@@ -1,0 +1,85 @@
+{
+  "communications": [
+    {
+      "direction": "inbound",
+      "engagement": null,
+      "kind": "email",
+      "occurred_at": "2026-03-02T14:00:00Z",
+      "participants": [
+        {
+          "address": "ada@example.com",
+          "party": "party:ada",
+          "role": "from"
+        },
+        {
+          "address": "rep@example.org",
+          "party": null,
+          "role": "to"
+        }
+      ],
+      "party": "party:ada",
+      "provider": "gmail",
+      "status": "completed",
+      "subject": "Copied header",
+      "thread_key": "mid:13bd3a11136489afdd44a28ce11d95ae906186a1"
+    },
+    {
+      "direction": "inbound",
+      "engagement": null,
+      "kind": "email",
+      "occurred_at": "2026-03-02T14:00:00Z",
+      "participants": [
+        {
+          "address": "ada@example.com",
+          "party": "party:ada",
+          "role": "from"
+        },
+        {
+          "address": "rep@example.org",
+          "party": null,
+          "role": "to"
+        }
+      ],
+      "party": "party:ada",
+      "provider": "gmail",
+      "status": "completed",
+      "subject": "Not from golden",
+      "thread_key": "mid:ba5c0044f6be06223fdbbcf39ae19391b4bd9fff"
+    },
+    {
+      "direction": "outbound",
+      "engagement": null,
+      "kind": "email",
+      "occurred_at": "2026-03-02T13:59:00Z",
+      "participants": [],
+      "party": null,
+      "provider": "golden",
+      "status": "completed",
+      "subject": "Quote Q-0001",
+      "thread_key": "golden:quote:<uuid>"
+    }
+  ],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {},
+      "object_type": "message",
+      "source": "gmail",
+      "source_id": "mid:13bd3a11136489afdd44a28ce11d95ae906186a11ff631f0011531956d4ed466",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    },
+    {
+      "metadata": {},
+      "object_type": "message",
+      "source": "gmail",
+      "source_id": "mid:ba5c0044f6be06223fdbbcf39ae19391b4bd9fffcb43a23ea86458d82ce24bb3",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    }
+  ],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

@@ -1,0 +1,17 @@
+{
+  "payload": {
+    "data": [],
+    "has_more": false,
+    "next_after": "fx_msg_0030"
+  },
+  "provider": "fixture_oauth",
+  "repeatable": true,
+  "request": {
+    "method": "GET",
+    "path": "/v1/mailbox/messages",
+    "query": {
+      "after": "fx_msg_0030"
+    }
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,42 @@
+name: Feature request
+description: Suggest a change or a new capability.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Features that are specific to one industry or company usually belong in a plugin
+        ([docs/plugins.md](https://github.com/Logos-Flux/fincas/blob/main/docs/plugins.md)).
+        If a hook you need is missing, ask for the hook.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like
+      description: The behavior, setting, API or hook you have in mind.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Workarounds, plugins, or other approaches.
+  - type: input
+    id: version
+    attributes:
+      label: Fincas version
+      placeholder: "0.4.1"
+  - type: dropdown
+    id: contribute
+    attributes:
+      label: Would you open a pull request for it?
+      options:
+        - "Yes"
+        - "Maybe, with guidance"
+        - "No"

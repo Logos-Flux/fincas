@@ -1,0 +1,36 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A task made in ClickUp carrying an engagement number becomes a golden task on that engagement (source clickup, party from the engagement, ClickUp's status, assignee and due).",
+  "seed": {
+    "engagements": [
+      {
+        "key": "deal",
+        "number": "EN-00042",
+        "party": "ada"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.com",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "status": 200,
+      "webhook": "inbound/001-created.json"
+    },
+    {
+      "drain": true
+    }
+  ]
+}

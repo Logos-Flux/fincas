@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+{% load static erp_tags labels %}
+
+{% block title %}{{ customer }} — {% label "customers.customer" %}{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "customer_detail", "customer_id": "{{ customer.id }}", "customer_name": "{{ customer|escapejs }}", "customer_email": "{{ customer.display_email|escapejs }}"}'>
+{% endblock %}
+
+{% block content %}
+{# Header Card #}
+<div class="row">
+  <div class="col-12 mb-4">
+    <div class="card">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div class="text-break" style="min-width: 0">
+            <h5 class="font-weight-bolder mb-1">{{ customer.full_name }}</h5>
+            {% if customer.is_erased %}
+            <p class="text-sm text-secondary mb-0" data-testid="erased-customer">This {% label "customers.customer" case="lower" %}'s personal data was erased; the account stays for its documents.</p>
+            {% else %}
+            <p class="text-sm text-secondary mb-0">
+              {% if customer.email %}{{ customer.email }}{% endif %}
+              {% if customer.phone %} · {{ customer.phone }}{% endif %}
+            </p>
+            {% endif %}
+          </div>
+          <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="badge bg-gradient-{{ customer.customer_type|status_color:status_colors }}">{{ customer.get_customer_type_display }}</span>
+            <span class="badge bg-gradient-info">{{ customer.get_pricing_tier_display }}</span>
+            {% if customer.is_active %}
+            <span class="badge bg-gradient-success">Active</span>
+            {% else %}
+            <span class="badge bg-gradient-secondary">Inactive</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="{% url 'erp-customer-edit' customer.pk %}" class="btn bg-gradient-dark btn-sm me-2">
+            <i class="fas fa-edit me-1"></i> Edit
+          </a>
+          <a href="{% url 'erp-quote-create' %}?customer={{ customer.pk }}" class="btn bg-gradient-info btn-sm">
+            <i class="fas fa-file-invoice me-1"></i> New {% label "orders.quote" %}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Tabs #}
+<div class="card mb-4">
+  <div class="card-body p-3 pb-0">
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#tab-profile" role="tab">Profile</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#tab-addresses" role="tab">Addresses ({{ addresses|length }})</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#tab-more-info" role="tab">More Info</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#tab-history" role="tab">History</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="tab-content">
+  {# Profile Tab #}
+  <div class="tab-pane fade show active" id="tab-profile" role="tabpanel">
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header pb-0"><h6 class="mb-0">Basic Information</h6></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-6 mb-3">
+                <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">First Name</p>
+                <p class="text-sm mb-0">{{ customer.first_name }}</p>
+              </div>
+              <div class="col-6 mb-3">
+                <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Last Name</p>
+                <p class="text-sm mb-0">{{ customer.last_name }}</p>
+              </div>
+              <div class="col-6 mb-3">
+                <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Email</p>
+                <p class="text-sm mb-0">{{ customer.display_email|default:"—" }}</p>
+              </div>
+              <div class="col-6 mb-3">
+                <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Phone</p>
+                <p class="text-sm mb-0">{{ customer.phone|default:"—" }}</p>
+              </div>
+              <div class="col-6 mb-3">
+                <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Company</p>
+                <p class="text-sm mb-0">{{ customer.company_name|default:"—" }}</p>
+              </div>
+              <div class="col-6 mb-3">
+                <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Job Title</p>
+                <p class="text-sm mb-0">{{ customer.job_title|default:"—" }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header pb-0"><h6 class="mb-0">Classification</h6></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-6 mb-3">
+                <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Customer Type</p>
+                <p class="text-sm mb-0">{{ customer.get_customer_type_display }}</p>
+              </div>
+              <div class="col-6 mb-3">
+                <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Pricing Tier</p>
+                <p class="text-sm mb-0">{{ customer.get_pricing_tier_display }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if customer.is_tax_exempt %}
+    <div class="card mb-4">
+      <div class="card-header pb-0"><h6 class="mb-0">Tax Exemption</h6></div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Reason</p>
+            <p class="text-sm mb-0">{{ customer.get_tax_exempt_reason_display|default:"—" }}</p>
+          </div>
+          <div class="col-md-3 mb-3">
+            <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Certificate #</p>
+            <p class="text-sm mb-0">{{ customer.tax_exempt_certificate_number|default:"—" }}</p>
+          </div>
+          <div class="col-md-3 mb-3">
+            <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Expiration</p>
+            <p class="text-sm mb-0">{{ customer.tax_exempt_expiration|default:"—" }}</p>
+          </div>
+          <div class="col-md-3 mb-3">
+            <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Document</p>
+            {% if customer.tax_exempt_document_url %}
+            <a href="{{ customer.tax_exempt_document_url }}" target="_blank" class="text-sm text-primary">View Document</a>
+            {% else %}
+            <p class="text-sm mb-0">—</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header pb-0"><h6 class="mb-0">Preferences</h6></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-6 mb-3">
+                <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Active</p>
+                <p class="text-sm mb-0">{% if customer.is_active %}<span class="text-success">Yes</span>{% else %}<span class="text-danger">No</span>{% endif %}</p>
+              </div>
+              <div class="col-6 mb-3">
+                <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Accepts Marketing</p>
+                <p class="text-sm mb-0">{% if customer.accepts_marketing %}<span class="text-success">Yes</span>{% else %}<span class="text-secondary">No</span>{% endif %}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if customer.notes %}
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header pb-0"><h6 class="mb-0">Notes</h6></div>
+          <div class="card-body">
+            <p class="text-sm">{{ customer.notes|linebreaksbr }}</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    {# Relationships of the customer's party (parties.erp_views.party_relationships) #}
+    {% if party %}
+    {% label "parties.party" case="lower" as party_noun %}
+    <section class="card mb-4" id="relationships" aria-labelledby="customer-relationships-title">
+      <div class="card-header pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+          <h2 class="h6 mb-0" id="customer-relationships-title">Relationships</h2>
+          <p class="text-xs text-secondary mb-0">Of the {{ party_noun }} <a href="{% url 'erp-party-detail' party.pk %}" class="text-primary text-decoration-underline">{{ party.display_name }}</a> this account belongs to.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{% url 'erp-party-detail' party.pk %}#relationships" class="btn btn-outline-secondary btn-sm mb-0"><i class="fas fa-address-card me-1" aria-hidden="true"></i> Open {{ party_noun }}</a>
+          {% if party_editable %}
+          <a href="{% url 'erp-party-relationship-create' party.pk %}?next={{ relationships_next|urlencode }}" class="btn btn-outline-primary btn-sm mb-0"><i class="fas fa-plus me-1" aria-hidden="true"></i> Add relationship</a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-body text-sm">
+        {% for label_text, rels in relationship_groups %}
+        <h3 class="text-xs text-uppercase text-secondary font-weight-bolder mb-2{% if not forloop.first %} mt-3{% endif %}">{{ label_text }}</h3>
+        <ul class="list-unstyled mb-0">
+          {% for rel in rels %}
+          <li class="mb-1 d-flex justify-content-between gap-2 flex-wrap">
+            <span class="text-break">
+              <a href="{% url 'erp-party-detail' rel.other.pk %}" class="text-primary font-weight-bold">{{ rel.other.display_name }}</a>
+              {% if rel.title %}<span class="text-secondary"> · {{ rel.title }}</span>{% endif %}
+              {% if rel.is_primary %}<span class="badge badge-sm bg-gradient-primary ms-1">Primary</span>{% endif %}
+              {% if rel.valid_from %}<span class="text-secondary"> · since {{ rel.valid_from|date:"M j, Y" }}</span>{% endif %}
+            </span>
+            {% if not rel.system and party_editable %}<a href="{% url 'erp-party-relationship-edit' rel.pk %}?party={{ party.pk }}&amp;next={{ relationships_next|urlencode }}" class="text-primary" aria-label="Edit relationship with {{ rel.other.display_name }}">Edit</a>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% empty %}
+        <p class="text-secondary mb-0">No current relationships.</p>
+        {% endfor %}
+        {% if past_relationships %}
+        <details class="mt-3">
+          <summary class="text-secondary">Past relationships ({{ past_relationships|length }})</summary>
+          <ul class="list-unstyled mt-2 mb-0">
+            {% for rel in past_relationships %}
+            <li class="mb-1 text-break">{{ rel.side_label }} <a href="{% url 'erp-party-detail' rel.other.pk %}" class="text-primary text-decoration-underline">{{ rel.other.display_name }}</a> <span class="text-secondary">until {{ rel.valid_to|date:"M j, Y" }}</span></li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+
+  {# Addresses Tab #}
+  <div class="tab-pane fade" id="tab-addresses" role="tabpanel">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">Addresses</h6>
+          <a href="{% url 'erp-customer-address-create' customer.pk %}" class="btn bg-gradient-primary btn-sm mb-0">
+            <i class="fas fa-plus me-1"></i> Add Address
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        {% for addr in addresses %}
+        <div class="border rounded p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                {% if addr.label %}<span class="font-weight-bold text-sm">{{ addr.label }}</span>{% endif %}
+                <span class="badge badge-sm bg-gradient-{% if addr.address_type == 'billing' %}warning{% elif addr.address_type == 'shipping' %}info{% else %}success{% endif %}">{{ addr.get_address_type_display }}</span>
+                {% if addr.is_default %}<span class="badge badge-sm bg-gradient-dark">Default</span>{% endif %}
+              </div>
+              <p class="text-sm mb-0">
+                {% if addr.first_name or addr.last_name %}{{ addr.first_name }} {{ addr.last_name }}<br>{% endif %}
+                {% if addr.company_name %}{{ addr.company_name }}<br>{% endif %}
+                {{ addr.address_line_1 }}<br>
+                {% if addr.address_line_2 %}{{ addr.address_line_2 }}<br>{% endif %}
+                {{ addr.city }}, {{ addr.state_province }} {{ addr.postal_code }} {{ addr.country }}
+              </p>
+              {% if addr.phone %}<p class="text-sm text-secondary mb-0 mt-1"><i class="fas fa-phone text-xs me-1"></i> {{ addr.phone }}</p>{% endif %}
+              <div class="mt-2">
+                {% if addr.is_residential %}<span class="badge badge-sm bg-gradient-secondary me-1">Residential</span>{% else %}<span class="badge badge-sm bg-gradient-dark me-1">Commercial</span>{% endif %}
+                {% if addr.has_loading_dock %}<span class="badge badge-sm bg-gradient-success me-1">Loading Dock</span>{% endif %}
+                {% if addr.has_forklift %}<span class="badge badge-sm bg-gradient-success me-1">Forklift</span>{% endif %}
+                {% if addr.requires_liftgate %}<span class="badge badge-sm bg-gradient-warning me-1">Liftgate Required</span>{% endif %}
+              </div>
+              {% if addr.delivery_instructions %}
+              <p class="text-xs text-secondary mt-2 mb-0"><i class="fas fa-info-circle me-1"></i> {{ addr.delivery_instructions }}</p>
+              {% endif %}
+            </div>
+            <div class="d-flex gap-1">
+              <a href="{% url 'erp-customer-address-edit' addr.pk %}" class="btn btn-link text-dark p-0 mb-0" title="Edit">
+                <i class="fas fa-pencil-alt text-xs"></i>
+              </a>
+              <form method="post" action="{% url 'erp-customer-address-delete' addr.pk %}" class="d-inline" onsubmit="return confirm('Delete this address?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-link text-danger p-0 mb-0 ms-2" title="Delete">
+                  <i class="fas fa-trash text-xs"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-sm text-secondary text-center py-4">No addresses yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {# More Info Tab #}
+  <div class="tab-pane fade" id="tab-more-info" role="tabpanel">
+    <div class="card mb-4">
+      <div class="card-header pb-0"><h6 class="mb-0">Sales Defaults</h6></div>
+      <div class="card-body">
+        <form method="post" action="{% url 'erp-customer-more-info' customer.pk %}" novalidate>
+          {% csrf_token %}
+          <div class="row">
+            {% for field in more_info_form %}
+            <div class="col-md-6 mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label text-sm">{{ field.label }}</label>
+              {% if field.field.widget.input_type == "checkbox" %}
+                <div class="form-check">
+                  {{ field }}
+                  <label for="{{ field.id_for_label }}" class="form-check-label text-sm">{{ field.label }}</label>
+                </div>
+              {% else %}
+                {{ field|add_class:"form-control form-control-sm" }}
+              {% endif %}
+              {% if field.errors %}
+              <div class="text-danger text-xs mt-1">{{ field.errors.0 }}</div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          <div class="text-end mt-2">
+            <button type="submit" class="btn bg-gradient-primary btn-sm">
+              <i class="fas fa-save me-1"></i> Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {# History Tab #}
+  <div class="tab-pane fade" id="tab-history" role="tabpanel">
+    {# Recent Quotes #}
+    <div class="card mb-4">
+      <div class="card-header pb-0"><h6 class="mb-0">Recent {% label "orders.quote" plural=True %}</h6></div>
+      <div class="card-body px-0 pt-0 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Quote #</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Status</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-4">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for q in recent_quotes %}
+              <tr>
+                <td class="ps-3">
+                  <a href="{% url 'erp-quote-edit' q.pk %}" class="text-sm font-weight-bold text-primary">{{ q.quote_number }}</a>
+                </td>
+                <td><span class="text-sm">{{ q.created_at|date:"M d, Y" }}</span></td>
+                <td class="text-center">
+                  <span class="badge badge-sm bg-gradient-{{ q.status|upper|status_color:status_colors }}">{{ q.get_status_display }}</span>
+                </td>
+                <td class="text-end pe-4"><span class="text-sm font-weight-bold">{{ q.grand_total|money }}</span></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center py-4 text-sm text-secondary">No {% label "orders.quote" plural=True case="lower" %} yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# Recent Orders #}
+    <div class="card mb-4">
+      <div class="card-header pb-0"><h6 class="mb-0">Recent Orders</h6></div>
+      <div class="card-body px-0 pt-0 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Order #</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Status</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Payment</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-4">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for o in recent_orders %}
+              <tr>
+                <td class="ps-3">
+                  <a href="{% url 'erp-order-edit' o.pk %}" class="text-sm font-weight-bold text-primary">{{ o.order_number }}</a>
+                </td>
+                <td><span class="text-sm">{{ o.created_at|date:"M d, Y" }}</span></td>
+                <td class="text-center">
+                  <span class="badge badge-sm bg-gradient-{{ o.status|upper|status_color:status_colors }}">{{ o.get_status_display }}</span>
+                </td>
+                <td class="text-center">
+                  <span class="badge badge-sm bg-gradient-{{ o.payment_status|upper|status_color:status_colors }}">{{ o.get_payment_status_display }}</span>
+                </td>
+                <td class="text-end pe-4"><span class="text-sm font-weight-bold">{{ o.grand_total|money }}</span></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center py-4 text-sm text-secondary">No orders yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Activate hash-based tab on page load #}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var hash = window.location.hash;
+    if (hash) {
+      var tab = document.querySelector('a[href="' + '#tab-' + hash.substring(1) + '"]');
+      if (tab) { new bootstrap.Tab(tab).show(); }
+    }
+  });
+</script>
+{% endblock %}

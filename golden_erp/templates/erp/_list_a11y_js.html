@@ -1,0 +1,28 @@
+{% comment %}
+  List-page accessibility helpers (phase4-fields.md 5.7), a JS fragment
+  included inside a list template's <script>:
+  - selects marked data-auto-submit submit on change only when a pointer made
+    the change; keyboard users (arrow keys fire "change" in some browsers)
+    use the form's Apply button;
+  - after a search or filter, the polite live region #erp-list-status is
+    refilled so screen readers announce the result count (content present at
+    page load is not announced).
+{% endcomment %}
+  document.querySelectorAll("select[data-auto-submit]").forEach(function(sel) {
+    var byPointer = false;
+    sel.addEventListener("pointerdown", function() { byPointer = true; });
+    sel.addEventListener("keydown", function() { byPointer = false; });
+    sel.addEventListener("change", function() {
+      if (byPointer && sel.form) {
+        byPointer = false;
+        sel.form.requestSubmit ? sel.form.requestSubmit() : sel.form.submit();
+      }
+    });
+  });
+  (function() {
+    var status = document.getElementById("erp-list-status");
+    if (!status || !status.hasAttribute("data-announce")) return;
+    var text = status.textContent;
+    status.textContent = "";
+    setTimeout(function() { status.textContent = text; }, 400);
+  })();

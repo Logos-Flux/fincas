@@ -1,0 +1,33 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A push for a party that already has a ref updates the provider record in place (PATCH), never a second create.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ],
+    "refs": [
+      {
+        "object_type": "contact",
+        "source_id": "fx_ct_0002",
+        "target": "party:ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "enqueue": {
+        "consumer": "fixture.contact",
+        "key": "contact:ada:2",
+        "object": "party:ada"
+      }
+    },
+    {
+      "drain": true
+    }
+  ]
+}

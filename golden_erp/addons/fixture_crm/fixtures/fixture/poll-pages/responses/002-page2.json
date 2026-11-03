@@ -1,0 +1,29 @@
+{
+  "payload": {
+    "data": [
+      {
+        "body": "Hello, could you send a quote for 40 panels?",
+        "from": "grace@example.net",
+        "id": "fx_msg_0011",
+        "occurred_at": "2026-03-02T14:30:00Z",
+        "subject": "Site visit",
+        "thread": "fx_thr_0001",
+        "to": [
+          "sales@example.org"
+        ],
+        "type": "message.received"
+      }
+    ],
+    "has_more": false,
+    "next_after": "fx_msg_0011"
+  },
+  "provider": "fixture",
+  "request": {
+    "method": "GET",
+    "path": "/v1/messages",
+    "query": {
+      "after": "fx_msg_0010"
+    }
+  },
+  "schema_version": 1
+}

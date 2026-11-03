@@ -1,0 +1,37 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "call.commented after call.ended updates the same communication (summary from the comments): one call id, one communication, two inbound rows with distinct keys.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada",
+        "phone": "+1 202-555-0143"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.org",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "status": 200,
+      "webhook": "inbound/001.json"
+    },
+    {
+      "drain": true
+    },
+    {
+      "status": 200,
+      "webhook": "inbound/002.json"
+    },
+    {
+      "drain": true
+    }
+  ]
+}

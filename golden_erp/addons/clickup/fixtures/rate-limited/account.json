@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "settings": {
+    "lists": {
+      "901": {
+        "engagement_field": "cf_engagement",
+        "golden_id_field": "cf_golden_id",
+        "status_map": {
+          "cancelled": "cancelled",
+          "complete": "done",
+          "in progress": "in_progress",
+          "in review": "waiting",
+          "to do": "open"
+        }
+      }
+    }
+  }
+}

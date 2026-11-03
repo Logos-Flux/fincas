@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/emails",
+    "query": {
+      "limit": "100",
+      "associations": "contacts,companies,deals,tickets"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "1001",
+        "properties": {
+          "hs_object_id": "1001",
+          "hs_timestamp": "2026-09-05T12:00:00.000Z",
+          "hs_createdate": "2026-09-05T12:00:00.000Z",
+          "hs_lastmodifieddate": "2026-09-05T12:00:00.000Z",
+          "hs_email_subject": "Revised quote",
+          "hs_email_text": "Hi Ann, the revised quote is attached.",
+          "hs_email_html": "<p>Hi Ann, the revised quote is attached.</p>",
+          "hs_email_direction": "EMAIL",
+          "hs_email_status": "SENT",
+          "hubspot_owner_id": "101",
+          "hs_email_headers": "{\"from\": {\"email\": \"avery.example@example.com\", \"firstName\": \"Avery\", \"lastName\": \"Example\"}, \"to\": [{\"email\": \"ann@example.com\", \"firstName\": \"Ann\", \"lastName\": \"Example\"}], \"cc\": [{\"email\": \"ann.alt@example.com\"}], \"bcc\": []}"
+        },
+        "createdAt": "2026-09-05T12:00:00.000Z",
+        "updatedAt": "2026-09-05T12:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "contacts": {
+            "results": [
+              {
+                "id": "301",
+                "type": "email_to_contact"
+              }
+            ]
+          },
+          "deals": {
+            "results": [
+              {
+                "id": "401",
+                "type": "email_to_deal"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "1002",
+        "properties": {
+          "hs_object_id": "1002",
+          "hs_timestamp": "2026-07-04T08:00:00.000Z",
+          "hs_createdate": "2026-07-04T08:00:00.000Z",
+          "hs_lastmodifieddate": "2026-07-04T08:00:00.000Z",
+          "hs_email_subject": "Re: onboarding",
+          "hs_email_text": "Thanks, received.",
+          "hs_email_direction": "INCOMING_EMAIL",
+          "hubspot_owner_id": "102",
+          "hs_email_headers": "{\"from\": {\"email\": \"cara@example.org\"}, \"to\": [{\"email\": \"blair.sample@example.com\"}]}"
+        },
+        "createdAt": "2026-07-04T08:00:00.000Z",
+        "updatedAt": "2026-07-04T08:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "contacts": {
+            "results": [
+              {
+                "id": "303",
+                "type": "email_to_contact"
+              }
+            ]
+          },
+          "tickets": {
+            "results": [
+              {
+                "id": "502",
+                "type": "email_to_ticket"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

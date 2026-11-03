@@ -1,0 +1,18 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "unknown_key",
+      "file": "contacts.jsonl",
+      "line": 1,
+      "field": "extra"
+    },
+    {
+      "code": "unknown_key",
+      "file": "contacts.jsonl",
+      "line": 1,
+      "field": "data.email"
+    }
+  ],
+  "warnings": []
+}

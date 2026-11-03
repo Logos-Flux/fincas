@@ -1,0 +1,87 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "One email copied into two staff mailboxes is one communication. The recipient's copy (no Bcc header) is polled after the sender's, adds no participant, is not read past its headers, and the sender's Bcc participant is kept.",
+  "second_run_requests": [
+    {
+      "form": null,
+      "headers": {
+        "authorization": "Bearer <redacted:oauth_access>"
+      },
+      "json": null,
+      "method": "GET",
+      "path": "/gmail/v1/users/me/history",
+      "query": {
+        "historyTypes": "messageAdded",
+        "maxResults": "50",
+        "startHistoryId": "1010"
+      }
+    },
+    {
+      "form": null,
+      "headers": {
+        "authorization": "Bearer <redacted:oauth_access>"
+      },
+      "json": null,
+      "method": "GET",
+      "path": "/gmail/v1/users/me/history",
+      "query": {
+        "historyTypes": "messageAdded",
+        "maxResults": "50",
+        "startHistoryId": "2010"
+      }
+    }
+  ],
+  "seed": {
+    "grants": [
+      {
+        "owner": "staff:rep",
+        "subject": "rep@example.org",
+        "sync_state": {
+          "cursor": {
+            "history_id": "1000"
+          },
+          "initial_sync_done": true
+        }
+      },
+      {
+        "owner": "staff:boss",
+        "subject": "boss@example.org",
+        "sync_state": {
+          "cursor": {
+            "history_id": "2000"
+          },
+          "initial_sync_done": true
+        }
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      },
+      {
+        "email": "grace@example.net",
+        "family": "Hopper",
+        "given": "Grace",
+        "key": "grace"
+      }
+    ],
+    "staff": [
+      {
+        "email": "rep@example.org",
+        "key": "rep"
+      },
+      {
+        "email": "boss@example.org",
+        "key": "boss"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "poll": true
+    }
+  ]
+}

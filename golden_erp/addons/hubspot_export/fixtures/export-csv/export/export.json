@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "payload": {
+    "exported_at": "2026-10-02T14:30:00Z",
+    "account": {
+      "portalId": 1234567,
+      "timeZone": "US/Eastern",
+      "companyCurrency": "USD",
+      "uiDomain": "app.hubspot.com",
+      "dataHostingLocation": "na1",
+      "accountType": "STANDARD"
+    }
+  }
+}

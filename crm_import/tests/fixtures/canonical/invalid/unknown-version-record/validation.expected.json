@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "unknown_version",
+      "file": "contacts.jsonl",
+      "line": 2,
+      "field": "schema_version"
+    }
+  ],
+  "warnings": []
+}

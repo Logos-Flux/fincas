@@ -1,0 +1,106 @@
+{% load static %}
+{% comment %}
+  navbar-expand-LG, not -xs. Tabler compiles only sm/md/lg/xl/xxl — there is
+  NO navbar-expand-xs. With -xs, none of .navbar-vertical's fixed positioning
+  matched and the sidebar rendered as a static full-width block. Silent: an
+  unknown class raises nothing, it just never applies.
+
+  The > .container-fluid child is REQUIRED — see base.html.
+
+  Logo: was .logo-light/.logo-dark plus an inline style="display:none", with
+  the swap driven by erp-dark.css rules that needed !important to beat the
+  inline style. Tabler ships .hide-theme-dark / .hide-theme-light natively, so
+  the inline style and those 4 CSS blocks both go. This also fixes dark mode
+  rendering the LIGHT logo once erp-dark.css is disabled.
+{% endcomment %}
+<aside class="navbar navbar-vertical navbar-expand-lg" id="sidenav-main">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#sidenav-collapse-main" aria-controls="sidenav-collapse-main"
+            aria-expanded="false" aria-label="Toggle navigation">
+      {% comment %}
+        One element, not Soft UI's three .sidenav-toggler-line spans. Tabler
+        animates :before/:after to an X off [aria-expanded="true"].
+      {% endcomment %}
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand" href="{% url 'erp-dashboard' %}">
+      <img src="{% static 'assets/img/logo.svg' %}" class="navbar-brand-img" alt="Fincas" style="max-height:40px;">
+      <span class="ms-1 fw-bold d-none d-sm-inline">Fincas</span>
+    </a>
+    <div class="collapse navbar-collapse" id="sidenav-collapse-main">
+      <ul class="navbar-nav pt-lg-3">
+      {% comment %}
+        Sidebar content is config, not markup — settings.ERP_NAV
+        (core/nav_registry.py), filtered for staff_only by the erp_nav
+        context processor. Adding/removing/reordering an app in the sidebar
+        is a settings change; this template just renders whatever it's
+        given. See nav_registry.py's docstring for the two item shapes.
+      {% endcomment %}
+      {% for item in erp_nav %}
+        {% if item.type == 'header' %}
+      <li class="nav-item mt-3">
+        <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">{{ item.label }}</h6>
+      </li>
+        {% else %}
+      <li class="nav-item">
+        <a class="nav-link {% if current_section == item.section %}active{% endif %}" href="{% url item.url_name %}">
+          <span class="nav-link-icon"><i class="{{ item.icon }} {{ item.color }}"></i></span>
+          <span class="nav-link-title">{{ item.label }}</span>
+          {% if item.section == 'forge' and forge_review_count %}
+          <span class="badge bg-gradient-warning ms-auto">{{ forge_review_count }}</span>
+          {% endif %}
+        </a>
+      </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+    </div>{# /.collapse.navbar-collapse #}
+  </div>{# /.container-fluid #}
+  <script>
+    (function() {
+      var sidebar = document.getElementById('sidenav-main');
+      var collapse = document.getElementById('sidenav-collapse-main');
+      if (!sidebar) return;
+
+      var getScrollTarget = function() {
+        return (sidebar.scrollHeight > sidebar.clientHeight) ? sidebar : (collapse || sidebar);
+      };
+
+      var savedPos = sessionStorage.getItem('erp_sidebar_scroll');
+      if (savedPos !== null) {
+        var pos = parseInt(savedPos, 10);
+        sidebar.scrollTop = pos;
+        if (collapse) collapse.scrollTop = pos;
+      } else {
+        var activeLink = sidebar.querySelector('.nav-link.active');
+        if (activeLink) {
+          try {
+            activeLink.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+          } catch (e) {}
+        }
+      }
+
+      var saveScroll = function() {
+        var target = getScrollTarget();
+        sessionStorage.setItem('erp_sidebar_scroll', target.scrollTop);
+      };
+
+      sidebar.addEventListener('scroll', saveScroll, { passive: true });
+      if (collapse) collapse.addEventListener('scroll', saveScroll, { passive: true });
+
+      sidebar.addEventListener('click', function(e) {
+        var link = e.target.closest('.nav-link, .navbar-brand');
+        if (link) {
+          if (link.classList.contains('navbar-brand')) {
+            sessionStorage.setItem('erp_sidebar_scroll', '0');
+          } else {
+            saveScroll();
+          }
+        }
+      });
+
+      window.addEventListener('beforeunload', saveScroll);
+    })();
+  </script>
+</aside>

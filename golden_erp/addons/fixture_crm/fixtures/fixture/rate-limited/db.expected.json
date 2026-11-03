@@ -1,0 +1,17 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [],
+  "outbox": [
+    {
+      "consumer": "fixture.contact",
+      "event": "push",
+      "idempotency_key": "contact:ada:4",
+      "object": "party:ada",
+      "state": "pending"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

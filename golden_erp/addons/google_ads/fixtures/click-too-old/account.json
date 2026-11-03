@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "settings": {
+    "click_window_days": 30,
+    "conversion_actions": {
+      "sales": "555000111"
+    },
+    "customer_id": "123-456-7890"
+  }
+}

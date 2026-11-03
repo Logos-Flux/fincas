@@ -1,0 +1,64 @@
+{
+  "communications": [],
+  "consents": [
+    {
+      "channel": "email",
+      "occurred_at": "2026-02-01T10:00:00Z",
+      "party": "party:ada",
+      "purpose": "marketing",
+      "source": "portal",
+      "state": "granted"
+    },
+    {
+      "channel": "email",
+      "occurred_at": "2026-03-02T15:00:00Z",
+      "party": "party:ada",
+      "purpose": "marketing",
+      "source": "api",
+      "state": "withdrawn"
+    },
+    {
+      "channel": "email",
+      "occurred_at": "2026-03-02T15:00:00Z",
+      "party": "party:ada",
+      "purpose": "marketing",
+      "source": "api",
+      "state": "withdrawn"
+    }
+  ],
+  "external_refs": [
+    {
+      "metadata": {
+        "address": "b5fc85e55755f9e0d030a10ab4429b6b2944855f9a0d60077fe832becbc41d72",
+        "fp": "accb7217f9a2df94",
+        "state": "unsubscribed",
+        "suppressed": false
+      },
+      "object_type": "profile",
+      "source": "klaviyo",
+      "source_id": "01FIXTUREPROFILEADA0000000",
+      "source_url": "https://www.klaviyo.com/profile/01FIXTUREPROFILEADA0000000",
+      "target": "parties.party:party:ada"
+    }
+  ],
+  "outbox": [
+    {
+      "consumer": "klaviyo.profile",
+      "event": "push",
+      "idempotency_key": "sync:ada:1",
+      "object": "party:ada",
+      "state": "done"
+    }
+  ],
+  "suppressions": [
+    {
+      "channel": "email",
+      "hint": "a***@example.com",
+      "lifted": false,
+      "reason": "opt_out",
+      "source": "api"
+    }
+  ],
+  "tasks": [],
+  "touchpoints": []
+}

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load static erp_tags %}
+
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "invoice_detail", "invoice_id": "{{ invoice.id }}", "invoice_number": "{{ invoice.invoice_number|escapejs }}"}'>
+{% endblock %}
+
+{% block content %}
+{# Header #}
+<div class="card mb-4">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <p class="text-xs text-secondary mb-1">Invoice</p>
+        <h1 class="h5 font-weight-bolder mb-1">{{ invoice.invoice_number }}</h1>
+        <p class="text-sm mb-1">
+          {% if customer %}<a href="{% url 'erp-customer-detail' customer.pk %}" class="text-primary text-decoration-underline">{{ customer }}</a> · {% endif %}
+          Order <a href="{% url 'erp-order-edit' order.pk %}" class="text-primary text-decoration-underline">{{ order.order_number }}</a>
+          · Invoiced {{ invoice.invoice_date|date:"M j, Y" }}{% if invoice.due_date %} · Due {{ invoice.due_date|date:"M j, Y" }}{% endif %}
+        </p>
+        <span class="badge {% if invoice.status == 'paid' %}bg-gradient-success{% elif invoice.status == 'partial' %}bg-gradient-info{% elif invoice.status == 'overdue' %}bg-gradient-danger{% elif invoice.status == 'void' or invoice.status == 'cancelled' %}bg-gradient-secondary{% else %}bg-gradient-warning{% endif %}">{{ invoice.get_status_display }}</span>
+      </div>
+      <div class="d-flex flex-wrap gap-2 justify-content-end">
+        <a href="{% url 'erp-order-edit' order.pk %}" class="btn btn-outline-secondary btn-sm mb-0"><i class="fas fa-arrow-left me-1" aria-hidden="true"></i> Order {{ order.order_number }}</a>
+        <a href="{% url 'erp-invoice-preview' invoice.pk %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm mb-0" title="Open the print preview in a new tab"><i class="fas fa-print me-1" aria-hidden="true"></i> Print preview</a>
+        <a href="{% url 'erp-invoice-pdf' invoice.pk %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm mb-0" title="Open the PDF in a new tab"><i class="fas fa-file-pdf me-1" aria-hidden="true"></i> PDF</a>
+        {% if customer_email and invoice.status != "void" and invoice.status != "cancelled" %}
+        <form method="post" action="{% url 'erp-invoice-send' invoice.pk %}" data-submit-once>{% csrf_token %}{% once_field %}
+          <input type="hidden" name="next" value="{% url 'erp-invoice-detail' invoice.pk %}">
+          <button type="submit" class="btn btn-outline-primary btn-sm mb-0" onclick="return confirm('Email invoice {{ invoice.invoice_number }} (PDF + payment link) to {{ customer_email }}?');"><i class="fas fa-paper-plane me-1" aria-hidden="true"></i> Email invoice</button>
+        </form>
+        {% endif %}
+        {% if can_record_payment %}
+        <a href="#record-payment" class="btn bg-gradient-success btn-sm mb-0"><i class="fas fa-hand-holding-usd me-1" aria-hidden="true"></i> Record payment</a>
+        {% endif %}
+        {% if can_refund %}
+        <a href="#refund" class="btn btn-outline-danger btn-sm mb-0"><i class="fas fa-undo me-1" aria-hidden="true"></i> Refund</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-7">
+    {# Totals #}
+    <section class="card mb-4" aria-labelledby="totals-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="totals-title">Totals</h2></div>
+      <div class="card-body text-sm">
+        <dl class="row mb-0">
+          <dt class="col-7">Subtotal</dt><dd class="col-5 text-end">{{ invoice.subtotal_ex_tax|money:order.currency }}</dd>
+          <dt class="col-7">Tax</dt><dd class="col-5 text-end">{{ invoice.tax_total|money:order.currency }}</dd>
+          <dt class="col-7">Shipping</dt><dd class="col-5 text-end">{{ invoice.shipping_cost|money:order.currency }}</dd>
+          <dt class="col-7 border-top pt-2">Total</dt><dd class="col-5 text-end border-top pt-2 font-weight-bolder">{{ invoice.grand_total|money:order.currency }}</dd>
+          <dt class="col-7">Paid</dt><dd class="col-5 text-end">{{ invoice.amount_paid|money:order.currency }}</dd>
+          {% if refunded_total %}
+          <dt class="col-7">Refunded</dt><dd class="col-5 text-end" id="invoice-refunded">{{ refunded_total|money:order.currency }}</dd>
+          {% endif %}
+          <dt class="col-7">Balance due</dt><dd class="col-5 text-end font-weight-bolder" id="invoice-balance-due">{{ invoice.balance_due|money:order.currency }}</dd>
+        </dl>
+      </div>
+    </section>
+
+    {# Payments #}
+    <section class="card mb-4" aria-labelledby="payments-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="payments-title">Payments</h2></div>
+      <div class="card-body text-sm">
+        {% if payments %}
+        <div class="table-responsive" tabindex="0" role="region" aria-label="Payments on this invoice">
+          <table class="table table-sm mb-0" id="invoice-payments">
+            <thead><tr><th scope="col">Payment</th><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Method</th><th scope="col">Reference</th><th scope="col">Status</th><th scope="col" class="text-end">Amount</th></tr></thead>
+            <tbody>
+              {% for p in payments %}
+              <tr>
+                <td>{{ p.payment_number }}</td>
+                <td>{{ p.payment_date|date:"M j, Y" }}</td>
+                <td>{{ p.get_payment_type_display }}{% if p.parent_payment_id %} of {{ p.parent_payment.payment_number }}{% endif %}</td>
+                <td>{{ p.get_payment_method_display }}</td>
+                <td>{% if p.payment_type == "refund" %}{{ p.refund_reason|default:"—" }}{% else %}{{ p.transaction_id|default:"—" }}{% endif %}</td>
+                <td>{{ p.get_status_display }}</td>
+                <td class="text-end">{% if p.payment_type == "refund" %}({{ p.amount|money:p.currency }}){% else %}{{ p.amount|money:p.currency }}{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-secondary mb-0">No payments recorded yet.</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="col-lg-5">
+    {# Record a payment #}
+    <section class="card mb-4" id="record-payment" aria-labelledby="record-payment-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="record-payment-title">Record payment</h2></div>
+      <div class="card-body text-sm">
+        {% if can_record_payment %}
+        <form method="post" action="{% url 'erp-invoice-record-payment' invoice.pk %}" id="record-payment-form" novalidate data-submit-once>
+          {% csrf_token %}{% once_field %}
+          <div class="mb-3">
+            <label for="{{ form.amount.id_for_label }}" class="form-label">{{ form.amount.label }} <span class="text-danger">*</span></label>
+            {{ form.amount|add_class:"form-control form-control-sm" }}
+            <div class="form-text">Balance due: {{ invoice.balance_due|money:order.currency }}</div>
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.payment_date.id_for_label }}" class="form-label">{{ form.payment_date.label }} <span class="text-danger">*</span></label>
+            {{ form.payment_date|add_class:"form-control form-control-sm" }}
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.payment_method.id_for_label }}" class="form-label">{{ form.payment_method.label }}</label>
+            {{ form.payment_method|add_class:"form-control form-control-sm" }}
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.reference.id_for_label }}" class="form-label">{{ form.reference.label }}</label>
+            {{ form.reference|add_class:"form-control form-control-sm" }}
+            <div class="form-text">{{ form.reference.help_text }}</div>
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+            {{ form.notes|add_class:"form-control form-control-sm" }}
+          </div>
+          <button type="submit" class="btn bg-gradient-success btn-sm mb-0"><i class="fas fa-hand-holding-usd me-1" aria-hidden="true"></i> Record payment</button>
+        </form>
+        {% elif invoice.status == "void" or invoice.status == "cancelled" %}
+        <p class="text-secondary mb-0">This invoice is {{ invoice.get_status_display|lower }}; nothing can be recorded against it.</p>
+        {% else %}
+        <p class="text-secondary mb-0">Paid in full{% if invoice.paid_date %} on {{ invoice.paid_date|date:"M j, Y" }}{% endif %}.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    {# Refund #}
+    <section class="card mb-4" id="refund" aria-labelledby="refund-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="refund-title">Refund</h2></div>
+      <div class="card-body text-sm">
+        {% if can_refund %}
+        <form method="post" action="{% url 'erp-invoice-refund' invoice.pk %}" id="refund-form" novalidate data-submit-once>
+          {% csrf_token %}{% once_field %}
+          <div class="mb-3">
+            <label for="{{ refund_form.payment.id_for_label }}" class="form-label">{{ refund_form.payment.label }} <span class="text-danger">*</span></label>
+            {{ refund_form.payment|add_class:"form-control form-control-sm" }}
+            <div class="form-text">Still refundable: {% for p, left in refundable %}{{ p.payment_number }} {{ left|money:p.currency }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+          </div>
+          <div class="mb-3">
+            <label for="{{ refund_form.amount.id_for_label }}" class="form-label">{{ refund_form.amount.label }} <span class="text-danger">*</span></label>
+            {{ refund_form.amount|add_class:"form-control form-control-sm" }}
+          </div>
+          <div class="mb-3">
+            <label for="{{ refund_form.reason.id_for_label }}" class="form-label">{{ refund_form.reason.label }} <span class="text-danger">*</span></label>
+            {{ refund_form.reason|add_class:"form-control form-control-sm" }}
+          </div>
+          <p class="form-text mb-3">The money goes back under the refund posting rule; stock is not changed (a refund returns money, not goods).</p>
+          <button type="submit" class="btn btn-outline-danger btn-sm mb-0" onclick="return confirm('Refund this amount on {{ invoice.invoice_number }}?');"><i class="fas fa-undo me-1" aria-hidden="true"></i> Refund</button>
+        </form>
+        {% elif refunded_total %}
+        <p class="text-secondary mb-0">Refunded in full: {{ refunded_total|money:order.currency }}.</p>
+        {% else %}
+        <p class="text-secondary mb-0">Nothing to refund: no settled payment on this invoice.</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

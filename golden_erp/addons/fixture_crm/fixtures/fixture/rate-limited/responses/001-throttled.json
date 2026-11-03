@@ -1,0 +1,17 @@
+{
+  "payload": {
+    "error": "rate_limited"
+  },
+  "provider": "fixture",
+  "request": {
+    "method": "POST",
+    "path": "/v1/contacts"
+  },
+  "response": {
+    "headers": {
+      "Retry-After": "120"
+    },
+    "status": 429
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,48 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "Each user's grant is polled with that user's access token; mail with a known party is ingested.",
+  "second_run_requests": [
+    {
+      "form": null,
+      "headers": {
+        "authorization": "Bearer <redacted:oauth_access>"
+      },
+      "json": null,
+      "method": "GET",
+      "path": "/v1/mailbox/messages",
+      "query": {
+        "after": "fx_msg_0020"
+      }
+    }
+  ],
+  "seed": {
+    "grants": [
+      {
+        "owner": "staff:rep",
+        "subject": "rep@example.org",
+        "sync_state": {
+          "initial_sync_done": true
+        }
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ],
+    "staff": [
+      {
+        "email": "rep@example.org",
+        "key": "rep"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "poll": true
+    }
+  ]
+}

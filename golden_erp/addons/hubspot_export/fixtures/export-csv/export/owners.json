@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/owners",
+    "query": {},
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "101",
+        "email": "avery.example@example.com",
+        "firstName": "Avery",
+        "lastName": "Example",
+        "userId": 9001,
+        "createdAt": "2020-01-06T09:00:00.000Z",
+        "updatedAt": "2026-03-01T10:00:00.000Z",
+        "archived": false,
+        "teams": [
+          {
+            "id": "11",
+            "name": "East Team",
+            "primary": true
+          }
+        ]
+      },
+      {
+        "id": "102",
+        "email": "blair.sample@example.com",
+        "firstName": "Blair",
+        "lastName": "Sample",
+        "userId": 9002,
+        "createdAt": "2020-02-03T09:00:00.000Z",
+        "updatedAt": "2026-03-01T10:00:00.000Z",
+        "archived": false,
+        "teams": [
+          {
+            "id": "11",
+            "name": "East Team",
+            "primary": false
+          },
+          {
+            "id": "12",
+            "name": "West Team",
+            "primary": true
+          }
+        ]
+      },
+      {
+        "id": "103",
+        "email": "casey.placeholder@example.com",
+        "firstName": "Casey",
+        "lastName": "Placeholder",
+        "userId": null,
+        "createdAt": "2021-05-10T09:00:00.000Z",
+        "updatedAt": "2021-05-10T09:00:00.000Z",
+        "archived": false,
+        "teams": []
+      }
+    ]
+  }
+}

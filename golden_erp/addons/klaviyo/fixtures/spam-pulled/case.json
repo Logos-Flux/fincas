@@ -1,0 +1,40 @@
+{
+  "klaviyo": {
+    "consents": [
+      {
+        "occurred_at": "2026-02-01T10:00:00Z",
+        "party": "ada",
+        "state": "granted"
+      }
+    ],
+    "marketable": [
+      "ada"
+    ],
+    "profiles": [
+      {
+        "address": "ada@example.com",
+        "list": "XFIX01",
+        "party": "ada",
+        "source_id": "01FIXTUREPROFILEADA0000000",
+        "state": "subscribed"
+      }
+    ]
+  },
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A spam complaint is a withdrawal and a complaint suppression.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001-event.json"
+    }
+  ]
+}

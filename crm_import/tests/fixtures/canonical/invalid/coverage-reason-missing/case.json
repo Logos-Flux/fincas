@@ -1,0 +1,14 @@
+{
+  "description": "partial coverage without a reason",
+  "manifest": [
+    {
+      "op": "set",
+      "path": [
+        "objects",
+        "contact",
+        "coverage"
+      ],
+      "value": "partial"
+    }
+  ]
+}

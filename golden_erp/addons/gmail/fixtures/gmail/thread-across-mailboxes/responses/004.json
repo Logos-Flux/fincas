@@ -1,0 +1,17 @@
+{
+  "payload": {
+    "historyId": "2010"
+  },
+  "provider": "gmail",
+  "repeatable": true,
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/history",
+    "query": {
+      "historyTypes": "messageAdded",
+      "maxResults": "50",
+      "startHistoryId": "2010"
+    }
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/tasks",
+    "query": {
+      "limit": "100",
+      "associations": "contacts,companies,deals,tickets"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "601",
+        "properties": {
+          "hs_object_id": "601",
+          "hs_timestamp": "2026-09-20T15:00:00.000Z",
+          "hs_createdate": "2026-09-20T15:00:00.000Z",
+          "hs_lastmodifieddate": "2026-09-20T15:00:00.000Z",
+          "hs_task_subject": "Call Ann about the retrofit",
+          "hs_task_type": "CALL",
+          "hs_task_status": "NOT_STARTED",
+          "hs_task_priority": "HIGH",
+          "hubspot_owner_id": "101",
+          "hs_task_body": "<p>Ask about <b>timing</b>.</p>"
+        },
+        "createdAt": "2026-09-20T15:00:00.000Z",
+        "updatedAt": "2026-09-20T15:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "contacts": {
+            "results": [
+              {
+                "id": "301",
+                "type": "task_to_contact"
+              }
+            ]
+          },
+          "deals": {
+            "results": [
+              {
+                "id": "401",
+                "type": "task_to_deal"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "602",
+        "properties": {
+          "hs_object_id": "602",
+          "hs_timestamp": "2026-07-02T09:00:00.000Z",
+          "hs_createdate": "2026-07-02T09:00:00.000Z",
+          "hs_lastmodifieddate": "2026-07-02T09:00:00.000Z",
+          "hs_task_subject": "Send onboarding pack",
+          "hs_task_type": "EMAIL",
+          "hs_task_status": "COMPLETED",
+          "hs_task_priority": "MEDIUM",
+          "hs_task_completion_date": "2026-07-03T11:00:00.000Z",
+          "hubspot_owner_id": "102"
+        },
+        "createdAt": "2026-07-02T09:00:00.000Z",
+        "updatedAt": "2026-07-02T09:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "contacts": {
+            "results": [
+              {
+                "id": "303",
+                "type": "task_to_contact"
+              }
+            ]
+          },
+          "tickets": {
+            "results": [
+              {
+                "id": "502",
+                "type": "task_to_ticket"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "603",
+        "properties": {
+          "hs_object_id": "603",
+          "hs_timestamp": "2026-10-15T09:00:00.000Z",
+          "hs_createdate": "2026-10-15T09:00:00.000Z",
+          "hs_lastmodifieddate": "2026-10-15T09:00:00.000Z",
+          "hs_task_subject": "Connect on a professional network",
+          "hs_task_type": "LINKED_IN",
+          "hs_task_status": "WAITING",
+          "hubspot_owner_id": "103"
+        },
+        "createdAt": "2026-10-15T09:00:00.000Z",
+        "updatedAt": "2026-10-15T09:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "contacts": {
+            "results": [
+              {
+                "id": "305",
+                "type": "task_to_contact"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "604",
+        "properties": {
+          "hs_object_id": "604",
+          "hs_timestamp": "2023-12-01T09:00:00.000Z",
+          "hs_createdate": "2023-12-01T09:00:00.000Z",
+          "hs_lastmodifieddate": "2023-12-01T09:00:00.000Z",
+          "hs_task_subject": "Old completed task",
+          "hs_task_type": "TODO",
+          "hs_task_status": "COMPLETED",
+          "hubspot_owner_id": "104"
+        },
+        "createdAt": "2023-12-01T09:00:00.000Z",
+        "updatedAt": "2023-12-01T09:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "companies": {
+            "results": [
+              {
+                "id": "203",
+                "type": "task_to_company"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

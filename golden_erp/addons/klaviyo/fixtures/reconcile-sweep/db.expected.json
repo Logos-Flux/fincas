@@ -1,0 +1,74 @@
+{
+  "communications": [],
+  "consents": [
+    {
+      "channel": "email",
+      "occurred_at": "2026-02-01T10:00:00Z",
+      "party": "party:ada",
+      "purpose": "marketing",
+      "source": "portal",
+      "state": "granted"
+    },
+    {
+      "channel": "email",
+      "occurred_at": "2026-02-01T10:00:00Z",
+      "party": "party:grace",
+      "purpose": "marketing",
+      "source": "portal",
+      "state": "withdrawn"
+    }
+  ],
+  "external_refs": [
+    {
+      "metadata": {
+        "address": "b5fc85e55755f9e0d030a10ab4429b6b2944855f9a0d60077fe832becbc41d72",
+        "fp": "accb7217f9a2df94",
+        "list": "XFIX01",
+        "state": "subscribed"
+      },
+      "object_type": "profile",
+      "source": "klaviyo",
+      "source_id": "01FIXTUREPROFILEADA0000000",
+      "source_url": "https://www.klaviyo.com/profile/01FIXTUREPROFILEADA0000000",
+      "target": "parties.party:party:ada"
+    },
+    {
+      "metadata": {
+        "address": "fa412966147ffb5f96d882bda59443f129f2ae48b8dfa946c74fd0131b08f36a",
+        "lists": [],
+        "state": "unsubscribed"
+      },
+      "object_type": "profile",
+      "source": "klaviyo",
+      "source_id": "01FIXTUREPROFILEGRACE00000",
+      "source_url": "",
+      "target": "parties.party:party:grace"
+    }
+  ],
+  "outbox": [
+    {
+      "consumer": "klaviyo.profile",
+      "event": "sync",
+      "idempotency_key": "party:ada:reconcile:2026-03-02T15:00:00+00:00",
+      "object": "party:ada",
+      "state": "done"
+    },
+    {
+      "consumer": "klaviyo.profile",
+      "event": "sync",
+      "idempotency_key": "party:grace:reconcile:2026-03-02T15:00:00+00:00",
+      "object": "party:grace",
+      "state": "done"
+    },
+    {
+      "consumer": "klaviyo.reconcile",
+      "event": "push",
+      "idempotency_key": "reconcile:1",
+      "object": null,
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

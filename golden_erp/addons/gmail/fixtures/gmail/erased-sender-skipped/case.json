@@ -1,0 +1,69 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "Mail involving an erased address (an erasure suppression) is dropped whole, even with a known party on it, and stays dropped on every re-sync.",
+  "second_run_requests": [
+    {
+      "form": null,
+      "headers": {
+        "authorization": "Bearer <redacted:oauth_access>"
+      },
+      "json": null,
+      "method": "GET",
+      "path": "/gmail/v1/users/me/history",
+      "query": {
+        "historyTypes": "messageAdded",
+        "maxResults": "50",
+        "startHistoryId": "1010"
+      }
+    }
+  ],
+  "seed": {
+    "grants": [
+      {
+        "owner": "staff:rep",
+        "subject": "rep@example.org",
+        "sync_state": {
+          "cursor": {
+            "history_id": "1000"
+          },
+          "initial_sync_done": true
+        }
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      },
+      {
+        "email": "grace@example.net",
+        "family": "Hopper",
+        "given": "Grace",
+        "key": "grace"
+      }
+    ],
+    "staff": [
+      {
+        "email": "rep@example.org",
+        "key": "rep"
+      },
+      {
+        "email": "boss@example.org",
+        "key": "boss"
+      }
+    ],
+    "suppressions": [
+      {
+        "address": "former@example.com",
+        "reason": "erasure"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "poll": true
+    }
+  ]
+}

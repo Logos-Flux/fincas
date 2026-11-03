@@ -1,0 +1,15 @@
+{
+  "description": "A 403 on the archived contacts listing: live contacts import, archived ones are unknown (2.13 row 2).",
+  "base": "crawl-small",
+  "remove": [
+    "crawl/contacts/archived"
+  ],
+  "added": {
+    "contact": [
+      "forbidden"
+    ],
+    "consent": [
+      "forbidden"
+    ]
+  }
+}

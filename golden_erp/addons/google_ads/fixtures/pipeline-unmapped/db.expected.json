@@ -1,0 +1,25 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [],
+  "outbox": [
+    {
+      "consumer": "google_ads.conversion",
+      "event": "upload",
+      "idempotency_key": "conv:<uuid>",
+      "object": "engagement:deal1",
+      "state": "cancelled"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": [
+    {
+      "channel": "paid_search",
+      "occurred_at": "2026-02-20T15:00:00Z",
+      "party": "party:ada",
+      "utm_campaign": "",
+      "utm_source": ""
+    }
+  ]
+}

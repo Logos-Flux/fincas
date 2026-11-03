@@ -1,0 +1,14 @@
+[
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:oauth_access>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/v1/mailbox/messages",
+    "query": {
+      "after": ""
+    }
+  }
+]

@@ -1,0 +1,38 @@
+{
+  "klaviyo": {
+    "consents": [
+      {
+        "occurred_at": "2026-02-01T10:00:00Z",
+        "party": "ada",
+        "state": "granted"
+      }
+    ],
+    "marketable": [
+      "ada"
+    ]
+  },
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "First connect: golden's grant meets a Klaviyo profile that already unsubscribed (before golden was connected). The refusal comes into golden as a withdrawal and an opt-out; golden does not subscribe it, and the second run sends nothing.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "enqueue": {
+        "consumer": "klaviyo.profile",
+        "key": "sync:ada:1",
+        "object": "party:ada"
+      }
+    },
+    {
+      "drain": true
+    }
+  ]
+}

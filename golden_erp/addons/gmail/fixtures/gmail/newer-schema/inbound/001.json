@@ -1,0 +1,90 @@
+{
+  "payload": {
+    "mailbox": "rep@example.org",
+    "message": {
+      "historyId": "1005",
+      "id": "19b0000000000001",
+      "internalDate": "1772460000000",
+      "labelIds": [
+        "INBOX"
+      ],
+      "payload": {
+        "body": {
+          "size": 0
+        },
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Ada Lovelace <ada@example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Rep <rep@example.org>"
+          },
+          {
+            "name": "Subject",
+            "value": "Quote for 40 panels"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<CAF-ada-0001@mail.example.com>"
+          },
+          {
+            "name": "Date",
+            "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+          }
+        ],
+        "mimeType": "multipart/mixed",
+        "parts": [
+          {
+            "body": {
+              "size": 0
+            },
+            "filename": "",
+            "headers": [],
+            "mimeType": "multipart/alternative",
+            "partId": "0",
+            "parts": [
+              {
+                "body": {
+                  "data": "SGVsbG8sDQpjb3VsZCB5b3Ugc2VuZCBhIHF1b3RlIGZvciA0MCBwYW5lbHM_DQpBZGE",
+                  "size": 50
+                },
+                "filename": "",
+                "headers": [],
+                "mimeType": "text/plain",
+                "partId": "0.0"
+              },
+              {
+                "body": {
+                  "data": "PHA-SGVsbG8sPC9wPjxwPmNvdWxkIHlvdSBzZW5kIGEgcXVvdGU_PC9wPg",
+                  "size": 43
+                },
+                "filename": "",
+                "headers": [],
+                "mimeType": "text/html",
+                "partId": "0.1"
+              }
+            ]
+          },
+          {
+            "body": {
+              "attachmentId": "ANGjdJ-fixture-attachment-0001",
+              "size": 51234
+            },
+            "filename": "site-plan.pdf",
+            "headers": [],
+            "mimeType": "application/pdf",
+            "partId": "1"
+          }
+        ]
+      },
+      "sizeEstimate": 4200,
+      "snippet": "Hello,\r\ncould you send a quote for 40 panels?\r\nAda",
+      "threadId": "19b0000000000001"
+    }
+  },
+  "provider": "gmail",
+  "schema_version": 2
+}

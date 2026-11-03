@@ -1,0 +1,2980 @@
+{% extends "base.html" %}
+{% load static erp_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<form method="post" novalidate id="document-form" data-submit-once>
+  {% csrf_token %}
+      {% if object_pk %}
+      <input type="hidden" name="order_id" value="{{ object_pk }}">
+      {% endif %}
+
+  {# Non-field errors #}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger text-sm">
+    {% for error in form.non_field_errors %}
+    <p class="mb-0">{{ error }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# All field errors — surfaces hidden-tab errors that inline rendering would miss. #}
+  {% if form.errors %}
+  <div class="alert alert-danger text-sm">
+    <p class="mb-1"><strong>Please fix the following:</strong></p>
+    <ul class="mb-0 ps-3">
+      {% for field in form %}
+        {% for error in field.errors %}
+        <li>{{ field.label }}: {{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Tab Navigation — 2 tabs: Details + More Info #}
+  <div class="card mb-4">
+    <div class="card-body p-3 pb-0">
+      <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" data-bs-toggle="tab" href="#tab-details" role="tab">
+            <i class="ti ti-file-text me-1"></i> Details
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-bs-toggle="tab" href="#tab-more" role="tab">
+            <i class="ti ti-settings me-1"></i> More Info
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tab-content">
+    {# ===== TAB 1: DETAILS ===== #}
+    <div class="tab-pane fade show active" id="tab-details" role="tabpanel">
+
+      {# Section 1: Order Header #}
+      <div class="card mb-4">
+        <div class="card-header pb-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">{{ doc_type_label|default:"Order" }} Header</h6>
+            {% if doc_number %}
+            <span class="badge bg-gradient-dark">{{ doc_number }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body pt-0">
+          <div class="row">
+            {% for field_name in header_fields %}
+              {% with field=form|get_form_field:field_name %}
+              {% if field %}
+              <div class="col-md-4 mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label text-sm">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                {% if field_name == "customer" %}
+                <div class="d-flex align-items-start gap-2">
+                  {{ field|add_class:"form-control form-control-sm" }}
+                  <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1 flex-shrink-0" id="btn-add-customer" title="Add new customer">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+                {% else %}
+                {{ field|add_class:"form-control form-control-sm" }}
+                {% endif %}
+                {% if field.errors %}<div class="text-danger text-xs mt-1">{{ field.errors.0 }}</div>{% endif %}
+              </div>
+              {% endif %}
+              {% endwith %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {# Section 2: Address and Contact #}
+      <div class="card mb-4">
+        <div class="card-header pb-0">
+          <h6>Address &amp; Contact</h6>
+        </div>
+        <div class="card-body pt-0">
+          <div class="row">
+            {% for field_name in address_fields %}
+              {% with field=form|get_form_field:field_name %}
+              {% if field %}
+              <div class="col-md-{% if field_name == 'customer_message' or field_name == 'ship_to_address' %}12{% else %}4{% endif %} mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label text-sm">{{ field.label }}</label>
+                <div class="d-flex align-items-start gap-2">
+                  {% if field_name == 'customer_message' %}
+                  {{ field|add_class:"form-control form-control-sm customer-message-sm" }}
+                  {% else %}
+                  {{ field|add_class:"form-control form-control-sm" }}
+                  {% endif %}
+                  {% if field_name == "billing_address" or field_name == "shipping_address" %}
+                  <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1 flex-shrink-0 btn-edit-address d-none" data-field="{{ field_name }}" title="Edit selected address">
+                    <i class="fas fa-pencil-alt"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1 flex-shrink-0 btn-add-address d-flex align-items-center gap-1" data-field="{{ field_name }}" title="Add new address">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span class="d-none d-lg-inline">Add New</span>
+                  </button>
+                  {% endif %}
+                  {% if field_name == "shipping_address" %}
+                  <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1 flex-shrink-0" id="btn-same-as-billing" title="Copy billing address as new shipping address">
+                    <i class="fas fa-copy me-1"></i><span class="d-none d-lg-inline">Same as Billing</span>
+                  </button>
+                  {% endif %}
+                  {% if field_name == "contact" %}
+                  <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1 flex-shrink-0 btn-edit-contact d-none" title="Edit selected contact">
+                    <i class="fas fa-pencil-alt"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1 flex-shrink-0" id="btn-add-contact" title="Add new contact">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                  {% endif %}
+                </div>
+                {% if field_name == "billing_address" or field_name == "shipping_address" %}
+                <div class="addr-display text-xs mt-2 px-1 opacity-8" data-addr-for="{{ field_name }}" style="line-height:1.5; min-height:3.6em;"></div>
+                {% endif %}
+                {% if field.errors %}<div class="text-danger text-xs mt-1">{{ field.errors.0 }}</div>{% endif %}
+              </div>
+              {% endif %}
+              {% endwith %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {% if is_edit and people_url %}
+      <div class="card mb-4" id="doc-people" data-url="{{ people_url }}">
+        {% include "erp/_doc_people.html" %}
+      </div>
+      {% endif %}
+
+      {# Section 3: Line Items #}
+      {{ line_item_formset.management_form }}
+
+      {% if show_shipment_groups %}
+      {# ── Shipment-grouped line items (Orders & Quotes) ── #}
+      <input type="hidden" name="sg_count" id="sg-count" value="{{ shipment_groups_data|length }}">
+      <div id="sg-move-status" class="visually-hidden" role="status" aria-live="polite"></div>
+
+      <div id="shipment-groups-container">
+      {% for sg in shipment_groups_data %}
+      <div class="card mb-4 shipment-group-card" data-sg-index="{{ sg.index }}">
+        <div class="card-header pb-0">
+          <div class="d-flex flex-column gap-2">
+            {# Row 1: Group name + fulfillment toggle + delete #}
+            <div class="d-flex justify-content-between align-items-center gap-2">
+              <div class="d-flex flex-wrap align-items-center gap-2">
+                <i class="fas fa-shipping-fast text-primary opacity-7"></i>
+                <input type="hidden" name="sg_{{ sg.index }}_id" value="{{ sg.id }}">
+                <input type="hidden" name="sg_{{ sg.index }}_supplier" class="sg-supplier-id" value="{{ sg.supplier_id }}">
+                <input type="hidden" name="sg_{{ sg.index }}_fulfillment_type" class="sg-fulfillment-type" value="{{ sg.fulfillment_type|default:'drop_ship' }}">
+                <input type="text" name="sg_{{ sg.index }}_name" value="{{ sg.name }}"
+                       class="form-control form-control-sm font-weight-bold" style="width:180px; max-width:100%"
+                       placeholder="Group name">
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" class="btn btn-sm sg-type-btn {% if sg.fulfillment_type != 'internal' %}bg-gradient-primary{% else %}btn-outline-primary{% endif %}" data-type="drop_ship">
+                    <i class="fas fa-truck me-1"></i> Drop Ship
+                  </button>
+                  <button type="button" class="btn btn-sm sg-type-btn {% if sg.fulfillment_type == 'internal' %}bg-gradient-primary{% else %}btn-outline-primary{% endif %}" data-type="internal">
+                    <i class="fas fa-warehouse me-1"></i> Internal
+                  </button>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 btn-delete-group"
+                      title="Delete group" {% if shipment_groups_data|length <= 1 %}style="display:none"{% endif %}>
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            {# Row 2: Fulfillment controls #}
+            <div class="d-flex flex-wrap align-items-center gap-2 ms-md-4 sg-controls">
+              {# Drop Ship controls #}
+              <div class="sg-dropship-controls d-flex flex-wrap align-items-center gap-2{% if sg.fulfillment_type == 'internal' %} d-none{% endif %}">
+                <div class="position-relative" style="width:250px; max-width:100%">
+                  <input type="text" class="form-control form-control-sm sg-supplier-search"
+                         placeholder="Search vendor..." autocomplete="off"
+                         value="{{ sg.supplier_name }}">
+                  <div class="sg-supplier-results list-group position-absolute w-100" style="z-index:1050; display:none; max-height:200px; overflow-y:auto;"></div>
+                </div>
+                <select class="form-control form-control-sm sg-ship-from" style="width:250px; max-width:100%" aria-label="Ship from location" {% if not sg.supplier_id %}disabled{% endif %}>
+                  <option value="">— Ship from location —</option>
+                </select>
+                {% if doc_type_label != "Quote" %}
+                {% if sg.existing_po %}
+                <a href="{% url 'erp-purchaseorder-edit' sg.existing_po.pk %}" class="btn bg-gradient-success btn-sm">
+                  <i class="fas fa-file-invoice me-1"></i> {{ sg.existing_po.number }}
+                </a>
+                {% else %}
+                <a href="#" class="btn bg-gradient-warning btn-sm sg-create-po {% if not sg.supplier_id %}disabled{% endif %}"{% if not sg.supplier_id %} aria-disabled="true"{% endif %}
+                   data-base-url="{% url 'erp-purchaseorder-create' %}">
+                  <i class="fas fa-file-invoice me-1"></i> Create PO
+                </a>
+                {% endif %}
+                {% endif %}
+              </div>
+
+              {# Internal controls #}
+              <div class="sg-internal-controls d-flex flex-wrap align-items-center gap-2{% if sg.fulfillment_type != 'internal' %} d-none{% endif %}">
+                <select name="sg_{{ sg.index }}_warehouse" class="form-control form-control-sm" style="width:250px; max-width:100%" aria-label="Ship from warehouse">
+                  <option value="">— Ship from warehouse —</option>
+                  {% for wh in warehouses %}
+                  <option value="{{ wh.pk }}" {% if sg.warehouse_id == wh.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ wh.name }}{% if wh.city %} ({{ wh.city }}, {{ wh.state_province }}){% endif %}
+                  </option>
+                  {% endfor %}
+                </select>
+                {% if doc_type_label != "Quote" %}
+                {% if sg.existing_pt %}
+                <a href="{% url 'erp-pickticket-edit' sg.existing_pt.pk %}" class="btn bg-gradient-success btn-sm">
+                  <i class="fas fa-clipboard-list me-1"></i> {{ sg.existing_pt.number }}
+                </a>
+                {% else %}
+                <button type="button" class="btn bg-gradient-info btn-sm sg-print-pick-ticket"
+                   data-base-url="{% url 'erp-pickticket-create-ajax' %}">
+                  <i class="fas fa-clipboard-list me-1"></i> Print Pick Ticket
+                </button>
+                {% endif %}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body px-0 pt-0 pb-2">
+          <div class="table-responsive p-0">
+            <table class="table align-items-center mb-0 line-items-table">
+              <thead>
+                <tr>
+                  <th style="width:30px"></th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2" style="width:30px">#</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style="width:140px">Item Code</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style="min-width:220px">Item Name</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="width:80px">Qty</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end" style="width:100px">Rate</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="width:80px">Disc %</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end" style="width:110px">Amount</th>
+                  <th style="min-width:40px"><span class="visually-hidden">Shipment and remove</span></th>
+                </tr>
+              </thead>
+              <tbody class="sg-items-body">
+                {% for li_form in sg.forms %}
+                <tr class="line-item-row"{% if li_form.move_lock %} data-move-lock="{{ li_form.move_lock }}"{% endif %}>
+                  <td class="ps-2">
+                    {% if li_form.move_lock %}
+                    <span class="li-move-locked text-secondary" tabindex="0" title="Locked to this shipment. {{ li_form.move_lock }}">
+                      <i class="fas fa-lock" aria-hidden="true"></i>
+                      <span class="visually-hidden">Locked to this shipment. {{ li_form.move_lock }}</span>
+                    </span>
+                    {% else %}
+                    <i class="fas fa-grip-vertical li-drag-handle text-secondary" title="Drag to reorder, or to another shipment" aria-hidden="true"></i>
+                    {% endif %}
+                  </td>
+                  <td class="ps-2">
+                    {{ li_form.id }}
+                    {{ li_form.DELETE|aria_label:"Remove line" }}
+                    {{ li_form.sg_index }}
+                    {{ li_form.shipment_group }}
+                    <span class="text-sm li-row-num">{{ forloop.counter }}</span>
+                  </td>
+                  <td>
+                    <div class="variant-search-wrapper position-relative">
+                      <div style="display:none">{{ li_form.variant }}</div>
+                      {% with sku_field=li_form|get_form_field:li_sku_field %}<input type="text" name="{{ sku_field.html_name }}" id="{{ sku_field.id_for_label }}" value="{{ sku_field.value|default:'' }}" class="form-control form-control-sm variant-search-input li-sku" placeholder="Search SKU or name..." autocomplete="off">{% endwith %}
+                      <div class="variant-search-results list-group position-absolute" style="z-index:1050; display:none; max-height:280px; overflow-y:auto; min-width:400px; white-space:nowrap;"></div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="item-name-search-wrapper position-relative">
+                      {{ li_form.item_name|add_class:"form-control form-control-sm" }}
+                      <div class="item-name-search-results list-group position-absolute w-100" style="z-index:1050; display:none; max-height:200px; overflow-y:auto;"></div>
+                    </div>
+                  </td>
+                  <td>{{ li_form|get_form_field:li_qty_field|add_class:"form-control form-control-sm text-center li-qty" }}</td>
+                  <td><div class="currency-field">{{ li_form|get_form_field:li_rate_field|add_class:"form-control form-control-sm text-end li-rate" }}</div></td>
+                  <td>{{ li_form.discount_percent|add_class:"form-control form-control-sm text-center" }}</td>
+                  <td><div class="currency-field">{{ li_form|get_form_field:li_total_field|add_class:"form-control form-control-sm text-end li-amount" }}</div></td>
+                  <td class="text-nowrap pe-3">
+                    <div class="d-flex align-items-center justify-content-end gap-2">
+                      {% if not li_form.move_lock %}
+                      {# Keyboard / touch alternative to dragging. No name: never submitted; the JS fills the options and rewrites sg_index. #}
+                      <select class="form-select form-select-sm li-move-select" aria-label="Shipment for this line" title="Move to another shipment" style="display:none"></select>
+                      {% endif %}
+                      {# A locked line cannot be removed either (the formset refuses it); the button stays in the row so a clone of it (Add Row) gets one. #}
+                      <button type="button" class="btn btn-link text-danger p-0 btn-delete-row{% if li_form.move_lock %} d-none{% endif %}" title="Remove"{% if li_form.move_lock %} disabled{% endif %}>
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+                <tr class="sg-empty-row"{% if sg.forms %} style="display:none"{% endif %}>
+                  <td colspan="9" class="text-center text-sm text-secondary py-3">
+                    <i class="fas fa-inbox me-1" aria-hidden="true"></i>
+                    No lines in this shipment yet. Drag a line here, or pick this shipment in a line's shipment menu.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="px-4 py-2 d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-outline-primary btn-sm btn-add-row-sg" data-sg-index="{{ sg.index }}">
+              <i class="fas fa-plus me-1"></i> Add Row
+            </button>
+            <span class="sg-summary text-sm text-secondary ms-auto"></span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      </div>
+
+      <div class="mb-4">
+        <button type="button" class="btn bg-gradient-secondary btn-sm" id="btn-split-ship">
+          <i class="fas fa-code-branch me-1"></i> Split Ship
+        </button>
+      </div>
+
+      {# ── SubOrder Tracking ── #}
+      {% if sub_orders_tracking %}
+      <div class="card mb-4">
+        <div class="card-header pb-0">
+          <h6 class="mb-0"><i class="fas fa-satellite-dish text-primary opacity-7 me-2"></i>Tracking</h6>
+        </div>
+        <div class="card-body pt-2">
+          {% for item in sub_orders_tracking %}
+          <div class="{% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+            <div class="text-xs font-weight-bold text-uppercase text-muted mb-2">
+              {{ item.sub_order.sub_order_number }}
+              {% if item.sub_order.purchase_order %}
+                <span class="badge bg-gradient-warning ms-1">PO {{ item.sub_order.purchase_order.po_number }}</span>
+              {% elif item.sub_order.pick_ticket %}
+                <span class="badge bg-gradient-info ms-1">PT {{ item.sub_order.pick_ticket.ticket_number }}</span>
+              {% endif %}
+            </div>
+            {% with sub_order=item.sub_order has_customer_email=item.has_customer_email %}
+              {% include "erp/_tracking_section.html" %}
+            {% endwith %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% else %}
+      {# ── Flat line items table (POs) ── #}
+      <div class="card mb-4">
+        <div class="card-header pb-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Items</h6>
+          </div>
+        </div>
+        <div class="card-body px-0 pt-0 pb-2">
+          <div class="table-responsive p-0">
+            <table class="table align-items-center mb-0 line-items-table">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3" style="width:40px">#</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style="width:140px">Item Code</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style="min-width:220px">Item Name</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="width:80px">Qty</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end" style="width:100px">Rate</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="width:80px">Disc %</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end" style="width:110px">Amount</th>
+                  <th style="width:40px"></th>
+                </tr>
+              </thead>
+              <tbody id="line-items-body">
+                {% for li_form in line_item_formset %}
+                <tr class="line-item-row">
+                  <td class="ps-3">
+                    {{ li_form.id }}
+                    {% if li_form.order_line_item %}{{ li_form.order_line_item }}{% endif %}
+                    {{ li_form.DELETE|aria_label:"Remove line" }}
+                    <span class="text-sm">{{ forloop.counter }}</span>
+                  </td>
+                  <td>
+                    <div class="variant-search-wrapper position-relative">
+                      <div style="display:none">{{ li_form.variant }}</div>
+                      {% with sku_field=li_form|get_form_field:li_sku_field %}<input type="text" name="{{ sku_field.html_name }}" id="{{ sku_field.id_for_label }}" value="{{ sku_field.value|default:'' }}" class="form-control form-control-sm variant-search-input li-sku" placeholder="Search SKU or name..." autocomplete="off">{% endwith %}
+                      <div class="variant-search-results list-group position-absolute" style="z-index:1050; display:none; max-height:280px; overflow-y:auto; min-width:400px; white-space:nowrap;"></div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="item-name-search-wrapper position-relative">
+                      {{ li_form.item_name|add_class:"form-control form-control-sm" }}
+                      <div class="item-name-search-results list-group position-absolute w-100" style="z-index:1050; display:none; max-height:200px; overflow-y:auto;"></div>
+                    </div>
+                  </td>
+                  <td>{{ li_form|get_form_field:li_qty_field|add_class:"form-control form-control-sm text-center li-qty" }}</td>
+                  <td><div class="currency-field">{{ li_form|get_form_field:li_rate_field|add_class:"form-control form-control-sm text-end li-rate" }}</div></td>
+                  <td>{{ li_form.discount_percent|add_class:"form-control form-control-sm text-center" }}</td>
+                  <td><div class="currency-field">{{ li_form|get_form_field:li_total_field|add_class:"form-control form-control-sm text-end li-amount" }}</div></td>
+                  <td>
+                    <button type="button" class="btn btn-link text-danger p-0 btn-delete-row" title="Remove">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="px-4 py-2">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-row">
+              <i class="fas fa-plus me-1"></i> Add Row
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# Section 4: Taxes #}
+      {% if tax_fields %}
+      <div class="card mb-4">
+        <div class="card-header pb-0"><h6>Taxes</h6></div>
+        <div class="card-body pt-0">
+          <div class="row">
+            {% for field_name in tax_fields %}
+              {% with field=form|get_form_field:field_name %}
+              {% if field %}
+              <div class="col-md-4 mb-3">
+                {% if field.field.widget.input_type == "checkbox" %}
+                <div class="form-check mt-4">
+                  {{ field }}
+                  <label for="{{ field.id_for_label }}" class="form-check-label text-sm">{{ field.label }}</label>
+                </div>
+                {% else %}
+                <label for="{{ field.id_for_label }}" class="form-label text-sm">{{ field.label }}</label>
+                {{ field|add_class:"form-control form-control-sm" }}
+                {% endif %}
+              </div>
+              {% endif %}
+              {% endwith %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# Section 5: Terms #}
+      {% if terms_fields %}
+      <div class="card mb-4">
+        <div class="card-header pb-0"><h6>Terms</h6></div>
+        <div class="card-body pt-0">
+          <div class="row">
+            {% for field_name in terms_fields %}
+              {% with field=form|get_form_field:field_name %}
+              {% if field %}
+              <div class="col-md-6 mb-3">
+                {% if field.field.widget.input_type == "checkbox" %}
+                <div class="form-check mt-4">
+                  {{ field }}
+                  <label for="{{ field.id_for_label }}" class="form-check-label text-sm">{{ field.label }}</label>
+                </div>
+                {% else %}
+                <label for="{{ field.id_for_label }}" class="form-label text-sm">{{ field.label }}</label>
+                {{ field|add_class:"form-control form-control-sm" }}
+                {% endif %}
+                {% if field.errors %}<div class="text-danger text-xs mt-1">{{ field.errors.0 }}</div>{% endif %}
+              </div>
+              {% endif %}
+              {% endwith %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# Section 6: Totals #}
+      <div class="card mb-4">
+        <div class="card-header pb-0"><h6>Totals</h6></div>
+        <div class="card-body pt-0">
+          <div class="row justify-content-end">
+            <div class="col-md-5">
+              <table class="table table-sm mb-0">
+                {% for field_name in totals_fields %}
+                  {% with field=form|get_form_field:field_name %}
+                  {% if field %}
+                  <tr>
+                    <td class="text-sm {% if field_name == 'grand_total' %}font-weight-bolder{% endif %}">{{ field.label }}</td>
+                    <td class="text-end">
+                      {% if field_name == "shipping_cost_ex_tax" or field_name == "shipping_cost" %}
+                      <div class="d-flex align-items-center gap-1">
+                        {{ field|add_class:"form-control form-control-sm text-end" }}
+                        <button type="button" class="btn btn-outline-info btn-sm px-2 py-1 flex-shrink-0" id="btn-calc-shipping" title="Calculate shipping rates">
+                          <i class="fas fa-truck"></i>
+                        </button>
+                      </div>
+                      {% else %}
+                      {{ field|add_class:"form-control form-control-sm text-end" }}
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endif %}
+                  {% endwith %}
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ===== TAB 2: MORE INFO ===== #}
+    <div class="tab-pane fade" id="tab-more" role="tabpanel">
+      {% for section in more_info_sections %}
+      <div class="card mb-4">
+        <div class="card-header pb-0 {% if section.collapsible %}cursor-pointer{% endif %}"
+             {% if section.collapsible %}data-bs-toggle="collapse" data-bs-target="#more-section-{{ forloop.counter }}"{% endif %}>
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">{{ section.title }}</h6>
+            {% if section.collapsible %}<i class="fas fa-chevron-down text-xs"></i>{% endif %}
+          </div>
+        </div>
+        <div class="{% if section.collapsible %}collapse{% endif %}" id="more-section-{{ forloop.counter }}">
+          <div class="card-body pt-0">
+            <div class="row">
+              {% for field_name in section.fields %}
+                {% with field=form|get_form_field:field_name %}
+                {% if field %}
+                <div class="col-md-6 mb-3">
+                  {% if field.field.widget.input_type == "checkbox" %}
+                  <div class="form-check mt-4">
+                    {{ field }}
+                    <label for="{{ field.id_for_label }}" class="form-check-label text-sm">{{ field.label }}</label>
+                  </div>
+                  {% else %}
+                  <label for="{{ field.id_for_label }}" class="form-label text-sm">{{ field.label }}</label>
+                  {{ field|add_class:"form-control form-control-sm" }}
+                  {% endif %}
+                  {% if field.errors %}<div class="text-danger text-xs mt-1">{{ field.errors.0 }}</div>{% endif %}
+                </div>
+                {% endif %}
+                {% endwith %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      {# ── PO Tracking (linked SubOrder) ── #}
+      {% if po_sub_order_tracking %}
+      <div class="card mb-4">
+        <div class="card-header pb-0">
+          <h6 class="mb-0"><i class="fas fa-satellite-dish text-primary opacity-7 me-2"></i>Tracking</h6>
+        </div>
+        <div class="card-body pt-2">
+          {% with sub_order=po_sub_order_tracking.sub_order has_customer_email=po_sub_order_tracking.has_customer_email %}
+            {% include "erp/_tracking_section.html" %}
+          {% endwith %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# ── PickTicket Tracking (linked SubOrder) ── #}
+      {% if pt_sub_order_tracking %}
+      <div class="card mb-4">
+        <div class="card-header pb-0">
+          <h6 class="mb-0"><i class="fas fa-satellite-dish text-primary opacity-7 me-2"></i>Tracking</h6>
+        </div>
+        <div class="card-body pt-2">
+          {% with sub_order=pt_sub_order_tracking.sub_order has_customer_email=pt_sub_order_tracking.has_customer_email %}
+            {% include "erp/_tracking_section.html" %}
+          {% endwith %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ===== ACTION BAR ===== #}
+  <div class="erp-action-bar">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div class="d-flex flex-nowrap flex-md-wrap align-items-center gap-2 erp-action-bar-actions">
+        {% if is_edit %}
+        <span class="badge bg-gradient-secondary text-xs">{{ object.get_status_display }}</span>
+        {% endif %}
+        {% if is_edit and status_transitions %}
+        <div class="d-flex align-items-center gap-1">
+          <select id="status-transition-select" class="form-select form-select-sm" style="width:auto; min-width:180px; max-width:100%;" aria-label="Change status">
+            <option value="">— Change status —</option>
+            {% for value, label in status_transitions %}
+            <option value="set_status_{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" id="status-apply-btn" class="btn bg-gradient-success btn-sm" disabled
+                  name="_action" value=""
+                  onclick="var sel=document.getElementById('status-transition-select'); if(!sel.value){return false;} this.value=sel.value; return confirm('Change status to '+sel.options[sel.selectedIndex].text+'?');">
+            <i class="fas fa-arrow-right me-1"></i> Apply
+          </button>
+        </div>
+        <script>document.getElementById('status-transition-select').addEventListener('change', function(){document.getElementById('status-apply-btn').disabled=!this.value;});</script>
+        {% endif %}
+        {% comment %}
+          Gated on can_cancel, NOT on doc_type_label. This button used to
+          render on all four documents while only Sales Order handled
+          _action=cancel_order, so cancelling a Purchase Order or Pick Ticket
+          silently just saved it and redirected -- the user believed they had
+          cancelled it. Each view now opts in, and Pick Ticket has no
+          cancelled state so it opts out.
+        {% endcomment %}
+        {% if is_edit and can_cancel and object.status != "cancelled" %}
+        <button type="submit" name="_action" value="cancel_order" class="btn btn-outline-danger btn-sm" onclick="return confirm('Cancel this {{ doc_type_label|lower }}?')">
+          Cancel {{ doc_type_label }}
+        </button>
+        {% endif %}
+        {% if is_edit and doc_type_label == "Sales Order" and object.status != "incomplete" and object.status != "cancelled" %}
+        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#resendEmailModal">
+          <i class="fas fa-envelope me-1"></i> Resend SO
+        </button>
+        {% if existing_invoice %}
+        <a href="{% url 'erp-invoice-detail' existing_invoice.pk %}" class="btn btn-outline-success btn-sm" title="View invoice {{ existing_invoice.invoice_number }}">
+          <i class="fas fa-file-invoice-dollar me-1"></i> View Invoice
+        </a>
+        {% if existing_invoice.balance_due > 0 and existing_invoice.status != "void" and existing_invoice.status != "cancelled" %}
+        <a href="{% url 'erp-invoice-detail' existing_invoice.pk %}#record-payment" class="btn btn-outline-success btn-sm" title="Record a payment on invoice {{ existing_invoice.invoice_number }}">
+          <i class="fas fa-hand-holding-usd me-1"></i> Record Payment
+        </a>
+        {% endif %}
+        {% if existing_invoice.amount_paid > 0 and existing_invoice.status != "void" and existing_invoice.status != "cancelled" %}
+        <a href="{% url 'erp-invoice-detail' existing_invoice.pk %}#refund" class="btn btn-outline-danger btn-sm" title="Refund a payment on invoice {{ existing_invoice.invoice_number }}">
+          <i class="fas fa-undo me-1" aria-hidden="true"></i> Refund
+        </a>
+        {% endif %}
+        <a href="{% url 'erp-invoice-pdf' existing_invoice.pk %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm" title="Download PDF">
+          <i class="fas fa-file-pdf me-1"></i> PDF
+        </a>
+        {% comment %}
+          The real <form> lives OUTSIDE #document-form (see below) and is
+          reached by the form= attribute. A nested <form> is dropped by the
+          HTML5 parser, which silently rebinds this button to #document-form
+          and turns Email into a plain Save.
+        {% endcomment %}
+        <button type="submit" form="invoice-send-form" class="btn btn-outline-primary btn-sm" onclick="return confirm('Email invoice {{ existing_invoice.invoice_number }} (PDF + payment link) to {{ customer_email }}?');">
+          <i class="fas fa-paper-plane me-1"></i> Email Invoice
+        </button>
+        {% else %}
+        <button type="submit" name="_action" value="create_invoice" class="btn btn-outline-success btn-sm" onclick="return confirm('Create an invoice for this order? You can email the PDF + payment link from the invoice page.');">
+          <i class="fas fa-file-invoice-dollar me-1"></i> Create Invoice
+        </button>
+        {% endif %}
+        {% endif %}
+        {% if is_edit and doc_type_label == "Purchase Order" and can_receive %}
+        <a href="{% url 'erp-purchaseorder-receive' object.pk %}" class="btn btn-outline-success btn-sm" title="Record goods received against this purchase order">
+          <i class="fas fa-dolly me-1" aria-hidden="true"></i> Receive
+        </a>
+        {% endif %}
+        {% if is_edit and doc_type_label == "Quote" and object.status != "cancelled" %}
+        <a href="{% url 'erp-quote-pdf' object.pk %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm" title="Open the quote PDF">
+          <i class="fas fa-file-pdf me-1"></i> PDF
+        </a>
+        <button type="submit" form="quote-send-form" class="btn btn-outline-primary btn-sm" onclick="return confirm('Email quote {{ object.quote_number }} (PDF attached) to {{ customer_email }}?');">
+          <i class="fas fa-paper-plane me-1"></i> Email Quote
+        </button>
+        {% if object.converted_to_order_id %}
+        <a href="{% url 'erp-order-edit' object.converted_to_order_id %}" class="btn btn-outline-success btn-sm" title="This quote has already been converted">
+          <i class="fas fa-file-invoice me-1"></i> View Sales Order
+        </a>
+        {% else %}
+        <button type="submit" name="_action" value="convert_to_order" class="btn btn-outline-success btn-sm" onclick="return confirm('Convert this quote to a Sales Order?\n\nThe quote is saved first, so the order matches what is on screen. The new order starts as Pending — no confirmation email is sent.');">
+          <i class="fas fa-file-invoice me-1"></i> Convert to Sales Order
+        </button>
+        {% endif %}
+        {% if object.superseded_by_id %}
+        <a href="{% url 'erp-quote-edit' object.superseded_by_id %}" class="btn btn-outline-secondary btn-sm" title="This quote has a newer revision">
+          <i class="fas fa-code-branch me-1" aria-hidden="true"></i> View revision
+        </a>
+        {% else %}
+        <button type="submit" form="quote-revise-form" class="btn btn-outline-secondary btn-sm" title="Copy this quote as its next revision, on the same deal" onclick="return confirm('Create revision {{ object.revision_number|add:1 }} of {{ object.quote_number }}?\n\nThe new quote copies these lines and stays on the same deal; this one is marked superseded.');">
+          <i class="fas fa-code-branch me-1" aria-hidden="true"></i> New revision
+        </button>
+        {% endif %}
+        {% endif %}
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        <button type="submit" name="_action" value="save" class="btn bg-gradient-primary btn-sm">
+          <i class="fas fa-save me-1"></i> Save
+        </button>
+        <button type="submit" name="_action" value="save_continue" class="btn bg-gradient-info btn-sm">
+          Save &amp; Continue
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% comment %}
+  Send forms, deliberately siblings of #document-form rather than children.
+  Nesting a <form> is a parse error: the HTML5 parser drops the inner tag,
+  its submit button silently becomes a submit control for the OUTER form,
+  and "Email" POSTs to the edit URL and just saves the document. Verified in
+  Chrome: the nested form does not exist in the DOM at all.
+  Buttons reach these via form="...".
+{% endcomment %}
+{% if is_edit and doc_type_label == "Sales Order" and existing_invoice %}
+<form method="post" id="invoice-send-form" action="{% url 'erp-invoice-send' existing_invoice.pk %}" data-submit-once>{% csrf_token %}{% once_field %}</form>
+{% endif %}
+{% if is_edit and people_url %}
+<form method="post" id="doc-people-form" action="{{ people_url }}" data-submit-once>{% csrf_token %}</form>
+{% endif %}
+{% if is_edit and doc_type_label == "Quote" and object.status != "cancelled" %}
+<form method="post" id="quote-send-form" action="{% url 'erp-quote-send' object.pk %}" data-submit-once>{% csrf_token %}{% once_field %}</form>
+<form method="post" id="quote-revise-form" action="{% url 'erp-quote-revise' object.pk %}" data-submit-once>{% csrf_token %}{% once_field %}</form>
+{% endif %}
+
+{# ===== RESEND EMAIL MODAL ===== #}
+{% if is_edit and doc_type_label == "Sales Order" %}
+<div class="modal fade" id="resendEmailModal" tabindex="-1" aria-labelledby="resendEmailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title" id="resendEmailModalLabel">Resend Order Confirmation</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="resend-email-input" class="form-label text-xs text-uppercase text-muted">Recipient Email</label>
+          <input type="email" class="form-control form-control-sm" id="resend-email-input"
+                 value="{{ customer_email|default:'' }}">
+        </div>
+        {% if last_email_log %}
+        <p class="text-xs text-muted mb-0">
+          Last sent: {{ last_email_log.created_at|date:"M j, Y g:i A" }} to {{ last_email_log.recipient_email }}
+          {% if last_email_log.status == "failed" %}<span class="text-danger">(failed)</span>{% endif %}
+        </p>
+        {% endif %}
+        <div id="resend-email-error" class="text-danger text-xs mt-2" style="display: none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn bg-gradient-info btn-sm" id="btn-send-order-email">
+          <i class="fas fa-paper-plane me-1"></i> Send
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ===== ADDRESS MODAL ===== #}
+<div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addressModalLabel">Add New Address</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="address-modal-error" class="alert alert-danger text-sm d-none"></div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Address Type <span class="text-danger">*</span></label>
+            <select class="form-control form-control-sm" id="addr-address_type">
+              <option value="billing">Billing</option>
+              <option value="shipping">Shipping</option>
+              <option value="both" selected>Both</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Label</label>
+            <input type="text" class="form-control form-control-sm" id="addr-label" placeholder="e.g. Main Office">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">First Name</label>
+            <input type="text" class="form-control form-control-sm" id="addr-first_name">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Last Name</label>
+            <input type="text" class="form-control form-control-sm" id="addr-last_name">
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label text-sm">Company Name</label>
+            <input type="text" class="form-control form-control-sm" id="addr-company_name">
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label text-sm">Address Line 1 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" id="addr-address_line_1">
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label text-sm">Address Line 2</label>
+            <input type="text" class="form-control form-control-sm" id="addr-address_line_2">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label text-sm">City <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" id="addr-city">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label text-sm">State/Province <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" id="addr-state_province">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label text-sm">Postal Code <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" id="addr-postal_code">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Country</label>
+            <input type="text" class="form-control form-control-sm" id="addr-country" value="US">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Phone</label>
+            <input type="text" class="form-control form-control-sm" id="addr-phone">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn bg-gradient-primary btn-sm" id="btn-save-address">
+          <i class="fas fa-save me-1"></i> Save Address
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{# ===== CUSTOMER MODAL ===== #}
+<div class="modal fade" id="customerModal" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="customerModalLabel">Add New Customer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="customer-modal-error" class="alert alert-danger text-sm d-none"></div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">First Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" id="cust-first_name">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Last Name</label>
+            <input type="text" class="form-control form-control-sm" id="cust-last_name">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Email <span class="text-danger">*</span></label>
+            <input type="email" class="form-control form-control-sm" id="cust-email">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Phone</label>
+            <input type="text" class="form-control form-control-sm" id="cust-phone">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Company Name</label>
+            <input type="text" class="form-control form-control-sm" id="cust-company_name">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Type</label>
+            <select class="form-control form-control-sm" id="cust-customer_type">
+              <option value="individual" selected>Individual</option>
+              <option value="business">Business</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn bg-gradient-primary btn-sm" id="btn-save-customer">
+          <i class="fas fa-save me-1"></i> Save Customer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{# ===== CONTACT MODAL ===== #}
+<div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="contactModalLabel">Add New Contact</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="contact-modal-error" class="alert alert-danger text-sm d-none"></div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">First Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" id="contact-first_name">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Last Name</label>
+            <input type="text" class="form-control form-control-sm" id="contact-last_name">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Email</label>
+            <input type="email" class="form-control form-control-sm" id="contact-email">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-sm">Phone</label>
+            <input type="text" class="form-control form-control-sm" id="contact-phone">
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label text-sm">Job Title</label>
+            <input type="text" class="form-control form-control-sm" id="contact-job_title">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn bg-gradient-primary btn-sm" id="btn-save-contact">
+          <i class="fas fa-save me-1"></i> Save Contact
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{# ===== SHIPPING RATES MODAL ===== #}
+<div class="modal fade" id="shippingRatesModal" tabindex="-1" aria-labelledby="shippingRatesModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shippingRatesModalLabel">Shipping Rates</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="shipping-rates-error" class="alert alert-danger text-sm d-none"></div>
+        <div id="shipping-rates-loading" class="text-center py-4 d-none">
+          <div class="spinner-border text-info" role="status"></div>
+          <p class="text-sm mt-2 mb-0">Fetching live shipping rates...</p>
+        </div>
+        <div id="shipping-rates-profile" class="d-none mb-3">
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <span class="badge bg-gradient-secondary" id="sr-weight"></span>
+            <span class="badge bg-gradient-secondary" id="sr-dims"></span>
+            <span class="badge bg-gradient-secondary" id="sr-items"></span>
+            <span class="badge bg-gradient-info d-none" id="sr-ltl"></span>
+            <span class="badge bg-gradient-warning d-none" id="sr-hazmat"></span>
+          </div>
+          <p class="text-xs text-muted mb-0" id="sr-ship-from"></p>
+        </div>
+        <div id="shipping-rates-warnings" class="d-none mb-2"></div>
+        <div id="shipping-rates-list" class="d-none">
+          <table class="table table-sm table-hover align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Carrier</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Service</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Rate</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Transit</th>
+                <th style="width:60px"></th>
+              </tr>
+            </thead>
+            <tbody id="shipping-rates-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ===== TOAST CONTAINER ===== #}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1090;">
+  <div id="email-toast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="email-toast-body"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+{% if show_shipment_groups %}
+<script src="{% static 'assets/js/plugins/dragula/dragula.min.js' %}"></script>
+{% endif %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var VARIANT_SEARCH_URL = "{% url 'erp-variant-search' %}";
+  var VARIANT_LOOKUP_URL = "{% url 'erp-variant-lookup' %}";
+  var CUSTOMER_DEFAULTS_URL = "{% url 'erp-customer-defaults-ajax' pk='00000000-0000-0000-0000-000000000000' %}";
+  var ADDRESS_DETAIL_URL = "{% url 'erp-address-detail-ajax' pk='00000000-0000-0000-0000-000000000000' %}";
+  var ADDRESS_UPDATE_URL = "{% url 'erp-address-update-ajax' pk='00000000-0000-0000-0000-000000000000' %}";
+  var SHOW_SG = {% if show_shipment_groups %}true{% else %}false{% endif %};
+  var DOC_CURRENCY = "{{ form.instance.currency|default:'USD'|escapejs }}";
+
+  // ── Address display under dropdowns ──────────────────────
+  var addrDetails = {% if address_details_json %}{{ address_details_json|safe }}{% else %}{}{% endif %};
+
+  function updateAddrDisplay(fieldName) {
+    var sel = document.querySelector("[name='" + fieldName + "']");
+    var panel = document.querySelector("[data-addr-for='" + fieldName + "']");
+    if (!sel || !panel) return;
+    var val = sel.value;
+    panel.innerHTML = addrDetails[val] || '<span class="opacity-5">—</span>';
+  }
+
+  ["billing_address", "shipping_address"].forEach(function(fn) {
+    var sel = document.querySelector("[name='" + fn + "']");
+    if (sel) {
+      sel.addEventListener("change", function() { updateAddrDisplay(fn); });
+      updateAddrDisplay(fn);
+    }
+  });
+
+  // ── AJAX FK Search Widgets ─────────────────────────────────
+  var AJAX_CONFIG = {% if ajax_search_fields %}{{ ajax_search_fields|safe }}{% else %}{}{% endif %};
+
+  // Escape user-controlled strings before innerHTML insertion (M3 Track G, S4).
+  function escHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c) {
+      return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;"}[c];
+    });
+  }
+
+  function initAjaxSearchWidget(fieldName, cfg) {
+    var selectEl = document.querySelector("select[name='" + fieldName + "']");
+    if (!selectEl) return;
+
+    // Hide the original <select>
+    selectEl.style.display = "none";
+
+    // Create search input
+    var wrapper = document.createElement("div");
+    wrapper.className = "position-relative ajax-search-widget";
+    wrapper.style.flex = "1";
+    var searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.className = "form-control form-control-sm";
+    searchInput.placeholder = cfg.placeholder || "Search...";
+    searchInput.autocomplete = "off";
+    searchInput.setAttribute("data-ajax-field", fieldName);
+    if (cfg.value && cfg.label) {
+      searchInput.value = cfg.label;
+    }
+
+    var resultsDiv = document.createElement("div");
+    resultsDiv.className = "list-group position-absolute w-100";
+    resultsDiv.style.cssText = "z-index:1050; display:none; max-height:250px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,.3);";
+
+    wrapper.appendChild(searchInput);
+    wrapper.appendChild(resultsDiv);
+    selectEl.parentNode.insertBefore(wrapper, selectEl);
+
+    // Debounced search
+    var debounceTimer = null;
+    searchInput.addEventListener("input", function() {
+      var q = searchInput.value.trim();
+      clearTimeout(debounceTimer);
+      if (q.length < 2) { resultsDiv.style.display = "none"; return; }
+      debounceTimer = setTimeout(function() {
+        var url = cfg.search_url + "?q=" + encodeURIComponent(q);
+        // For address fields, add customer param
+        if (cfg.depends_on) {
+          var parentSel = document.querySelector("select[name='" + cfg.depends_on + "']");
+          if (parentSel && parentSel.value) url += "&customer=" + parentSel.value;
+          else { resultsDiv.style.display = "none"; return; }
+        }
+        fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+          resultsDiv.innerHTML = "";
+          if (!data.results || data.results.length === 0) {
+            resultsDiv.innerHTML = '<div class="list-group-item text-xs text-muted">No results</div>';
+            resultsDiv.style.display = "block";
+            return;
+          }
+          data.results.forEach(function(item) {
+            var a = document.createElement("a");
+            a.href = "#";
+            a.className = "list-group-item list-group-item-action text-xs py-2";
+            // Labels carry user-controlled names — escape before innerHTML.
+            var text = escHtml(item.label);
+            if (item.company) text += ' <span class="opacity-7">(' + escHtml(item.company) + ')</span>';
+            if (item.code) text += ' <span class="opacity-7">[' + escHtml(item.code) + ']</span>';
+            a.innerHTML = text;
+            a.addEventListener("click", function(e) {
+              e.preventDefault();
+              selectAjaxValue(fieldName, item.id, item.label, cfg);
+              resultsDiv.style.display = "none";
+            });
+            resultsDiv.appendChild(a);
+          });
+          resultsDiv.style.display = "block";
+        });
+      }, 300);
+    });
+
+    // Enter inside the search box picks the first suggestion (or does
+    // nothing); it must never submit the document form around it. Found by
+    // the 2026-10-18 persona run (F-088): a new PO was saved empty.
+    searchInput.addEventListener("keydown", function(e) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      var first = resultsDiv.querySelector("a.list-group-item");
+      if (resultsDiv.style.display !== "none" && first) first.click();
+    });
+
+    // Focus shows results if already populated
+    searchInput.addEventListener("focus", function() {
+      if (searchInput.value.trim().length >= 2 && resultsDiv.children.length > 0) {
+        resultsDiv.style.display = "block";
+      }
+    });
+
+    // Close on outside click
+    document.addEventListener("click", function(e) {
+      if (!wrapper.contains(e.target)) resultsDiv.style.display = "none";
+    });
+
+    // Clear value if user empties the input
+    searchInput.addEventListener("blur", function() {
+      setTimeout(function() {
+        if (!searchInput.value.trim()) {
+          selectEl.innerHTML = '<option value="">---------</option>';
+          selectEl.value = "";
+          selectEl.dispatchEvent(new Event("change"));
+        }
+      }, 200);
+    });
+  }
+
+  function selectAjaxValue(fieldName, id, label, cfg) {
+    var selectEl = document.querySelector("select[name='" + fieldName + "']");
+    var searchInput = document.querySelector("input[data-ajax-field='" + fieldName + "']");
+    if (!selectEl) return;
+
+    // Set the hidden select value
+    selectEl.innerHTML = "";
+    var opt = new Option(label, id, true, true);
+    selectEl.appendChild(opt);
+    selectEl.dispatchEvent(new Event("change"));
+
+    // Update search input display
+    if (searchInput) searchInput.value = label;
+
+    // If this is the customer field, load defaults
+    if (fieldName === "customer" && id) {
+      loadCustomerDefaults(id);
+      refreshEngagementOptions(id);
+    }
+
+    // Update address display if applicable
+    if (fieldName === "billing_address" || fieldName === "shipping_address") {
+      updateAddrDisplay(fieldName);
+    }
+
+    // Show/hide edit button based on whether a value is selected
+    toggleEditButton(fieldName, id);
+  }
+
+  // The quote editor's Engagement select (R1.06): the deals the picked
+  // customer's party is on. Keeps the current pick when it is still offered
+  // (a quote started from an engagement whose customer was just created).
+  function refreshEngagementOptions(customerId) {
+    var select = document.querySelector("select[name='engagement'][data-options-url]");
+    if (!select) return;
+    fetch(select.getAttribute("data-options-url") + "?customer=" + encodeURIComponent(customerId))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var current = select.value;
+        var keep = null;
+        Array.from(select.options).forEach(function(o) { if (o.value && o.value === current) keep = o.textContent; });
+        select.innerHTML = "";
+        var blank = document.createElement("option");
+        blank.value = ""; blank.textContent = "New engagement";
+        select.appendChild(blank);
+        var offered = false;
+        (data.results || []).forEach(function(e) {
+          var opt = document.createElement("option");
+          opt.value = e.id; opt.textContent = e.label;
+          if (e.id === current) { opt.selected = true; offered = true; }
+          select.appendChild(opt);
+        });
+        if (current && !offered && keep !== null) {
+          var opt = document.createElement("option");
+          opt.value = current; opt.textContent = keep; opt.selected = true;
+          select.appendChild(opt);
+        }
+      })
+      .catch(function() {});
+  }
+
+  function loadCustomerDefaults(customerId) {
+    var url = CUSTOMER_DEFAULTS_URL.replace("00000000-0000-0000-0000-000000000000", customerId);
+    fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+      // Update address details cache
+      if (data.details) {
+        Object.keys(data.details).forEach(function(k) { addrDetails[k] = data.details[k]; });
+      }
+
+      // Populate address dropdowns
+      ["billing_address", "shipping_address"].forEach(function(fn) {
+        var selectEl = document.querySelector("select[name='" + fn + "']");
+        if (!selectEl) return;
+        selectEl.innerHTML = '<option value="">---------</option>';
+        if (data.addresses) {
+          data.addresses.forEach(function(a) {
+            var opt = new Option(a.label, a.id);
+            selectEl.appendChild(opt);
+          });
+        }
+        // Auto-select default (or clear if none)
+        var defaultId = fn === "billing_address" ? data.default_billing : data.default_shipping;
+        var searchInput = document.querySelector("input[data-ajax-field='" + fn + "']");
+        if (defaultId) {
+          selectEl.value = defaultId;
+          if (searchInput) {
+            var addr = data.addresses.find(function(a) { return a.id === defaultId; });
+            if (addr) searchInput.value = addr.label;
+          }
+        } else {
+          selectEl.value = "";
+          if (searchInput) searchInput.value = "";
+        }
+        selectEl.dispatchEvent(new Event("change"));
+        updateAddrDisplay(fn);
+      });
+    });
+  }
+
+  // ── Toggle edit buttons based on selection ──────────────
+  function toggleEditButton(fieldName, value) {
+    var editBtn;
+    if (fieldName === "billing_address" || fieldName === "shipping_address") {
+      editBtn = document.querySelector(".btn-edit-address[data-field='" + fieldName + "']");
+    } else if (fieldName === "contact") {
+      editBtn = document.querySelector(".btn-edit-contact");
+    }
+    if (editBtn) {
+      if (value) { editBtn.classList.remove("d-none"); }
+      else { editBtn.classList.add("d-none"); }
+    }
+  }
+
+  // Initialize all AJAX search widgets
+  Object.keys(AJAX_CONFIG).forEach(function(fieldName) {
+    initAjaxSearchWidget(fieldName, AJAX_CONFIG[fieldName]);
+    // Show edit button if value is pre-filled
+    var cfg = AJAX_CONFIG[fieldName];
+    if (cfg.value) toggleEditButton(fieldName, cfg.value);
+  });
+
+  // ── Auto-size item name textareas ──────────────────────────
+  function autoSizeTextarea(ta) {
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  }
+
+  function initAutoSizeTextareas() {
+    document.querySelectorAll("textarea[name$='-item_name']").forEach(function(ta) {
+      autoSizeTextarea(ta);
+      ta.addEventListener("input", function() { autoSizeTextarea(ta); });
+    });
+  }
+  initAutoSizeTextareas();
+
+  // ── Format qty (no decimals), rate & amount (2 decimals) ──
+  function formatQty(input) {
+    if (!input || !input.value) return;
+    var v = parseFloat(input.value);
+    if (!isNaN(v)) input.value = Math.round(v);
+  }
+  function formatMoney(input) {
+    if (!input || !input.value) return;
+    var v = parseFloat(input.value);
+    if (!isNaN(v)) input.value = v.toFixed(2);
+  }
+
+  function initNumberFormatting() {
+    document.querySelectorAll(".li-qty").forEach(function(inp) {
+      formatQty(inp);
+      inp.addEventListener("change", function() { formatQty(inp); });
+      inp.setAttribute("step", "1");
+    });
+    document.querySelectorAll(".li-rate, .li-amount").forEach(function(inp) {
+      formatMoney(inp);
+      inp.addEventListener("change", function() { formatMoney(inp); });
+      inp.setAttribute("step", "0.01");
+    });
+  }
+  initNumberFormatting();
+
+  // ── Variant search autocomplete ──────────────────────────
+  var searchDebounceTimers = {};
+
+  function initVariantSearch(row) {
+    var wrapper = row.querySelector(".variant-search-wrapper");
+    if (!wrapper) return;
+    var searchInput = wrapper.querySelector(".variant-search-input");
+    var resultsList = wrapper.querySelector(".variant-search-results");
+    var hiddenSelect = wrapper.querySelector("select[name$='-variant']");
+    if (!searchInput || !hiddenSelect) return;
+
+    // Pre-fill search input with current selection text
+    if (hiddenSelect.value) {
+      var selectedOption = hiddenSelect.options[hiddenSelect.selectedIndex];
+      if (selectedOption && selectedOption.text && selectedOption.text !== "---------") {
+        searchInput.value = selectedOption.text;
+      }
+    }
+
+    searchInput.addEventListener("input", function() {
+      var q = this.value.trim();
+      var inputId = hiddenSelect.name;
+
+      if (searchDebounceTimers[inputId]) clearTimeout(searchDebounceTimers[inputId]);
+
+      if (q.length < 1) {
+        resultsList.style.display = "none";
+        resultsList.innerHTML = "";
+        return;
+      }
+
+      searchDebounceTimers[inputId] = setTimeout(function() {
+        fetch(VARIANT_SEARCH_URL + "?q=" + encodeURIComponent(q))
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            resultsList.innerHTML = "";
+            if (!data.results || data.results.length === 0) {
+              resultsList.innerHTML = '<div class="list-group-item text-muted text-xs py-1">No results found</div>';
+              resultsList.style.display = "block";
+              return;
+            }
+            data.results.forEach(function(item) {
+              var el = document.createElement("a");
+              el.href = "#";
+              el.className = "list-group-item list-group-item-action py-1 px-2 text-xs";
+              el.innerHTML = '<strong>' + escHtml(item.sku) + '</strong> &mdash; ' + escHtml(item.name) +
+                ' <span class="text-muted ms-1">$' + escHtml(item.retail_price) + '</span>';
+              el.addEventListener("mousedown", function(e) {
+                e.preventDefault();
+                selectVariant(row, item, searchInput, hiddenSelect, resultsList);
+              });
+              resultsList.appendChild(el);
+            });
+            resultsList.style.display = "block";
+          })
+          .catch(function() {});
+      }, 200);
+    });
+
+    searchInput.addEventListener("blur", function() {
+      setTimeout(function() { resultsList.style.display = "none"; }, 150);
+    });
+
+    searchInput.addEventListener("focus", function() {
+      if (resultsList.children.length > 0) resultsList.style.display = "block";
+    });
+  }
+
+  function selectVariant(row, item, searchInput, hiddenSelect, resultsList) {
+    var optionExists = false;
+    for (var i = 0; i < hiddenSelect.options.length; i++) {
+      if (hiddenSelect.options[i].value === item.id) {
+        optionExists = true;
+        break;
+      }
+    }
+    if (!optionExists) {
+      var opt = new Option(item.sku, item.id);
+      hiddenSelect.add(opt);
+    }
+    hiddenSelect.value = item.id;
+    // The search input IS the sku field in SO/Quote mode, so this also
+    // persists the SKU. PO mode has a separate li-sku input.
+    searchInput.value = item.sku;
+    var skuField = row.querySelector(".li-sku");
+    if (skuField && skuField !== searchInput) skuField.value = item.sku || "";
+    resultsList.style.display = "none";
+
+    var nameField = row.querySelector("[name$='-item_name']");
+    if (nameField) nameField.value = item.name || "";
+
+    // Hide item-name search results if open
+    var nameResults = row.querySelector(".item-name-search-results");
+    if (nameResults) nameResults.style.display = "none";
+
+    var priceField = row.querySelector("input[name$='-unit_price_ex_tax']")
+                  || row.querySelector("input[name$='-unit_cost']");
+    if (priceField) priceField.value = item.retail_price || "0";
+
+    // Default quantity to 1 if empty or zero
+    var qtyField = row.querySelector("input[name$='-quantity']") || row.querySelector("input[name$='-quantity_ordered']");
+    if (qtyField && (!qtyField.value || parseFloat(qtyField.value) === 0)) {
+      qtyField.value = "1";
+    }
+
+    recalcRow(row);
+  }
+
+  // ── Item name search autocomplete (uses website FTS5 search) ──
+  var PRODUCT_SEARCH_URL = "{% if storefront_url %}{{ storefront_url }}/api/product-search{% endif %}";
+  var nameSearchTimers = {};
+
+  function initItemNameSearch(row) {
+    if (!PRODUCT_SEARCH_URL) return;
+    var wrapper = row.querySelector(".item-name-search-wrapper");
+    if (!wrapper) return;
+    var nameField = wrapper.querySelector("[name$='-item_name']");
+    var resultsList = wrapper.querySelector(".item-name-search-results");
+    if (!nameField || !resultsList) return;
+
+    var timerId = nameField.getAttribute("name") || Math.random();
+
+    nameField.addEventListener("input", function() {
+      var q = this.value.trim();
+      if (nameSearchTimers[timerId]) clearTimeout(nameSearchTimers[timerId]);
+
+      if (q.length < 2) {
+        resultsList.style.display = "none";
+        resultsList.innerHTML = "";
+        return;
+      }
+
+      // Skip search if variant is already selected
+      var variantWrapper = row.querySelector(".variant-search-wrapper");
+      var hiddenSelect = variantWrapper ? variantWrapper.querySelector("select[name$='-variant']") : null;
+      if (hiddenSelect && hiddenSelect.value) return;
+
+      nameSearchTimers[timerId] = setTimeout(function() {
+        fetch(PRODUCT_SEARCH_URL + "?q=" + encodeURIComponent(q) + "&limit=10")
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            resultsList.innerHTML = "";
+            if (!data.results || data.results.length === 0) {
+              resultsList.innerHTML = '<div class="list-group-item text-muted text-xs py-1">No products found</div>';
+              resultsList.style.display = "block";
+              return;
+            }
+            data.results.forEach(function(item) {
+              var el = document.createElement("div");
+              el.className = "list-group-item list-group-item-action py-1 px-2 text-xs";
+              el.style.cursor = "pointer";
+              var priceStr = item.sale_price ? '$' + Number(item.sale_price).toFixed(2) : (item.price ? '$' + Number(item.price).toFixed(2) : '');
+              el.innerHTML = '<strong>' + escHtml(item.sku || '') + '</strong> &mdash; ' + escHtml(item.title) +
+                (priceStr ? ' <span class="text-muted ms-1">' + priceStr + '</span>' : '');
+              el.addEventListener("mousedown", function(e) {
+                e.preventDefault();
+                // Look up the ERP variant by SKU to get the Django variant ID
+                if (item.sku && hiddenSelect) {
+                  fetch(VARIANT_SEARCH_URL + "?q=" + encodeURIComponent(item.sku))
+                    .then(function(r) { return r.json(); })
+                    .then(function(erpData) {
+                      if (erpData.results && erpData.results.length > 0) {
+                        // Find exact SKU match
+                        var match = erpData.results.find(function(v) { return v.sku === item.sku; }) || erpData.results[0];
+                        var searchInput = variantWrapper ? variantWrapper.querySelector(".variant-search-input") : null;
+                        if (searchInput) {
+                          selectVariant(row, match, searchInput, hiddenSelect, resultsList);
+                        }
+                      } else {
+                        // No ERP variant found — just set name
+                        nameField.value = item.title || "";
+                        resultsList.style.display = "none";
+                      }
+                    })
+                    .catch(function() {
+                      nameField.value = item.title || "";
+                      resultsList.style.display = "none";
+                    });
+                } else {
+                  nameField.value = item.title || "";
+                  resultsList.style.display = "none";
+                }
+              });
+              resultsList.appendChild(el);
+            });
+            resultsList.style.display = "block";
+          })
+          .catch(function() {});
+      }, 300);
+    });
+
+    nameField.addEventListener("blur", function() {
+      setTimeout(function() { resultsList.style.display = "none"; }, 200);
+    });
+
+    nameField.addEventListener("focus", function() {
+      var vs = row.querySelector("select[name$='-variant']");
+      if (resultsList.children.length > 0 && (!vs || !vs.value)) {
+        resultsList.style.display = "block";
+      }
+    });
+  }
+
+  // ── Amount = qty x rate auto-calculation ─────────────────
+  function recalcRow(row) {
+    var qtyField = row.querySelector("input[name$='-quantity']") || row.querySelector("input[name$='-quantity_ordered']");
+    var rateField = row.querySelector("input[name$='-unit_price_ex_tax']") || row.querySelector("input[name$='-unit_cost']");
+    var discField = row.querySelector("input[name$='-discount_percent']");
+    var totalField = row.querySelector("input[name$='-line_total_ex_tax']") || row.querySelector("input[name$='-line_total']");
+    if (!qtyField || !rateField || !totalField) return;
+
+    var qty = parseFloat(qtyField.value) || 0;
+    var rate = parseFloat(rateField.value) || 0;
+    var disc = discField ? (parseFloat(discField.value) || 0) : 0;
+    var amount = qty * rate * (1 - disc / 100);
+    totalField.value = amount.toFixed(2);
+    recalcTotals();
+  }
+
+  function attachCalcListeners(row) {
+    var fields = row.querySelectorAll("input[name$='-quantity'], input[name$='-quantity_ordered'], input[name$='-unit_price_ex_tax'], input[name$='-unit_cost'], input[name$='-discount_percent']");
+    fields.forEach(function(f) {
+      f.addEventListener("input", function() { recalcRow(row); });
+    });
+  }
+
+  // ── Recalculate document totals ──────────────────────────
+  function getAllLineItemRows() {
+    if (SHOW_SG) {
+      return document.querySelectorAll(".sg-items-body tr.line-item-row");
+    }
+    return document.querySelectorAll("#line-items-body tr.line-item-row");
+  }
+
+  function recalcTotals() {
+    var subtotal = 0;
+    getAllLineItemRows().forEach(function(row) {
+      if (row.style.display === "none") return;
+      var totalField = row.querySelector("input[name$='-line_total_ex_tax']") || row.querySelector("input[name$='-line_total']");
+      if (totalField) subtotal += parseFloat(totalField.value) || 0;
+    });
+    var subtotalField = document.querySelector("input[name='subtotal_ex_tax']") || document.querySelector("input[name='subtotal']");
+    if (subtotalField) subtotalField.value = subtotal.toFixed(2);
+
+    var taxField = document.querySelector("input[name='tax_total']");
+    var shippingField = document.querySelector("input[name='shipping_cost_ex_tax']") || document.querySelector("input[name='shipping_cost']");
+    var discountField = document.querySelector("input[name='discount_amount']");
+    var handlingField = document.querySelector("input[name='handling_fee']") || document.querySelector("input[name='other_charges']");
+    var grandField = document.querySelector("input[name='grand_total']");
+
+    var tax = taxField ? (parseFloat(taxField.value) || 0) : 0;
+    var shipping = shippingField ? (parseFloat(shippingField.value) || 0) : 0;
+    var discountAmt = discountField ? (parseFloat(discountField.value) || 0) : 0;
+    var handling = handlingField ? (parseFloat(handlingField.value) || 0) : 0;
+    var discPctField = document.querySelector("input[name='discount_percent']");
+    var discPct = discPctField ? (parseFloat(discPctField.value) || 0) : 0;
+    var pctDiscount = discPct > 0 ? subtotal * (discPct / 100) : 0;
+    var grand = subtotal - discountAmt - pctDiscount + tax + shipping + handling;
+    if (grandField) grandField.value = grand.toFixed(2);
+    if (SHOW_SG) updateGroupSummaries();
+  }
+
+  // Attach listeners to total-affecting fields
+  ["tax_total", "shipping_cost_ex_tax", "shipping_cost", "discount_amount", "discount_percent", "handling_fee", "other_charges"].forEach(function(name) {
+    var field = document.querySelector("input[name='" + name + "']");
+    if (field) field.addEventListener("input", recalcTotals);
+  });
+
+  // ── Initialize existing rows ─────────────────────────────
+  getAllLineItemRows().forEach(function(row) {
+    initVariantSearch(row);
+    initItemNameSearch(row);
+    attachCalcListeners(row);
+  });
+
+  // ── Recalculate totals on page load for consistency ─────
+  recalcTotals();
+
+  // ── Delete row handler ───────────────────────────────────
+  function attachDeleteHandler(btn) {
+    btn.addEventListener("click", function() {
+      var row = this.closest("tr");
+      var deleteInput = row.querySelector("input[name$='-DELETE']");
+      if (deleteInput) {
+        // Django renders DELETE as a checkbox; setting only .value leaves
+        // the box unchecked and the browser drops it from the POST body,
+        // so the formset never sees the deletion. Toggle .checked too.
+        deleteInput.checked = true;
+        deleteInput.value = "on";
+        row.style.display = "none";
+        recalcTotals();
+        if (SHOW_SG) renumberAllGroups();
+      }
+    });
+  }
+
+  document.querySelectorAll(".btn-delete-row").forEach(attachDeleteHandler);
+
+  // ── Clone row helper ─────────────────────────────────────
+  function cloneNewRow(sourceRow, formIdx, sgIndex) {
+    var newRow = sourceRow.cloneNode(true);
+    // A new line has no fulfillment yet, even when cloned from a locked one.
+    makeRowMovable(newRow);
+    newRow.querySelectorAll("input, select, textarea").forEach(function(el) {
+      var name = el.getAttribute("name");
+      if (name) {
+        el.setAttribute("name", name.replace(/-\d+-/, "-" + formIdx + "-"));
+        var elId = el.getAttribute("id");
+        if (elId) el.setAttribute("id", elId.replace(/-\d+-/, "-" + formIdx + "-"));
+      }
+      if (el.type !== "hidden") el.value = "";
+      // Clear hidden fields for new forms (id, DELETE, shipment_group)
+      if (el.type === "hidden" && (name && (name.endsWith("-id") || name.endsWith("-DELETE")))) {
+        el.value = "";
+      }
+      // DELETE is a checkbox by default; an inherited .checked from the
+      // source row would mark a brand-new line for immediate deletion.
+      if (el.type === "checkbox" && name && name.endsWith("-DELETE")) {
+        el.checked = false;
+      }
+    });
+    // Set sg_index hidden field
+    var sgField = newRow.querySelector("input[name$='-sg_index']");
+    if (sgField) sgField.value = sgIndex !== undefined ? sgIndex : 0;
+    // Clear shipment_group hidden (will be set server-side)
+    var sgHidden = newRow.querySelector("input[name$='-shipment_group']");
+    if (sgHidden) sgHidden.value = "";
+    // Clear the search input
+    var searchInput = newRow.querySelector(".variant-search-input");
+    if (searchInput) searchInput.value = "";
+    var resultsList = newRow.querySelector(".variant-search-results");
+    if (resultsList) { resultsList.innerHTML = ""; resultsList.style.display = "none"; }
+    // Set default quantity to 1
+    var qtyField = newRow.querySelector("input[name$='-quantity']") || newRow.querySelector("input[name$='-quantity_ordered']");
+    if (qtyField) qtyField.value = "1";
+    // Row number
+    var numSpan = newRow.querySelector("span.li-row-num") || newRow.querySelector("span.text-sm");
+    if (numSpan) numSpan.textContent = "?";
+    newRow.style.display = "";
+    // Attach listeners
+    initVariantSearch(newRow);
+    initItemNameSearch(newRow);
+    attachCalcListeners(newRow);
+    // Clear item-name search results on cloned row
+    var nameResults = newRow.querySelector(".item-name-search-results");
+    if (nameResults) { nameResults.innerHTML = ""; nameResults.style.display = "none"; }
+    // Auto-size textareas and format numbers on new rows
+    newRow.querySelectorAll("textarea[name$='-item_name']").forEach(function(ta) {
+      autoSizeTextarea(ta);
+      ta.addEventListener("input", function() { autoSizeTextarea(ta); });
+    });
+    newRow.querySelectorAll(".li-qty").forEach(function(inp) {
+      inp.setAttribute("step", "1");
+      inp.addEventListener("change", function() { formatQty(inp); });
+    });
+    newRow.querySelectorAll(".li-rate, .li-amount").forEach(function(inp) {
+      inp.setAttribute("step", "0.01");
+      inp.addEventListener("change", function() { formatMoney(inp); });
+    });
+    var delBtn = newRow.querySelector(".btn-delete-row");
+    if (delBtn) attachDeleteHandler(delBtn);
+    return newRow;
+  }
+
+  // ── Flat mode: Add row ───────────────────────────────────
+  var addBtn = document.getElementById("btn-add-row");
+  if (addBtn) {
+    addBtn.addEventListener("click", function() {
+      var totalForms = document.querySelector("[name$='-TOTAL_FORMS']");
+      var formIdx = parseInt(totalForms.value);
+      var tbody = document.getElementById("line-items-body");
+      var lastRow = tbody.querySelector("tr:last-child");
+      if (lastRow) {
+        var newRow = cloneNewRow(lastRow, formIdx);
+        newRow.querySelector("span.text-sm").textContent = formIdx + 1;
+        tbody.appendChild(newRow);
+        totalForms.value = formIdx + 1;
+      }
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ── Shipment Group mode ──────────────────────────────────
+  // ══════════════════════════════════════════════════════════
+
+  // ── Moving lines between shipments ───────────────────────
+  // A line belongs to the group whose index is in its hidden sg_index; the
+  // server resolves that index to one of this document's own groups on save.
+  // Moving a row (drag and drop, or the row's shipment menu) therefore only
+  // relocates the <tr> and rewrites sg_index: form prefixes and the
+  // management form never change. Rows with data-move-lock (order lines
+  // whose fulfillment has started) never move; the server enforces it too.
+  function sgCards() {
+    return Array.from(document.querySelectorAll(".shipment-group-card"));
+  }
+
+  function sgVisibleRows(card) {
+    return Array.from(card.querySelectorAll(".sg-items-body tr.line-item-row")).filter(function(row) {
+      return row.style.display !== "none";
+    });
+  }
+
+  function sgName(card, idx) {
+    var nameInput = card.querySelector("input[name^='sg_'][name$='_name']");
+    var name = nameInput ? nameInput.value.trim() : "";
+    return name || ("Shipment " + (idx + 1));
+  }
+
+  // The row's SKU or item name; "" for the untouched blank row.
+  function rowText(row) {
+    var sku = row.querySelector(".li-sku");
+    var name = row.querySelector("textarea[name$='-item_name']");
+    return (sku && sku.value.trim()) || (name && name.value.trim()) || "";
+  }
+
+  function rowLabel(row) {
+    return rowText(row) || "Line";
+  }
+
+  // Per-shipment line count and amount, under each group's table.
+  function updateGroupSummaries() {
+    sgCards().forEach(function(card) {
+      var summary = card.querySelector(".sg-summary");
+      if (!summary) return;
+      var lines = 0;
+      var amount = 0;
+      sgVisibleRows(card).forEach(function(row) {
+        if (!rowText(row)) return;
+        lines++;
+        var amt = row.querySelector(".li-amount");
+        amount += amt ? (parseFloat(amt.value) || 0) : 0;
+      });
+      // Same rule as the money filter: a symbol for USD only, the code otherwise.
+      var currency = (document.getElementById("id_currency") || {}).value || DOC_CURRENCY || "USD";
+      var prefix = currency === "USD" ? "$" : currency + " ";
+      summary.textContent = lines + (lines === 1 ? " line" : " lines") + " · " + prefix +
+        amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    });
+  }
+
+  // The "drop here" row of an empty group gives it height to drop into.
+  // Kept as the table's last row (a drop may land below it).
+  function syncEmptyStates() {
+    sgCards().forEach(function(card) {
+      var empty = card.querySelector("tr.sg-empty-row");
+      if (!empty) return;
+      if (empty.parentNode.lastElementChild !== empty) {
+        empty.parentNode.appendChild(empty);
+      }
+      empty.style.display = sgVisibleRows(card).length ? "none" : "";
+    });
+  }
+
+  // Rebuild every row's shipment menu: one option per group, its own selected.
+  function refreshMoveSelects() {
+    var cards = sgCards();
+    cards.forEach(function(card, idx) {
+      card.querySelectorAll("tr.line-item-row").forEach(function(row) {
+        var sel = row.querySelector("select.li-move-select");
+        if (!sel) return;
+        sel.innerHTML = "";
+        cards.forEach(function(other, i) {
+          var opt = document.createElement("option");
+          opt.value = String(i);
+          opt.textContent = sgName(other, i);
+          if (i === idx) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        var num = row.querySelector("span.li-row-num");
+        sel.setAttribute("aria-label", "Shipment for line " + (num ? num.textContent : "") + " (" + rowLabel(row) + ")");
+        sel.style.display = cards.length > 1 ? "" : "none";
+      });
+    });
+  }
+
+  function syncShipmentGroups() {
+    syncEmptyStates();
+    refreshMoveSelects();
+    updateGroupSummaries();
+  }
+
+  // Put a row in a group's table (above its "drop here" row) and stamp the
+  // group's index into the row's sg_index.
+  function placeRowInGroup(row, card) {
+    var tbody = card.querySelector(".sg-items-body");
+    tbody.insertBefore(row, tbody.querySelector("tr.sg-empty-row"));
+    var sgField = row.querySelector("input[name$='-sg_index']");
+    if (sgField) sgField.value = card.getAttribute("data-sg-index");
+  }
+
+  function announceMove(row, card) {
+    var status = document.getElementById("sg-move-status");
+    var idx = sgCards().indexOf(card);
+    if (status) status.textContent = rowLabel(row) + " moved to " + sgName(card, idx) + ".";
+    row.classList.remove("li-moved");
+    void row.offsetWidth;  // restart the highlight animation
+    row.classList.add("li-moved");
+  }
+
+  // A row cloned from a locked line (Add Row) must not inherit its lock.
+  function makeRowMovable(row) {
+    if (!row.hasAttribute("data-move-lock")) return;
+    row.removeAttribute("data-move-lock");
+    var lock = row.querySelector(".li-move-locked");
+    if (lock) {
+      var handle = document.createElement("i");
+      handle.className = "fas fa-grip-vertical li-drag-handle text-secondary";
+      handle.title = "Drag to reorder, or to another shipment";
+      handle.setAttribute("aria-hidden", "true");
+      lock.parentNode.replaceChild(handle, lock);
+    }
+    var del = row.querySelector(".btn-delete-row");
+    if (del) { del.classList.remove("d-none"); del.disabled = false; }
+    if (del && !row.querySelector("select.li-move-select")) {
+      var sel = document.createElement("select");
+      sel.className = "form-select form-select-sm li-move-select";
+      sel.title = "Move to another shipment";
+      sel.style.display = "none";
+      del.parentNode.insertBefore(sel, del);
+    }
+  }
+
+  if (SHOW_SG) {
+    var drake = null;
+
+    // ── Dragula init ──────────────────────────────────────
+    function initDragula() {
+      if (typeof dragula === "undefined") { console.warn("dragula not loaded"); return; }
+      var containers = Array.from(document.querySelectorAll(".sg-items-body"));
+      if (drake) drake.destroy();
+      drake = dragula(containers, {
+        moves: function(el, source, handle) {
+          if (!el.classList.contains("line-item-row") || el.hasAttribute("data-move-lock")) return false;
+          return !!(handle.closest && handle.closest(".li-drag-handle"));
+        },
+        accepts: function(el, target) {
+          return target.classList.contains("sg-items-body");
+        },
+        revertOnSpill: true,
+      });
+      drake.on("drop", function(el, target, source) {
+        // Update the row's sg_index to match the target group
+        var card = target.closest(".shipment-group-card");
+        if (card) {
+          var sgIdx = card.getAttribute("data-sg-index");
+          var sgField = el.querySelector("input[name$='-sg_index']");
+          if (sgField) sgField.value = sgIdx;
+        }
+        renumberAllGroups();
+        recalcTotals();
+        if (card && target !== source) announceMove(el, card);
+      });
+      // "Drop here" rows stay put until the drop: hiding one mid-drag shifts
+      // the target table under the pointer, and the release then misses it.
+      drake.on("cancel", function() { syncShipmentGroups(); });
+
+      // Scroll the page while a row is held near the top or bottom edge, so
+      // a line can be dragged to a shipment that is off screen.
+      var scroll = { active: false, y: 0, raf: 0 };
+      function trackPointer(e) {
+        var point = e.touches ? e.touches[0] : e;
+        if (point) scroll.y = point.clientY;
+      }
+      function scrollStep() {
+        if (!scroll.active) return;
+        var edge = 80;
+        var h = window.innerHeight;
+        var speed = 0;
+        if (scroll.y < edge) speed = -Math.ceil((edge - scroll.y) / 4);
+        else if (scroll.y > h - edge) speed = Math.ceil((scroll.y - (h - edge)) / 4);
+        if (speed) window.scrollBy(0, speed);
+        scroll.raf = requestAnimationFrame(scrollStep);
+      }
+      drake.on("drag", function() {
+        scroll.active = true;
+        scroll.y = window.innerHeight / 2;
+        document.addEventListener("mousemove", trackPointer);
+        document.addEventListener("touchmove", trackPointer, { passive: true });
+        scroll.raf = requestAnimationFrame(scrollStep);
+      });
+      drake.on("dragend", function() {
+        scroll.active = false;
+        cancelAnimationFrame(scroll.raf);
+        document.removeEventListener("mousemove", trackPointer);
+        document.removeEventListener("touchmove", trackPointer);
+        syncEmptyStates();
+      });
+    }
+
+    initDragula();
+
+    // ── Shipment menu (keyboard / touch alternative to dragging) ──
+    function moveRowToGroup(row, idx) {
+      if (!row || row.hasAttribute("data-move-lock")) return;
+      var card = sgCards()[idx];
+      if (!card || card.contains(row)) return;
+      placeRowInGroup(row, card);
+      renumberAllGroups();
+      recalcTotals();
+      announceMove(row, card);
+    }
+
+    document.addEventListener("change", function(e) {
+      if (!e.target.classList || !e.target.classList.contains("li-move-select")) return;
+      var sel = e.target;
+      moveRowToGroup(sel.closest("tr.line-item-row"), parseInt(sel.value, 10));
+      sel.focus();  // the row moved; keep the keyboard user on it
+    });
+
+    // Renaming a group renames it in every row's shipment menu.
+    document.addEventListener("input", function(e) {
+      var name = e.target.getAttribute && e.target.getAttribute("name");
+      if (name && /^sg_\d+_name$/.test(name)) refreshMoveSelects();
+    });
+
+    // ── Renumber row counters within each group ───────────
+    function renumberAllGroups() {
+      document.querySelectorAll(".shipment-group-card").forEach(function(card) {
+        var counter = 1;
+        card.querySelectorAll(".sg-items-body tr.line-item-row").forEach(function(row) {
+          if (row.style.display === "none") return;
+          var numSpan = row.querySelector("span.li-row-num");
+          if (numSpan) numSpan.textContent = counter++;
+        });
+      });
+      syncShipmentGroups();
+    }
+
+    syncShipmentGroups();
+
+    // ── Reindex group cards after add/delete ──────────────
+    function reindexGroups() {
+      var cards = document.querySelectorAll(".shipment-group-card");
+      var sgCount = document.getElementById("sg-count");
+      cards.forEach(function(card, idx) {
+        var oldIdx = card.getAttribute("data-sg-index");
+        card.setAttribute("data-sg-index", idx);
+
+        // Rename sg_{old}_* inputs to sg_{idx}_*
+        card.querySelectorAll("input[name^='sg_" + oldIdx + "_'], select[name^='sg_" + oldIdx + "_']").forEach(function(el) {
+          el.setAttribute("name", el.getAttribute("name").replace("sg_" + oldIdx + "_", "sg_" + idx + "_"));
+        });
+
+        // Update child rows' sg_index values
+        card.querySelectorAll("input[name$='-sg_index']").forEach(function(el) {
+          el.value = idx;
+        });
+
+        // Update add-row button data attribute
+        var addBtn = card.querySelector(".btn-add-row-sg");
+        if (addBtn) addBtn.setAttribute("data-sg-index", idx);
+
+        // Show/hide delete button
+        var delBtn = card.querySelector(".btn-delete-group");
+        if (delBtn) delBtn.style.display = cards.length <= 1 ? "none" : "";
+      });
+      if (sgCount) sgCount.value = cards.length;
+      renumberAllGroups();
+    }
+
+    // ── Add row to specific group ─────────────────────────
+    document.querySelectorAll(".btn-add-row-sg").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        addRowToGroup(this);
+      });
+    });
+
+    function addRowToGroup(btn) {
+      var sgIdx = parseInt(btn.getAttribute("data-sg-index"));
+      var card = btn.closest(".shipment-group-card");
+      var tbody = card.querySelector(".sg-items-body");
+      var totalForms = document.querySelector("[name$='-TOTAL_FORMS']");
+      var formIdx = parseInt(totalForms.value);
+
+      // Find any existing row to clone as template
+      var templateRow = document.querySelector(".sg-items-body tr.line-item-row");
+      if (!templateRow) return;
+
+      var newRow = cloneNewRow(templateRow, formIdx, sgIdx);
+      tbody.insertBefore(newRow, tbody.querySelector("tr.sg-empty-row"));
+      totalForms.value = formIdx + 1;
+
+      // Register new container with Dragula if needed
+      if (drake && drake.containers.indexOf(tbody) === -1) {
+        drake.containers.push(tbody);
+      }
+      renumberAllGroups();
+    }
+
+    // ── Split Ship — add new group ────────────────────────
+    var splitBtn = document.getElementById("btn-split-ship");
+    if (splitBtn) {
+      splitBtn.addEventListener("click", function() {
+        var container = document.getElementById("shipment-groups-container");
+        var existingCards = container.querySelectorAll(".shipment-group-card");
+        var newIdx = existingCards.length;
+
+        // Clone first card structure
+        var firstCard = existingCards[0];
+        var newCard = firstCard.cloneNode(true);
+
+        // Update card index
+        newCard.setAttribute("data-sg-index", newIdx);
+
+        // Update hidden id (empty for new group)
+        var idInput = newCard.querySelector("input[name^='sg_']");
+        // Rename all sg_* inputs
+        newCard.querySelectorAll("input[name^='sg_'], select[name^='sg_']").forEach(function(el) {
+          var name = el.getAttribute("name");
+          el.setAttribute("name", name.replace(/sg_\d+_/, "sg_" + newIdx + "_"));
+          // Clear values for new group
+          if (name.includes("_id")) el.value = "";
+          if (name.includes("_name")) el.value = "Shipment " + (newIdx + 1);
+          if (name.includes("_warehouse")) el.value = "";
+          if (name.includes("_supplier")) el.value = "";
+          if (name.includes("_fulfillment_type")) el.value = "drop_ship";
+        });
+
+        // Clear the tbody, keeping its "drop here" row
+        var tbody = newCard.querySelector(".sg-items-body");
+        tbody.querySelectorAll("tr.line-item-row").forEach(function(row) { row.remove(); });
+
+        // Update add-row button
+        var addBtn = newCard.querySelector(".btn-add-row-sg");
+        if (addBtn) {
+          addBtn.setAttribute("data-sg-index", newIdx);
+          // Re-attach listener
+          addBtn.addEventListener("click", function() { addRowToGroup(this); });
+        }
+
+        // Attach delete group handler
+        var delBtn = newCard.querySelector(".btn-delete-group");
+        if (delBtn) {
+          delBtn.style.display = "";
+          delBtn.addEventListener("click", function() { deleteGroup(this); });
+        }
+
+        container.appendChild(newCard);
+
+        // Reset fulfillment controls on the cloned card
+        var sgSupplierSearch = newCard.querySelector('.sg-supplier-search');
+        if (sgSupplierSearch) sgSupplierSearch.value = '';
+        var shipFrom = newCard.querySelector('.sg-ship-from');
+        if (shipFrom) { shipFrom.innerHTML = '<option value="">— Ship from location —</option>'; shipFrom.disabled = true; }
+        var createPoBtn = newCard.querySelector('.sg-create-po');
+        if (createPoBtn) { createPoBtn.classList.add('disabled'); createPoBtn.setAttribute('aria-disabled', 'true'); }
+
+        // Reset fulfillment toggle to Drop Ship
+        newCard.querySelectorAll('.sg-type-btn').forEach(function(b) {
+          b.classList.remove('bg-gradient-primary');
+          b.classList.add('btn-outline-primary');
+        });
+        var dropShipBtn = newCard.querySelector('.sg-type-btn[data-type="drop_ship"]');
+        if (dropShipBtn) {
+          dropShipBtn.classList.remove('btn-outline-primary');
+          dropShipBtn.classList.add('bg-gradient-primary');
+        }
+        var dropshipCtrl = newCard.querySelector('.sg-dropship-controls');
+        if (dropshipCtrl) dropshipCtrl.classList.remove('d-none');
+        var internalCtrl = newCard.querySelector('.sg-internal-controls');
+        if (internalCtrl) internalCtrl.classList.add('d-none');
+
+        // Re-attach fulfillment toggle listeners on the new card
+        newCard.querySelectorAll('.sg-type-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var card = this.closest('.shipment-group-card');
+            var type = this.dataset.type;
+            card.querySelector('.sg-fulfillment-type').value = type;
+            card.querySelectorAll('.sg-type-btn').forEach(function(b) {
+              b.classList.remove('bg-gradient-primary');
+              b.classList.add('btn-outline-primary');
+            });
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('bg-gradient-primary');
+            var dropship = card.querySelector('.sg-dropship-controls');
+            var internal = card.querySelector('.sg-internal-controls');
+            // d-none, not style.display: .d-flex is display:flex !important.
+            dropship.classList.toggle('d-none', type !== 'drop_ship');
+            internal.classList.toggle('d-none', type === 'drop_ship');
+          });
+        });
+
+        // Show all delete buttons now that there are multiple groups
+        container.querySelectorAll(".btn-delete-group").forEach(function(b) {
+          b.style.display = "";
+        });
+
+        // Update count
+        document.getElementById("sg-count").value = newIdx + 1;
+
+        // Register new tbody with Dragula
+        if (drake) drake.containers.push(tbody);
+
+        // Every row's shipment menu gains the new group
+        syncShipmentGroups();
+      });
+    }
+
+    // ── Delete group ──────────────────────────────────────
+    function deleteGroup(btn) {
+      var cards = document.querySelectorAll(".shipment-group-card");
+      if (cards.length <= 1) {
+        alert("Cannot delete the only shipment group.");
+        return;
+      }
+
+      var card = btn.closest(".shipment-group-card");
+      var tbody = card.querySelector(".sg-items-body");
+      var rows = tbody.querySelectorAll("tr.line-item-row");
+
+      // If group has visible rows, confirm and move them to group 0
+      var visibleRows = Array.from(rows).filter(function(r) { return r.style.display !== "none"; });
+
+      // Lines locked to this shipment cannot leave it, so neither can it go.
+      var locked = visibleRows.filter(function(r) { return r.hasAttribute("data-move-lock"); });
+      if (locked.length) {
+        alert("This shipment can't be deleted: " + locked.length + " of its lines can't move to another shipment.\n\n" +
+          rowLabel(locked[0]) + ": " + locked[0].getAttribute("data-move-lock"));
+        return;
+      }
+      if (visibleRows.length > 0) {
+        if (!confirm("This group has " + visibleRows.length + " item(s). Move them to the first group?")) return;
+        var firstCard = document.querySelector(".shipment-group-card");
+        if (firstCard === card) {
+          // Deleting the first card — use the second
+          firstCard = document.querySelectorAll(".shipment-group-card")[1];
+        }
+        var targetTbody = firstCard.querySelector(".sg-items-body");
+        rows.forEach(function(row) {
+          targetTbody.appendChild(row);
+        });
+      }
+
+      // Remove from Dragula
+      if (drake) {
+        var idx = drake.containers.indexOf(tbody);
+        if (idx > -1) drake.containers.splice(idx, 1);
+      }
+
+      card.remove();
+      reindexGroups();
+    }
+
+    document.querySelectorAll(".btn-delete-group").forEach(function(btn) {
+      btn.addEventListener("click", function() { deleteGroup(this); });
+    });
+
+    // ── Fulfillment type toggle ──
+    document.querySelectorAll('.sg-type-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var card = this.closest('.shipment-group-card');
+        var type = this.dataset.type;
+        var hiddenInput = card.querySelector('.sg-fulfillment-type');
+        hiddenInput.value = type;
+
+        // Toggle button styles
+        card.querySelectorAll('.sg-type-btn').forEach(function(b) {
+          b.classList.remove('bg-gradient-primary');
+          b.classList.add('btn-outline-primary');
+        });
+        this.classList.remove('btn-outline-primary');
+        this.classList.add('bg-gradient-primary');
+
+        // Show/hide controls
+        var dropship = card.querySelector('.sg-dropship-controls');
+        var internal = card.querySelector('.sg-internal-controls');
+        // d-none, not style.display: .d-flex is display:flex !important.
+        dropship.classList.toggle('d-none', type !== 'drop_ship');
+        internal.classList.toggle('d-none', type === 'drop_ship');
+      });
+    });
+
+    // ── Supplier search ──
+    var supplierSearchTimeout;
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Enter' || !e.target.classList.contains('sg-supplier-search')) return;
+      e.preventDefault();  // F-088: Enter picks, never submits the form
+      var card = e.target.closest('.shipment-group-card');
+      var first = card && card.querySelector('.sg-supplier-results .list-group-item');
+      if (first) first.click();
+    });
+    document.addEventListener('input', function(e) {
+      if (!e.target.classList.contains('sg-supplier-search')) return;
+      clearTimeout(supplierSearchTimeout);
+      var input = e.target;
+      var card = input.closest('.shipment-group-card');
+      var resultsDiv = card.querySelector('.sg-supplier-results');
+
+      var q = input.value.trim();
+      if (q.length < 2) { resultsDiv.style.display = 'none'; return; }
+
+      supplierSearchTimeout = setTimeout(function() {
+        var docCompany = document.querySelector("[name='company']");
+        var companyQ = docCompany && docCompany.value ? '&company=' + encodeURIComponent(docCompany.value) : '';
+        fetch('/erp/purchasing/suppliers/search-ajax/?q=' + encodeURIComponent(q) + companyQ)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            resultsDiv.innerHTML = '';
+            if (!data.results.length) {
+              resultsDiv.style.display = 'none';
+              return;
+            }
+            data.results.forEach(function(s) {
+              var item = document.createElement('a');
+              item.href = '#';
+              item.className = 'list-group-item list-group-item-action py-1 px-2';
+              item.innerHTML = '<small class="text-muted">' + escHtml(s.code) + '</small> ' + escHtml(s.label);
+              item.addEventListener('click', function(ev) {
+                ev.preventDefault();
+                input.value = s.label;
+                card.querySelector('.sg-supplier-id').value = s.id;
+                resultsDiv.style.display = 'none';
+                // Enable Create PO button
+                card.querySelector('.sg-create-po').classList.remove('disabled');
+                card.querySelector('.sg-create-po').removeAttribute('aria-disabled');
+                // Load ship-from locations
+                loadShipFromLocations(card, s.id);
+              });
+              resultsDiv.appendChild(item);
+            });
+            resultsDiv.style.display = '';
+          });
+      }, 300);
+    });
+
+    // Close supplier results on outside click
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.sg-supplier-search') && !e.target.closest('.sg-supplier-results')) {
+        document.querySelectorAll('.sg-supplier-results').forEach(function(d) { d.style.display = 'none'; });
+      }
+    });
+
+    // ── Ship-from locations ──
+    function loadShipFromLocations(card, supplierId) {
+      var select = card.querySelector('.sg-ship-from');
+      select.disabled = true;
+      select.innerHTML = '<option value="">Loading...</option>';
+
+      fetch('/erp/purchasing/suppliers/' + supplierId + '/ship-from-locations/')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          select.innerHTML = '<option value="">— Ship from location —</option>';
+          (data.locations || []).forEach(function(loc) {
+            var opt = document.createElement('option');
+            opt.value = loc.id;
+            opt.textContent = loc.label;
+            if (loc.default) opt.selected = true;
+            select.appendChild(opt);
+          });
+          select.disabled = false;
+        });
+    }
+
+    // Load ship-from on page load for groups that already have a supplier
+    document.querySelectorAll('.shipment-group-card').forEach(function(card) {
+      var supplierId = card.querySelector('.sg-supplier-id');
+      if (supplierId && supplierId.value) loadShipFromLocations(card, supplierId.value);
+    });
+
+    // ── Create PO click ──
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.sg-create-po');
+      if (!btn || btn.classList.contains('disabled')) return;
+      e.preventDefault();
+
+      var card = btn.closest('.shipment-group-card');
+      var supplierId = card.querySelector('.sg-supplier-id').value;
+      var shipFrom = card.querySelector('.sg-ship-from').value;
+      var sgIdInput = card.querySelector('input[name$="_id"]');
+      var sgId = sgIdInput ? sgIdInput.value : '';
+
+      if (!supplierId) { alert('Please select a vendor first.'); return; }
+
+      var orderIdInput = document.querySelector('[name="order_id"]');
+      var orderId = orderIdInput ? orderIdInput.value : '';
+      if (!sgId) {
+        alert('Please save the order first to create a PO from this shipment group.');
+        return;
+      }
+
+      var params = new URLSearchParams();
+      if (orderId) params.set('order', orderId);
+      params.set('shipment_group', sgId);
+      params.set('supplier', supplierId);
+      if (shipFrom) params.set('ship_from', shipFrom);
+      window.location.href = btn.dataset.baseUrl + '?' + params.toString();
+    });
+
+    // ── Print Pick Ticket click ──
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.sg-print-pick-ticket');
+      if (!btn) return;
+      e.preventDefault();
+
+      var card = btn.closest('.shipment-group-card');
+      var whSelect = card.querySelector('[name$="_warehouse"]');
+      var warehouseId = whSelect ? whSelect.value : '';
+      var sgIdInput = card.querySelector('input[name$="_id"]');
+      var sgId = sgIdInput ? sgIdInput.value : '';
+
+      console.log('Pick ticket click:', {orderId: document.querySelector('[name="order_id"]')?.value, sgId: sgId, warehouseId: warehouseId, baseUrl: btn.dataset.baseUrl});
+
+      if (!sgId) {
+        alert('Please save the order first to create a pick ticket.');
+        return;
+      }
+
+      var orderIdInput = document.querySelector('[name="order_id"]');
+      var orderId = orderIdInput ? orderIdInput.value : '';
+
+      btn.classList.add('disabled');
+      btn.setAttribute('aria-disabled', 'true');
+      btn.style.pointerEvents = 'none';
+
+      // Open window immediately in user-gesture context to avoid popup blocker
+      var printWindow = window.open('about:blank', '_blank');
+
+      var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      fetch(btn.dataset.baseUrl, {
+        method: 'POST',
+        headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
+        body: JSON.stringify({order: orderId, shipment_group: sgId, warehouse: warehouseId}),
+      })
+      .then(function(resp) {
+        if (!resp.ok) {
+          return resp.text().then(function(t) {
+            throw new Error('Server returned ' + resp.status + ': ' + t.substring(0, 200));
+          });
+        }
+        return resp.json();
+      })
+      .then(function(data) {
+        if (data.success) {
+          printWindow.location.href = data.print_url;
+        } else {
+          printWindow.close();
+          alert(data.error || 'Failed to create pick ticket.');
+        }
+      })
+      .catch(function(err) {
+        printWindow.close();
+        alert('Pick ticket error: ' + (err.message || 'Network error'));
+      })
+      .finally(function() {
+        btn.classList.remove('disabled');
+        btn.removeAttribute('aria-disabled');
+        btn.style.pointerEvents = '';
+      });
+    });
+
+    renumberAllGroups();
+  }
+
+  // ── Address modal ────────────────────────────────────────
+  var activeAddressField = null;
+  var editingAddressId = null;  // null = creating, uuid = editing
+
+  function openAddressModal(mode, fieldName) {
+    activeAddressField = fieldName;
+    document.getElementById("address-modal-error").classList.add("d-none");
+    var titleEl = document.getElementById("addressModalLabel");
+    var saveBtn = document.getElementById("btn-save-address");
+
+    if (mode === "edit") {
+      var selectEl = document.querySelector("select[name='" + fieldName + "']");
+      editingAddressId = selectEl ? selectEl.value : "";
+      if (!editingAddressId) return;
+      titleEl.textContent = "Edit Address";
+      saveBtn.innerHTML = '<i class="fas fa-save me-1"></i> Update Address';
+      // Fetch address data to pre-fill
+      var url = ADDRESS_DETAIL_URL.replace("00000000-0000-0000-0000-000000000000", editingAddressId);
+      fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.error) { alert(data.error); return; }
+        document.getElementById("addr-address_type").value = data.address_type || "both";
+        document.getElementById("addr-label").value = data.label || "";
+        document.getElementById("addr-first_name").value = data.first_name || "";
+        document.getElementById("addr-last_name").value = data.last_name || "";
+        document.getElementById("addr-company_name").value = data.company_name || "";
+        document.getElementById("addr-address_line_1").value = data.address_line_1 || "";
+        document.getElementById("addr-address_line_2").value = data.address_line_2 || "";
+        document.getElementById("addr-city").value = data.city || "";
+        document.getElementById("addr-state_province").value = data.state_province || "";
+        document.getElementById("addr-postal_code").value = data.postal_code || "";
+        document.getElementById("addr-country").value = data.country || "US";
+        document.getElementById("addr-phone").value = data.phone || "";
+        var modalEl = document.getElementById("addressModal");
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      });
+    } else {
+      editingAddressId = null;
+      titleEl.textContent = "Add New Address";
+      saveBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save Address';
+      document.querySelectorAll("#addressModal input[type='text']").forEach(function(el) {
+        if (el.id !== "addr-country") el.value = "";
+      });
+      document.getElementById("addr-address_type").value = "both";
+      var modalEl = document.getElementById("addressModal");
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+  }
+
+  document.querySelectorAll(".btn-add-address").forEach(function(btn) {
+    btn.addEventListener("click", function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var customerSelect = document.querySelector("select[name='customer']");
+      if (customerSelect && !customerSelect.value) {
+        alert("Please select a customer first.");
+        return;
+      }
+      openAddressModal("create", this.getAttribute("data-field"));
+    });
+  });
+
+  document.querySelectorAll(".btn-edit-address").forEach(function(btn) {
+    btn.addEventListener("click", function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      openAddressModal("edit", this.getAttribute("data-field"));
+    });
+  });
+
+  // ── Customer modal ──────────────────────────────────────
+  var addCustBtn = document.getElementById("btn-add-customer");
+  if (addCustBtn) {
+    addCustBtn.addEventListener("click", function() {
+      document.getElementById("customer-modal-error").classList.add("d-none");
+      document.querySelectorAll("#customerModal input[type='text'], #customerModal input[type='email']").forEach(function(el) { el.value = ""; });
+      document.getElementById("cust-customer_type").value = "individual";
+      var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("customerModal"));
+      modal.show();
+    });
+  }
+
+  var saveCustBtn = document.getElementById("btn-save-customer");
+  if (saveCustBtn) {
+    saveCustBtn.addEventListener("click", function() {
+      var data = {
+        first_name: document.getElementById("cust-first_name").value,
+        last_name: document.getElementById("cust-last_name").value,
+        email: document.getElementById("cust-email").value,
+        phone: document.getElementById("cust-phone").value,
+        company_name: document.getElementById("cust-company_name").value,
+        customer_type: document.getElementById("cust-customer_type").value,
+      };
+
+      if (!data.first_name || !data.email) {
+        document.getElementById("customer-modal-error").textContent = "First name and email are required.";
+        document.getElementById("customer-modal-error").classList.remove("d-none");
+        return;
+      }
+
+      var csrfToken = document.querySelector("[name='csrfmiddlewaretoken']").value;
+      fetch("{% url 'erp-customer-create-ajax' %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        body: JSON.stringify(data),
+      })
+      .then(function(resp) { return resp.json(); })
+      .then(function(result) {
+        if (result.id) {
+          selectAjaxValue("customer", result.id, result.label, AJAX_CONFIG["customer"] || {});
+          bootstrap.Modal.getInstance(document.getElementById("customerModal")).hide();
+        } else {
+          document.getElementById("customer-modal-error").textContent = result.error || "Failed to create customer.";
+          document.getElementById("customer-modal-error").classList.remove("d-none");
+        }
+      })
+      .catch(function(err) {
+        document.getElementById("customer-modal-error").textContent = "Network error: " + err.message;
+        document.getElementById("customer-modal-error").classList.remove("d-none");
+      });
+    });
+  }
+
+  // ── Same as Billing button ─────────────────────────────
+  var sameAsBillingBtn = document.getElementById("btn-same-as-billing");
+  if (sameAsBillingBtn) {
+    sameAsBillingBtn.addEventListener("click", function() {
+      var billingSelect = document.querySelector("select[name='billing_address']");
+      var billingId = billingSelect ? billingSelect.value : "";
+      if (!billingId) { alert("Please select a billing address first."); return; }
+      var customerField = document.querySelector("select[name='customer']");
+      var customerId = customerField ? customerField.value : "";
+      if (!customerId) { alert("Please select a customer first."); return; }
+
+      // Create a new shipping address that copies the billing address
+      var csrfToken = document.querySelector("[name='csrfmiddlewaretoken']").value;
+      fetch("{% url 'erp-address-create-ajax' %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        body: JSON.stringify({ customer: customerId, copy_from: billingId, address_type: "shipping" }),
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(result) {
+        if (result.id) {
+          selectAjaxValue("shipping_address", result.id, result.label, AJAX_CONFIG["shipping_address"] || {});
+          if (result.display_html) addrDetails[result.id] = result.display_html;
+          updateAddrDisplay("shipping_address");
+          // Also add to the hidden select
+          var shipSelect = document.querySelector("select[name='shipping_address']");
+          if (shipSelect) {
+            var opt = new Option(result.label, result.id, true, true);
+            shipSelect.appendChild(opt);
+            shipSelect.value = result.id;
+          }
+        } else {
+          alert(result.error || "Failed to copy address.");
+        }
+      });
+    });
+  }
+
+  // ── Contact modal ────────────────────────────────────────
+  var CONTACT_DETAIL_URL = "{% url 'erp-contact-detail-ajax' pk='00000000-0000-0000-0000-000000000000' %}";
+  var CONTACT_UPDATE_URL = "{% url 'erp-contact-update-ajax' pk='00000000-0000-0000-0000-000000000000' %}";
+  var editingContactId = null;
+
+  function openContactModal(mode) {
+    document.getElementById("contact-modal-error").classList.add("d-none");
+    var titleEl = document.getElementById("contactModalLabel");
+    var saveBtn = document.getElementById("btn-save-contact");
+
+    if (mode === "edit") {
+      var selectEl = document.querySelector("select[name='contact']");
+      editingContactId = selectEl ? selectEl.value : "";
+      if (!editingContactId) return;
+      titleEl.textContent = "Edit Contact";
+      saveBtn.innerHTML = '<i class="fas fa-save me-1"></i> Update Contact';
+      var url = CONTACT_DETAIL_URL.replace("00000000-0000-0000-0000-000000000000", editingContactId);
+      fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.error) { alert(data.error); return; }
+        document.getElementById("contact-first_name").value = data.first_name || "";
+        document.getElementById("contact-last_name").value = data.last_name || "";
+        document.getElementById("contact-email").value = data.email || "";
+        document.getElementById("contact-phone").value = data.phone || "";
+        document.getElementById("contact-job_title").value = data.job_title || "";
+        bootstrap.Modal.getOrCreateInstance(document.getElementById("contactModal")).show();
+      });
+    } else {
+      editingContactId = null;
+      titleEl.textContent = "Add New Contact";
+      saveBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save Contact';
+      document.querySelectorAll("#contactModal input[type='text'], #contactModal input[type='email']").forEach(function(el) { el.value = ""; });
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("contactModal")).show();
+    }
+  }
+
+  var addContactBtn = document.getElementById("btn-add-contact");
+  if (addContactBtn) {
+    addContactBtn.addEventListener("click", function() {
+      var customerField = document.querySelector("select[name='customer']");
+      if (!customerField || !customerField.value) {
+        alert("Please select a customer first.");
+        return;
+      }
+      openContactModal("create");
+    });
+  }
+
+  var editContactBtn = document.querySelector(".btn-edit-contact");
+  if (editContactBtn) {
+    editContactBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      openContactModal("edit");
+    });
+  }
+
+  var saveContactBtn = document.getElementById("btn-save-contact");
+  if (saveContactBtn) {
+    saveContactBtn.addEventListener("click", function() {
+      var customerField = document.querySelector("select[name='customer']");
+      var customerId = customerField ? customerField.value : "";
+      if (!customerId && !editingContactId) {
+        document.getElementById("contact-modal-error").textContent = "No customer selected.";
+        document.getElementById("contact-modal-error").classList.remove("d-none");
+        return;
+      }
+      var data = {
+        customer: customerId,
+        first_name: document.getElementById("contact-first_name").value,
+        last_name: document.getElementById("contact-last_name").value,
+        email: document.getElementById("contact-email").value,
+        phone: document.getElementById("contact-phone").value,
+        job_title: document.getElementById("contact-job_title").value,
+      };
+      if (!data.first_name) {
+        document.getElementById("contact-modal-error").textContent = "First name is required.";
+        document.getElementById("contact-modal-error").classList.remove("d-none");
+        return;
+      }
+      var csrfToken = document.querySelector("[name='csrfmiddlewaretoken']").value;
+      var fetchUrl;
+      if (editingContactId) {
+        fetchUrl = CONTACT_UPDATE_URL.replace("00000000-0000-0000-0000-000000000000", editingContactId);
+      } else {
+        fetchUrl = "{% url 'erp-contact-create-ajax' %}";
+      }
+      fetch(fetchUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        body: JSON.stringify(data),
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(result) {
+        if (result.id) {
+          selectAjaxValue("contact", result.id, result.label, AJAX_CONFIG["contact"] || {});
+          if (window.refreshDocPeople) window.refreshDocPeople();
+          toggleEditButton("contact", result.id);
+          bootstrap.Modal.getInstance(document.getElementById("contactModal")).hide();
+        } else {
+          document.getElementById("contact-modal-error").textContent = result.error || "Failed to save contact.";
+          document.getElementById("contact-modal-error").classList.remove("d-none");
+        }
+      })
+      .catch(function(err) {
+        document.getElementById("contact-modal-error").textContent = "Network error: " + err.message;
+        document.getElementById("contact-modal-error").classList.remove("d-none");
+      });
+    });
+  }
+
+  // ── Shipping rate calculator ─────────────────────────────
+  var calcShipBtn = document.getElementById("btn-calc-shipping");
+  if (calcShipBtn) {
+    calcShipBtn.addEventListener("click", function() {
+      // Gather line item variant IDs and quantities from the form
+      var items = [];
+      getAllLineItemRows().forEach(function(row) {
+        if (row.style.display === "none") return;
+        var select = row.querySelector("select[name$='-variant']");
+        var qtyField = row.querySelector("input[name$='-quantity']") || row.querySelector("input[name$='-quantity_ordered']");
+        if (select && select.value && qtyField) {
+          items.push({ variant_id: select.value, quantity: parseFloat(qtyField.value) || 1 });
+        }
+      });
+
+      if (items.length === 0) {
+        alert("Add line items with variants before calculating shipping.");
+        return;
+      }
+
+      // Get shipping address from the hidden select (set by AJAX search)
+      var shipAddrSelect = document.querySelector("select[name='shipping_address']");
+      var addressId = shipAddrSelect ? shipAddrSelect.value : "";
+
+      if (!addressId) {
+        var shipToZip = prompt("No shipping address selected. Enter destination ZIP code:");
+        if (!shipToZip) return;
+      }
+
+      var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("shippingRatesModal"));
+      document.getElementById("shipping-rates-error").classList.add("d-none");
+      document.getElementById("shipping-rates-loading").classList.remove("d-none");
+      document.getElementById("shipping-rates-profile").classList.add("d-none");
+      document.getElementById("shipping-rates-list").classList.add("d-none");
+      document.getElementById("shipping-rates-warnings").classList.add("d-none");
+      modal.show();
+
+      var payload;
+      var orderPk = "{{ object.pk|default:'' }}";
+      if (orderPk && addressId) {
+        payload = { order_id: orderPk };
+      } else if (addressId) {
+        payload = { items: items, address_id: addressId };
+      } else {
+        payload = { items: items, ship_to_zip: shipToZip };
+      }
+
+      var csrfToken = document.querySelector("[name='csrfmiddlewaretoken']").value;
+      fetch("{% url 'erp-shipping-rates' %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        body: JSON.stringify(payload),
+      })
+      .then(function(resp) { return resp.json(); })
+      .then(function(result) {
+        document.getElementById("shipping-rates-loading").classList.add("d-none");
+
+        if (result.error) {
+          document.getElementById("shipping-rates-error").textContent = result.error;
+          document.getElementById("shipping-rates-error").classList.remove("d-none");
+          return;
+        }
+
+        var profile = result.profile || {};
+        document.getElementById("sr-weight").textContent = profile.total_weight_lbs + " lbs";
+        document.getElementById("sr-dims").textContent = profile.max_length_in + "x" + profile.max_width_in + "x" + profile.total_height_in + " in";
+        document.getElementById("sr-items").textContent = profile.total_items + " items";
+        var ltlBadge = document.getElementById("sr-ltl");
+        if (profile.requires_ltl) { ltlBadge.textContent = "LTL Required"; ltlBadge.classList.remove("d-none"); }
+        else { ltlBadge.classList.add("d-none"); }
+        var hazBadge = document.getElementById("sr-hazmat");
+        if (profile.has_hazmat) { hazBadge.textContent = "Hazmat"; hazBadge.classList.remove("d-none"); }
+        else { hazBadge.classList.add("d-none"); }
+
+        var shipFrom = result.ship_from || {};
+        document.getElementById("sr-ship-from").textContent = "Ship from: " + shipFrom.name + " (" + shipFrom.city + ", " + shipFrom.state + " " + shipFrom.zip + ")";
+        document.getElementById("shipping-rates-profile").classList.remove("d-none");
+
+        if (result.warnings && result.warnings.length > 0) {
+          var warnDiv = document.getElementById("shipping-rates-warnings");
+          warnDiv.innerHTML = result.warnings.map(function(w) {
+            return '<div class="alert alert-warning text-dark text-xs py-1 px-2 mb-1">' + w + '</div>';
+          }).join("");
+          warnDiv.classList.remove("d-none");
+        }
+
+        var tbody = document.getElementById("shipping-rates-tbody");
+        tbody.innerHTML = "";
+        var rates = result.rates || [];
+        if (rates.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted text-sm py-3">No rates available</td></tr>';
+        } else {
+          rates.forEach(function(rate) {
+            var tr = document.createElement("tr");
+            tr.className = "cursor-pointer";
+            var transitText = rate.transit_days ? rate.transit_days + " days" : "-";
+            if (rate.guaranteed) transitText += " (guaranteed)";
+            tr.innerHTML =
+              '<td class="text-sm">' + rate.carrier + '</td>' +
+              '<td class="text-sm">' + rate.service + '</td>' +
+              '<td class="text-sm text-end font-weight-bold">$' + parseFloat(rate.rate).toFixed(2) + '</td>' +
+              '<td class="text-sm text-center">' + transitText + '</td>' +
+              '<td><button type="button" class="btn btn-outline-success btn-sm px-2 py-0 btn-select-rate" data-rate="' + rate.rate + '" data-carrier="' + rate.carrier + '" data-service="' + rate.service + '">Select</button></td>';
+            tbody.appendChild(tr);
+          });
+        }
+        document.getElementById("shipping-rates-list").classList.remove("d-none");
+
+        tbody.querySelectorAll(".btn-select-rate").forEach(function(btn) {
+          btn.addEventListener("click", function() {
+            var rateVal = parseFloat(this.getAttribute("data-rate"));
+            var shippingField = document.querySelector("input[name='shipping_cost_ex_tax']") || document.querySelector("input[name='shipping_cost']");
+            if (shippingField) {
+              shippingField.value = rateVal.toFixed(2);
+              recalcTotals();
+            }
+            bootstrap.Modal.getInstance(document.getElementById("shippingRatesModal")).hide();
+          });
+        });
+      })
+      .catch(function(err) {
+        document.getElementById("shipping-rates-loading").classList.add("d-none");
+        document.getElementById("shipping-rates-error").textContent = "Network error: " + err.message;
+        document.getElementById("shipping-rates-error").classList.remove("d-none");
+      });
+    });
+  }
+
+  document.getElementById("btn-save-address").addEventListener("click", function() {
+    var customerField = document.querySelector("[name='customer']");
+    var customerId = customerField ? customerField.value : "";
+    if (!customerId && !editingAddressId) {
+      document.getElementById("address-modal-error").textContent = "No customer selected.";
+      document.getElementById("address-modal-error").classList.remove("d-none");
+      return;
+    }
+
+    var data = {
+      customer: customerId,
+      address_type: document.getElementById("addr-address_type").value,
+      label: document.getElementById("addr-label").value,
+      first_name: document.getElementById("addr-first_name").value,
+      last_name: document.getElementById("addr-last_name").value,
+      company_name: document.getElementById("addr-company_name").value,
+      address_line_1: document.getElementById("addr-address_line_1").value,
+      address_line_2: document.getElementById("addr-address_line_2").value,
+      city: document.getElementById("addr-city").value,
+      state_province: document.getElementById("addr-state_province").value,
+      postal_code: document.getElementById("addr-postal_code").value,
+      country: document.getElementById("addr-country").value,
+      phone: document.getElementById("addr-phone").value,
+    };
+
+    if (!data.address_line_1 || !data.city || !data.state_province || !data.postal_code) {
+      document.getElementById("address-modal-error").textContent = "Address line 1, city, state, and postal code are required.";
+      document.getElementById("address-modal-error").classList.remove("d-none");
+      return;
+    }
+
+    var csrfToken = document.querySelector("[name='csrfmiddlewaretoken']").value;
+    var fetchUrl, isEdit;
+    if (editingAddressId) {
+      fetchUrl = ADDRESS_UPDATE_URL.replace("00000000-0000-0000-0000-000000000000", editingAddressId);
+      isEdit = true;
+    } else {
+      fetchUrl = "{% url 'erp-address-create-ajax' %}";
+      isEdit = false;
+    }
+
+    fetch(fetchUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+      body: JSON.stringify(data),
+    })
+    .then(function(resp) { return resp.json(); })
+    .then(function(result) {
+      if (result.id) {
+        var selectField = document.querySelector("[name='" + activeAddressField + "']");
+        if (isEdit) {
+          // Update the existing option label
+          if (selectField) {
+            for (var i = 0; i < selectField.options.length; i++) {
+              if (selectField.options[i].value === result.id) {
+                selectField.options[i].text = result.label;
+                break;
+              }
+            }
+          }
+        } else {
+          // Add new option
+          if (selectField) {
+            var option = new Option(result.label, result.id, true, true);
+            selectField.appendChild(option);
+            selectField.value = result.id;
+          }
+        }
+        // Update AJAX search input display
+        var searchInput = document.querySelector("input[data-ajax-field='" + activeAddressField + "']");
+        if (searchInput) searchInput.value = result.label;
+        // Cache display HTML and update
+        if (result.display_html) addrDetails[result.id] = result.display_html;
+        updateAddrDisplay(activeAddressField);
+        toggleEditButton(activeAddressField, result.id);
+        bootstrap.Modal.getInstance(document.getElementById("addressModal")).hide();
+      } else {
+        document.getElementById("address-modal-error").textContent = result.error || "Failed to save address.";
+        document.getElementById("address-modal-error").classList.remove("d-none");
+      }
+    })
+    .catch(function(err) {
+      document.getElementById("address-modal-error").textContent = "Network error: " + err.message;
+      document.getElementById("address-modal-error").classList.remove("d-none");
+    });
+  });
+
+  // Resend email modal
+  var sendEmailBtn = document.getElementById("btn-send-order-email");
+  if (sendEmailBtn) {
+    // F-033: one _once token per opening of the modal, so a retried request
+    // (the button is disabled while one is in flight, but a second tab or
+    // a replayed POST is not) sends one email; the server answers the
+    // repeat with "already sent" (core.once).
+    var resendOnce = null;
+    function mintOnce() {
+      return (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID().replace(/-/g, "")
+        : (Date.now().toString(16) + Math.random().toString(16).slice(2));
+    }
+    var resendModal = document.getElementById("resendEmailModal");
+    if (resendModal) {
+      resendModal.addEventListener("show.bs.modal", function() { resendOnce = mintOnce(); });
+    }
+    sendEmailBtn.addEventListener("click", function() {
+      if (!resendOnce) resendOnce = mintOnce();
+      var emailInput = document.getElementById("resend-email-input");
+      var errorDiv = document.getElementById("resend-email-error");
+      var email = emailInput.value.trim();
+      errorDiv.style.display = "none";
+
+      if (!email) {
+        errorDiv.textContent = "Email is required";
+        errorDiv.style.display = "block";
+        return;
+      }
+
+      sendEmailBtn.disabled = true;
+      sendEmailBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Sending...';
+
+      var csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+      var orderId = document.querySelector("[name=order_id]").value;
+
+      function doSend(payload) {
+        fetch("/erp/orders/" + orderId + "/send-email/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify(payload),
+        })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+          // Old date warning — ask user to confirm before actually sending
+          if (data.confirm_old_date) {
+            sendEmailBtn.disabled = false;
+            sendEmailBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Send';
+            if (confirm(data.message)) {
+              sendEmailBtn.disabled = true;
+              sendEmailBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Sending...';
+              doSend({recipient_email: email, confirmed_old_date: true, _once: resendOnce});
+            }
+            return;
+          }
+
+          sendEmailBtn.disabled = false;
+          sendEmailBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Send';
+
+          var toast = document.getElementById("email-toast");
+          var toastBody = document.getElementById("email-toast-body");
+
+          if (data.success) {
+            toast.className = "toast align-items-center text-white bg-success border-0";
+            toastBody.textContent = data.message;
+            bootstrap.Modal.getInstance(document.getElementById("resendEmailModal")).hide();
+          } else {
+            toast.className = "toast align-items-center text-white bg-danger border-0";
+            toastBody.textContent = data.error || "Failed to send email";
+          }
+
+          var bsToast = new bootstrap.Toast(toast, {delay: 4000});
+          bsToast.show();
+        })
+        .catch(function(err) {
+          sendEmailBtn.disabled = false;
+          sendEmailBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Send';
+          errorDiv.textContent = "Network error: " + err.message;
+          errorDiv.style.display = "block";
+        });
+      }
+
+      doSend({recipient_email: email, _once: resendOnce});
+    });
+  }
+});
+</script>
+{% if sub_orders_tracking %}
+  {% include "erp/_tracking_section_js.html" %}
+{% endif %}
+{% if po_sub_order_tracking %}
+  {% include "erp/_tracking_section_js.html" %}
+{% endif %}
+{% if pt_sub_order_tracking %}
+  {% include "erp/_tracking_section_js.html" %}
+{% endif %}
+{% if is_edit and people_url %}
+<script>
+// People card: add/remove without a page reload, so unsaved edits in the
+// document form survive. Without JS the buttons submit #doc-people-form.
+(function() {
+  var card = document.getElementById("doc-people");
+  if (!card) return;
+  function csrf() {
+    var el = document.querySelector("#doc-people-form [name=csrfmiddlewaretoken]");
+    return el ? el.value : "";
+  }
+  function swap(resp) {
+    // A redirect means the session expired (login page): never swap it in.
+    if (!resp.ok || resp.redirected) throw new Error(resp.redirected ? "please sign in again" : "Server returned " + resp.status);
+    return resp.text().then(function(html) { card.innerHTML = html; });
+  }
+  function send(body) {
+    body.append("csrfmiddlewaretoken", csrf());
+    return fetch(card.dataset.url, {
+      method: "POST", body: body, credentials: "same-origin",
+      headers: {"X-Requested-With": "fetch"},
+    }).then(swap);
+  }
+  window.refreshDocPeople = function() {
+    return fetch(card.dataset.url, {credentials: "same-origin", headers: {"X-Requested-With": "fetch"}})
+      .then(swap).catch(function() {});
+  };
+  card.addEventListener("click", function(e) {
+    var add = e.target.closest("[data-people-add]");
+    var remove = e.target.closest("[data-people-remove]");
+    if (!add && !remove) return;
+    e.preventDefault();
+    var body = new FormData();
+    if (add) {
+      var pick = document.getElementById("doc-people-pick");
+      if (!pick || !pick.value) return;
+      body.append("party", pick.value);
+    } else {
+      body.append("remove", remove.dataset.peopleRemove);
+    }
+    (add || remove).disabled = true;
+    send(body).catch(function(err) {
+      (add || remove).disabled = false;
+      alert("Could not update people: " + err.message);
+    });
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

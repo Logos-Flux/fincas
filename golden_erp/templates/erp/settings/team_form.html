@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load erp_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+  <div class="card-header pb-0"><h1 class="h6 mb-0">{{ page_title }}</h1></div>
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-danger text-sm">{% for e in form.non_field_errors %}<p class="mb-0">{{ e }}</p>{% endfor %}</div>{% endif %}
+      <div class="row">
+        {% for field in form %}{% if field.name != "members" %}
+        <div class="col-md-6 mb-3">
+          {% if field.field.widget.input_type == "checkbox" %}
+          <div class="form-check">
+            {{ field }}
+            <label for="{{ field.id_for_label }}" class="form-check-label text-sm">{{ field.label }}</label>
+          </div>
+          {% else %}
+          <label for="{{ field.id_for_label }}" class="form-label text-sm">{{ field.label }}{% if field.field.required %} <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span>{% endif %}</label>
+          {{ field|add_class:"form-control form-control-sm" }}
+          {% endif %}
+          {% if field.errors %}<div class="text-danger text-xs mt-1">{{ field.errors.0 }}</div>{% endif %}
+          {% if field.help_text %}<small class="form-text text-secondary text-xs d-block">{{ field.help_text }}</small>{% endif %}
+        </div>
+        {% endif %}{% endfor %}
+      </div>
+      <fieldset class="mb-3" aria-describedby="members-help">
+        <legend class="form-label text-sm mb-1">Members</legend>
+        <small class="form-text text-secondary text-xs d-block mb-2" id="members-help">{{ form.members.help_text }}</small>
+        <div class="row">
+          {% for option in form.members %}
+          <div class="col-md-4 form-check">
+            {{ option.tag }}
+            <label class="form-check-label text-sm" for="{{ option.id_for_label }}">{{ option.choice_label }}</label>
+          </div>
+          {% empty %}
+          <p class="text-sm text-secondary">No active people in this company.</p>
+          {% endfor %}
+        </div>
+        {% if form.members.errors %}<div class="text-danger text-xs mt-1">{{ form.members.errors.0 }}</div>{% endif %}
+      </fieldset>
+      <div class="d-flex gap-2">
+        <a href="{{ back_url }}" class="btn btn-outline-secondary btn-sm mb-0">Cancel</a>
+        <button type="submit" class="btn bg-gradient-primary btn-sm mb-0">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

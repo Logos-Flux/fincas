@@ -1,0 +1,92 @@
+{% load static %}
+<nav class="navbar navbar-main navbar-expand-lg position-sticky mt-4 top-1 px-0 mx-4 shadow-none border-radius-xl z-index-sticky" id="navbarBlur" data-scroll="true">
+  <div class="container-fluid py-1 px-3">
+    <div class="sidenav-toggler sidenav-toggler-inner d-xl-block d-none me-3">
+      {# Dead Soft UI toggler: no script or style drives it (Tabler's real one is #}
+      {# in sidebar.html). Kept for spacing, hidden from keyboard + AT.         #}
+      <a href="javascript:;" class="nav-link text-body p-0" aria-hidden="true" tabindex="-1">
+        <div class="sidenav-toggler-inner">
+          <i class="sidenav-toggler-line"></i>
+          <i class="sidenav-toggler-line"></i>
+          <i class="sidenav-toggler-line"></i>
+        </div>
+      </a>
+    </div>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+        <li class="breadcrumb-item text-sm">
+          <a class="text-secondary" href="{% url 'erp-dashboard' %}">ERP</a>
+        </li>
+        {% block breadcrumb_items %}
+        <li class="breadcrumb-item text-sm text-dark active" aria-current="page">{{ page_title|default:"Dashboard" }}</li>
+        {% endblock %}
+      </ol>
+      <h6 class="font-weight-bolder mb-0">{{ page_title|default:"Dashboard" }}</h6>
+    </nav>
+    <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+      <div class="ms-md-auto pe-md-3 d-flex align-items-center">
+        <div class="input-group">
+          <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
+          <input type="text" class="form-control" placeholder="Search..." aria-label="Search">
+        </div>
+      </div>
+      <ul class="navbar-nav justify-content-end">
+        {# Theme picker — items come from settings.ERP_THEMES via the       #}
+        {# core.context_processors.erp_themes context processor. Clicks are #}
+        {# handled by the [data-theme-pick] delegation in scripts.html,     #}
+        {# which also sets .active on the current theme's item.             #}
+        <li class="nav-item dropdown d-flex align-items-center me-2">
+          <a class="nav-link text-body px-0 d-flex align-items-center" href="javascript:;" id="navbarThemeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Theme">
+            <i class="fas fa-palette"></i>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarThemeDropdown">
+            {% for theme in erp_themes %}
+            {% ifchanged theme.mode %}<li><h6 class="dropdown-header">{{ theme.mode|capfirst }}</h6></li>{% endifchanged %}
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="javascript:;" data-theme-pick="{{ theme.name }}">
+                {% if theme.bg %}<span class="d-inline-block rounded-circle border me-2" style="width:.85rem;height:.85rem;background:{{ theme.bg }}" aria-hidden="true"></span>{% endif %}
+                <span class="me-3">{{ theme.label }}</span>
+                <i class="fas fa-check ms-auto theme-pick-check" aria-hidden="true"></i>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% if user.is_authenticated %}
+        <li class="nav-item dropdown d-flex align-items-center">
+          <a class="nav-link text-body font-weight-bold px-0 d-flex align-items-center" href="javascript:;" id="navbarAccountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa fa-user me-sm-1"></i>
+            <span class="d-sm-inline d-none">{{ user.get_short_name|default:user.username }}</span>
+            <i class="fas fa-chevron-down text-xs ms-1 d-sm-inline d-none"></i>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarAccountDropdown">
+            <li>
+              <a class="dropdown-item" href="{% url 'erp-account' %}">
+                <i class="ti ti-settings me-2"></i> My Account
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <form method="post" action="{% url 'erp-logout' %}" class="mb-0">
+                {% csrf_token %}
+                <button type="submit" class="dropdown-item">
+                  <i class="fas fa-sign-out-alt me-2"></i> Logout
+                </button>
+              </form>
+            </li>
+          </ul>
+        </li>
+        {% endif %}
+        <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
+          <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav" aria-hidden="true" tabindex="-1">
+            <div class="sidenav-toggler-inner">
+              <i class="sidenav-toggler-line"></i>
+              <i class="sidenav-toggler-line"></i>
+              <i class="sidenav-toggler-line"></i>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

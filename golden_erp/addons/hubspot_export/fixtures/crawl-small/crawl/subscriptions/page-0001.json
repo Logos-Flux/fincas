@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/communication-preferences/v3/status/email/{emailAddress}",
+    "query": {
+      "recipients": "ann@example.com,cara@example.org,ann.alt@example.com,dev@example.net,finn@example.com,gale@example.org,eve@example.com"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "recipient": "ann@example.com",
+        "subscriptionStatuses": [
+          {
+            "id": "5001",
+            "name": "Newsletter",
+            "description": "Monthly newsletter",
+            "status": "SUBSCRIBED",
+            "sourceOfStatus": "SUBSCRIPTION_STATUS",
+            "legalBasis": "CONSENT_WITH_NOTICE",
+            "legalBasisExplanation": "Signed up at the expo",
+            "preferenceGroupName": "Marketing"
+          }
+        ]
+      },
+      {
+        "recipient": "cara@example.org",
+        "subscriptionStatuses": [
+          {
+            "id": "5001",
+            "name": "Newsletter",
+            "description": "Monthly newsletter",
+            "status": "NOT_SUBSCRIBED",
+            "sourceOfStatus": "SUBSCRIPTION_STATUS",
+            "legalBasis": null,
+            "legalBasisExplanation": null,
+            "preferenceGroupName": "Marketing"
+          }
+        ]
+      },
+      {
+        "recipient": "ann.alt@example.com",
+        "subscriptionStatuses": []
+      },
+      {
+        "recipient": "dev@example.net",
+        "subscriptionStatuses": []
+      },
+      {
+        "recipient": "finn@example.com",
+        "subscriptionStatuses": []
+      },
+      {
+        "recipient": "gale@example.org",
+        "subscriptionStatuses": []
+      },
+      {
+        "recipient": "eve@example.com",
+        "subscriptionStatuses": [
+          {
+            "id": "5002",
+            "name": "Product updates",
+            "description": "Release notes",
+            "status": "SUBSCRIBED",
+            "sourceOfStatus": "SUBSCRIPTION_STATUS",
+            "legalBasis": "LEGITIMATE_INTEREST_CLIENT",
+            "legalBasisExplanation": "Existing client",
+            "preferenceGroupName": "Marketing"
+          }
+        ]
+      }
+    ]
+  }
+}

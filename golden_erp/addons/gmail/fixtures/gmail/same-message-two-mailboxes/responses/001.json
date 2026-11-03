@@ -1,0 +1,38 @@
+{
+  "payload": {
+    "history": [
+      {
+        "id": "1001",
+        "messages": [
+          {
+            "id": "19b0000000000007",
+            "threadId": "19b0000000000007"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b0000000000007",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b0000000000007"
+            }
+          }
+        ]
+      }
+    ],
+    "historyId": "1010"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/history",
+    "query": {
+      "historyTypes": "messageAdded",
+      "maxResults": "50",
+      "startHistoryId": "1000"
+    }
+  },
+  "schema_version": 1
+}

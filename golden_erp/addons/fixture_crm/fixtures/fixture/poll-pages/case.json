@@ -1,0 +1,39 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A first poll runs suppressed from the initial_since horizon, follows the cursor across pages and saves it; the next poll asks from the saved cursor.",
+  "second_run_requests": [
+    {
+      "form": null,
+      "headers": {
+        "authorization": "Bearer <redacted:api_key>"
+      },
+      "json": null,
+      "method": "GET",
+      "path": "/v1/messages",
+      "query": {
+        "after": "fx_msg_0011"
+      }
+    }
+  ],
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      },
+      {
+        "email": "grace@example.net",
+        "family": "Hopper",
+        "given": "Grace",
+        "key": "grace"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "poll": true
+    }
+  ]
+}

@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/deals",
+    "query": {
+      "limit": "50",
+      "propertiesWithHistory": "dealstage,pipeline"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "401",
+        "propertiesWithHistory": {
+          "dealstage": [
+            {
+              "value": "contractsent",
+              "timestamp": "2026-09-10T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            },
+            {
+              "value": "qualifiedtobuy",
+              "timestamp": "2026-08-15T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            },
+            {
+              "value": "appointmentscheduled",
+              "timestamp": "2026-08-01T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ],
+          "pipeline": [
+            {
+              "value": "default",
+              "timestamp": "2026-08-01T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ]
+        }
+      },
+      {
+        "id": "402",
+        "propertiesWithHistory": {
+          "dealstage": [
+            {
+              "value": "closedwon",
+              "timestamp": "2025-06-01T12:00:00.000Z",
+              "sourceType": "CRM_UI"
+            },
+            {
+              "value": "contractsent",
+              "timestamp": "2025-03-01T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ],
+          "pipeline": [
+            {
+              "value": "default",
+              "timestamp": "2025-03-01T09:00:00.000Z",
+              "sourceType": "IMPORT"
+            }
+          ]
+        }
+      },
+      {
+        "id": "403",
+        "propertiesWithHistory": {
+          "dealstage": [
+            {
+              "value": "closedlost",
+              "timestamp": "2024-02-15T16:30:00.000Z",
+              "sourceType": "AUTOMATION_PLATFORM"
+            },
+            {
+              "value": "appointmentscheduled",
+              "timestamp": "2023-11-01T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ],
+          "pipeline": [
+            {
+              "value": "default",
+              "timestamp": "2023-11-01T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ]
+        }
+      },
+      {
+        "id": "404",
+        "propertiesWithHistory": {
+          "dealstage": [
+            {
+              "value": "12345680",
+              "timestamp": "2023-06-01T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ],
+          "pipeline": [
+            {
+              "value": "12345678",
+              "timestamp": "2023-02-01T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ]
+        }
+      },
+      {
+        "id": "405",
+        "propertiesWithHistory": {
+          "dealstage": [
+            {
+              "value": "appointmentscheduled",
+              "timestamp": "2026-08-01T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ],
+          "pipeline": [
+            {
+              "value": "default",
+              "timestamp": "2026-08-01T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ]
+        }
+      },
+      {
+        "id": "406",
+        "propertiesWithHistory": {
+          "dealstage": [
+            {
+              "value": "qualifiedtobuy",
+              "timestamp": "2026-08-01T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ],
+          "pipeline": [
+            {
+              "value": "default",
+              "timestamp": "2026-08-01T09:00:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

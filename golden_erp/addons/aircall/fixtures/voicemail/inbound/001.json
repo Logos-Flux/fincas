@@ -1,0 +1,34 @@
+{
+  "payload": {
+    "data": {
+      "answered_at": null,
+      "archived": false,
+      "asset": "https://media.example.com/aircall/voicemails/1004.mp3?expires=1772470000",
+      "comments": [],
+      "direct_link": "https://api.aircall.io/v1/calls/1004",
+      "direction": "inbound",
+      "duration": 48,
+      "ended_at": 1772461248,
+      "id": 1004,
+      "missed_call_reason": "out_of_opening_hours",
+      "number": {
+        "digits": "+1 202-555-0100",
+        "id": 5101,
+        "name": "Sales line"
+      },
+      "raw_digits": "+1 202-555-0143",
+      "recording": null,
+      "started_at": 1772461200,
+      "status": "done",
+      "tags": [],
+      "user": null,
+      "voicemail": "https://media.example.com/aircall/voicemails/1004.mp3?expires=1772470000"
+    },
+    "event": "call.ended",
+    "resource": "call",
+    "timestamp": 1772461610,
+    "token": "fixture-webhook-secret-1"
+  },
+  "provider": "aircall",
+  "schema_version": 1
+}

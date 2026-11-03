@@ -1,0 +1,27 @@
+{
+  "_comment": "Test fixture: what a deployment's GOLDEN_SEO_PATTERN_FILES entry looks like (products/test_seo_quality.py).",
+  "version": 1,
+  "patterns": [
+    {
+      "id": "category-title-shop-x",
+      "applies_to": ["title"],
+      "severity": "template",
+      "pattern": "^Shop .+ Equipment \\| Example Store$",
+      "flags": "i",
+      "examples": ["Shop Batteries Equipment | Example Store"]
+    },
+    {
+      "id": "meta-length-extender",
+      "applies_to": ["meta"],
+      "severity": "padding",
+      "pattern": "Order online at Example Store for fast shipping\\.",
+      "flags": "",
+      "examples": ["Rugged 48V batteries for cabins. Order online at Example Store for fast shipping."]
+    }
+  ],
+  "truncation": {
+    "meta_patterns": ["\\band fast\\.$"],
+    "soft_dangling_words": ["fast"],
+    "examples_truncated": [["meta", "Batteries with expert support and fast."]]
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "schema_version": 99,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/contacts",
+    "query": {
+      "limit": "100"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "301",
+        "properties": {
+          "hs_object_id": "301",
+          "createdate": "2021-03-04T10:15:00.000Z",
+          "lastmodifieddate": "2026-09-30T08:00:00.000Z",
+          "firstname": "Ann",
+          "lastname": "Example",
+          "email": "ann@example.com",
+          "hs_additional_emails": "ann.alt@example.com",
+          "phone": "+1 202-555-0111",
+          "mobilephone": "202-555-0112",
+          "address": "1 Example Way",
+          "city": "Springfield",
+          "state": "IL",
+          "zip": "62701",
+          "country": "United States",
+          "jobtitle": "Director",
+          "hubspot_owner_id": "101",
+          "lifecyclestage": "customer",
+          "lead_type": "Patent Attorney",
+          "client_status": "active_client",
+          "hs_marketable_status": "true",
+          "associatedcompanyid": "201",
+          "hs_merged_object_ids": "18;33",
+          "hs_email_optout": "false"
+        },
+        "createdAt": "2021-03-04T10:15:00.000Z",
+        "updatedAt": "2026-09-30T08:00:00.000Z",
+        "archived": false
+      },
+      {
+        "id": "302",
+        "properties": {
+          "hs_object_id": "302",
+          "createdate": "2022-07-01T12:00:00.000Z",
+          "lastmodifieddate": "2026-09-30T08:00:00.000Z",
+          "firstname": "Ben",
+          "lastname": "Sample",
+          "phone": "312-555-0113",
+          "hubspot_owner_id": "102",
+          "lifecyclestage": "lead",
+          "lead_type": "patent attorney",
+          "hs_marketable_status": "false"
+        },
+        "createdAt": "2022-07-01T12:00:00.000Z",
+        "updatedAt": "2026-09-30T08:00:00.000Z",
+        "archived": false
+      },
+      {
+        "id": "303",
+        "properties": {
+          "hs_object_id": "303",
+          "createdate": "2022-05-06T11:05:00.000Z",
+          "lastmodifieddate": "2026-09-30T08:00:00.000Z",
+          "firstname": "Cara",
+          "lastname": "Placeholder",
+          "email": "cara@example.org",
+          "hs_email_optout": "true",
+          "hs_marketable_status": "false",
+          "associatedcompanyid": "202",
+          "lead_type": "Inventor",
+          "lifecyclestage": "opportunity"
+        },
+        "createdAt": "2022-05-06T11:05:00.000Z",
+        "updatedAt": "2026-09-30T08:00:00.000Z",
+        "archived": false
+      },
+      {
+        "id": "304",
+        "properties": {
+          "hs_object_id": "304",
+          "createdate": "2019-06-02T09:00:00.000Z",
+          "lastmodifieddate": "2024-02-20T09:00:00.000Z",
+          "firstname": "Dev",
+          "lastname": "Example",
+          "email": "dev@example.net",
+          "hs_email_hard_bounce_reason_enum": "UNKNOWN_USER",
+          "hubspot_owner_id": "104",
+          "associatedcompanyid": "203"
+        },
+        "createdAt": "2019-06-02T09:00:00.000Z",
+        "updatedAt": "2024-02-20T09:00:00.000Z",
+        "archived": false
+      }
+    ],
+    "paging": {
+      "next": {
+        "after": "305",
+        "link": "https://api.hubapi.com/crm/v3/objects?after=305"
+      }
+    }
+  }
+}

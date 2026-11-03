@@ -1,0 +1,34 @@
+{
+  "expect": "refused",
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "An envelope from a newer ClickUp shape is refused, never misread.",
+  "seed": {
+    "engagements": [
+      {
+        "key": "deal",
+        "number": "EN-00042",
+        "party": "ada"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.com",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001.json",
+      "raises": "AdapterError"
+    }
+  ]
+}

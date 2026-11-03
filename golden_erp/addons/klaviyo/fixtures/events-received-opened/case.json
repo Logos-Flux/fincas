@@ -1,0 +1,60 @@
+{
+  "klaviyo": {
+    "consents": [
+      {
+        "occurred_at": "2026-02-01T10:00:00Z",
+        "party": "ada",
+        "state": "granted"
+      }
+    ],
+    "first_poll_pending": true,
+    "marketable": [
+      "ada"
+    ],
+    "profiles": [
+      {
+        "address": "ada@example.com",
+        "list": "XFIX01",
+        "party": "ada",
+        "source_id": "01FIXTUREPROFILEADA0000000",
+        "state": "subscribed"
+      }
+    ]
+  },
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A polled page of a send and an open writes one marketing_email communication (no body, no engagement link) with the open folded into it; the next poll re-reads the boundary event and changes nothing.",
+  "second_run_requests": [
+    {
+      "form": null,
+      "headers": {
+        "accept": "application/vnd.api+json",
+        "authorization": "Klaviyo-API-Key <redacted:api_key>",
+        "revision": "2024-10-15"
+      },
+      "json": null,
+      "method": "GET",
+      "path": "/api/events/",
+      "query": {
+        "filter": "greater-or-equal(datetime,2026-03-01T11:05:00Z)",
+        "include": "metric,profile",
+        "page[size]": "100",
+        "sort": "datetime"
+      }
+    }
+  ],
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "poll": true
+    }
+  ]
+}

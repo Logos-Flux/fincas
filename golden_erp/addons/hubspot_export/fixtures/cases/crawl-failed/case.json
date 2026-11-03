@@ -1,0 +1,5 @@
+{
+  "description": "A 401 in the error log: the crawl failed, and the adapter writes no manifest at all (2.13, last paragraph).",
+  "base": "crawl-small",
+  "refuses": "the crawl failed"
+}

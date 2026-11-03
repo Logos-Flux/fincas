@@ -1,0 +1,523 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# One set of workflow files for the private dev repo and the public repo
+# (docs/release-process.md §3.5). Runners: the repository variable CI_RUNS_ON,
+# a JSON label list, picks them (the dev repo sets
+# ["self-hosted","linux","x64","review"]); unset, every job runs on GitHub's
+# ubuntu-latest. So every job installs what it needs itself and assumes
+# nothing from our runner image, and nothing here reaches a private host or
+# secret. Steps that need dev-only material (the release tags the upgrade
+# path replays, docs/pin/ from scripts/release/dev-only.txt) skip with a
+# notice when it is absent, as it is in the public tree.
+
+jobs:
+  quality-and-tests:
+    name: Quality, Isolation, & Tests
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: golden_erp
+          POSTGRES_USER: golden
+          POSTGRES_PASSWORD: golden_secret
+        # No host port: this job's suite runs on SQLite; on a self-hosted box two
+        # concurrent jobs publishing 5432 would collide ("driver failed
+        # programming external connectivity").
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: valkey/valkey:7.2-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install system runtime & build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libpq-dev \
+            libcairo2 \
+            libpango-1.0-0 \
+            libpangocairo-1.0-0 \
+            libgdk-pixbuf-2.0-0 \
+            shared-mime-info \
+            fonts-dejavu-core \
+            fontconfig
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      - name: Run isolation tripwire check
+        run: bash scripts/tripwire.sh
+
+      - name: Run ruff lint & style checks
+        run: python -m ruff check .
+
+      # docs/findings-log.md is dev-only (scripts/release/dev-only.txt); the
+      # public tree has none, so the step is skipped there.
+      - name: Check the findings log (docs/findings-log.md)
+        if: hashFiles('docs/findings-log.md') != ''
+        run: python -I scripts/findings_check.py
+
+      - name: Verify Django system checks and migrations
+        run: |
+          python manage.py check --settings=config.settings.test
+          python manage.py makemigrations --check --settings=config.settings.test
+
+      - name: Validate OpenAPI 3.0 specification generation
+        run: python manage.py spectacular --file /tmp/openapi.yaml --settings=config.settings.test
+
+      # The suite runs in parallel (as the Postgres job does); coverage follows
+      # the worker processes (--concurrency=multiprocessing) and is combined
+      # before the reports. Serial under coverage took ~70 min on the shared
+      # runner and was the queue's bottleneck (2026-10-17). A failing test
+      # under --parallel surfaces as "cannot pickle 'traceback'": rerun that
+      # label serially to see it (CLAUDE.md, CRM engagement section).
+      - name: Run test suite with coverage
+        run: |
+          coverage run manage.py test --noinput --parallel auto --settings=config.settings.test
+          coverage combine
+          coverage report --fail-under=60 --include="orders/*,payments/*,accounting/*,inventory/*,webhooks/*"
+          coverage report --fail-under=40
+
+      # Blocking since F-050: the pins in requirements/base.txt carry security
+      # floors (PyJWT 2.15, pypdf 6.19, urllib3 2.8). A new advisory fails the
+      # build; raise the floor (and pyproject.toml) rather than re-adding
+      # continue-on-error.
+      - name: Audit Python dependencies for CVEs
+        run: python -m pip_audit --desc
+
+      - name: Verify demo database migration & seed command
+        run: |
+          python manage.py migrate --settings=config.settings.dev
+          python manage.py seed_demo_data --settings=config.settings.dev
+          python manage.py check_external_refs --settings=config.settings.dev
+          python manage.py reconcile_parties --check --settings=config.settings.dev
+          python manage.py check_tenancy --settings=config.settings.dev
+          python manage.py check_engagements --settings=config.settings.dev
+          python manage.py check_sidecar --settings=config.settings.dev
+          python manage.py reconcile_engagements --check --settings=config.settings.dev
+
+  migrations-postgres:
+    name: Migrations & Schema Parity (Postgres 17)
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: golden_erp
+          POSTGRES_USER: golden
+          POSTGRES_PASSWORD: golden_secret
+        ports:
+          - 5432   # random host port: concurrent jobs on one runner box must not collide
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Point DATABASE_URL at the service's host port
+        run: |
+          echo "PGPORT=${{ job.services.postgres.ports['5432'] }}" >> "$GITHUB_ENV"
+          echo "DATABASE_URL=postgres://golden:golden_secret@localhost:${{ job.services.postgres.ports['5432'] }}/golden_erp" >> "$GITHUB_ENV"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install system runtime & build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libpq-dev \
+            postgresql-client \
+            libcairo2 \
+            libpango-1.0-0 \
+            libpangocairo-1.0-0 \
+            libgdk-pixbuf-2.0-0 \
+            shared-mime-info \
+            fonts-dejavu-core \
+            fontconfig
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      # config.settings.dev reads DATABASE_URL; config.settings.test is SQLite-only.
+      - name: Migrate an empty Postgres database
+        run: python manage.py migrate --noinput --settings=config.settings.dev
+
+      # docs/pin/ is dev-only (scripts/release/dev-only.txt): the public tree
+      # has no baseline to compare with, so the step reports and moves on.
+      - name: Compare schema against the committed baseline
+        run: |
+          if [ ! -f docs/pin/schema-baseline.json ]; then
+            echo "::notice title=schema parity::docs/pin/schema-baseline.json is not in this tree (dev-only); comparison skipped"
+            exit 0
+          fi
+          python manage.py check_schema_parity \
+            --compare docs/pin/schema-baseline.json \
+            --expect-diff docs/pin/expected-diff.txt \
+            --settings=config.settings.dev
+
+      - name: Run Postgres-backed schema parity test
+        run: python manage.py test core.tests.test_schema_parity --noinput --settings=config.settings.dev
+
+      # CRM Phase 2 step 11: the D13 constraints and the pre-check on Postgres
+      # (the full suite above covers SQLite).
+      - name: Run Postgres-backed step-11 tightening tests
+        run: python manage.py test customers.test_tighten --noinput --settings=config.settings.dev
+
+      # Issue #88: a database built and filled by the previous release must
+      # migrate with HEAD. A fresh database never reaches the data migrations'
+      # row-dependent paths (e.g. communications.0003 with EmailLog rows), so
+      # the step above cannot catch a data migration that uses live models.
+      # PREVIOUS_TAGS: the previous release candidate (v0.4.0-rc.7), the
+      # candidate that still exercises communications.0003's row path on
+      # upgrade (v0.4.0-rc.1) and the oldest release a downstream still
+      # upgrades from in one jump (v0.3.0-rc.1). Move them forward deliberately
+      # (docs/release-hardening-plan.md section 2.1).
+      # Run locally: docs in CLAUDE.md ("Data migrations").
+      # The tags are the dev repo's. The public repo has one squashed commit
+      # per release and none of them, so a tag the remote does not hold is
+      # skipped with a notice, and the row-path assertion below applies only
+      # when every tag ran (on the dev repo, always).
+      - name: Upgrade path from the previous releases
+        env:
+          PREVIOUS_TAGS: v0.3.0-rc.1 v0.4.0-rc.1 v0.4.0-rc.7
+          PGPASSWORD: golden_secret
+        run: |
+          # The default shell has no pipefail: without it a failing
+          # check_upgrade_path.sh piped into tee passed the step.
+          set -o pipefail
+          log=$(mktemp)
+          ran=0 skipped=0
+          for tag in $PREVIOUS_TAGS; do
+            # --exit-code: 2 means "no such ref"; anything else (network,
+            # auth) is an error and must fail, not skip the replay.
+            rc=0; git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null || rc=$?
+            if ((rc == 2)); then
+              echo "::notice title=upgrade path::tag $tag is not in this repository; skipped"
+              skipped=$((skipped + 1))
+              continue
+            elif ((rc != 0)); then
+              echo "::error title=upgrade path::git ls-remote failed for $tag (exit $rc)"
+              exit 1
+            fi
+            db="golden_upgrade_$(echo "$tag" | tr -c 'a-z0-9\n' '_')"
+            createdb -h localhost -p "$PGPORT" -U golden "$db"
+            PREVIOUS_TAG=$tag DATABASE_URL="postgres://golden:golden_secret@localhost:$PGPORT/$db" \
+              scripts/upgrade/check_upgrade_path.sh | tee -a "$log"
+            ran=$((ran + 1))
+          done
+          echo "upgrade path: $ran tag(s) replayed, $skipped absent"
+          if [ "$skipped" -gt 0 ]; then
+            exit 0
+          fi
+          # At least one tag must predate communications.0003, or its row path
+          # (issue #88) is no longer tested by anything.
+          grep -q 'row path exercised' "$log" \
+            || { echo "no PREVIOUS_TAG exercised communications.0003's row path"; exit 1; }
+
+  release-notes:
+    name: Release Notes (release_notes on the oldest previous release..HEAD)
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+
+    steps:
+      # Full history: release_notes refuses a shallow clone (exit 2).
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install system runtime & build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libcairo2 \
+            libpango-1.0-0 \
+            libpangocairo-1.0-0 \
+            libgdk-pixbuf-2.0-0 \
+            shared-mime-info
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      # No database: the command reads git and the files at the refs only.
+      # OLDEST_TAG is the oldest entry of PREVIOUS_TAGS above; move both.
+      # Fails when release_notes lists no migration although */migrations/
+      # changed in the range, i.e. the generator stopped seeing them.
+      - name: release_notes lists every migration added since the oldest previous release
+        env:
+          OLDEST_TAG: v0.3.0-rc.1
+        run: |
+          # The default shell has no pipefail: without it a failing
+          # release_notes piped into tee passed the step.
+          set -o pipefail
+          git fetch --quiet --tags origin
+          # A dev-repo tag; the public repo's squashed history has none of them.
+          if ! git rev-parse -q --verify "refs/tags/$OLDEST_TAG" >/dev/null; then
+            echo "::notice title=release notes::tag $OLDEST_TAG is not in this repository; skipped"
+            exit 0
+          fi
+          python manage.py release_notes "$OLDEST_TAG" HEAD --settings=config.settings.test | tee release-notes.md
+          if [ -n "$(git diff --name-only "$OLDEST_TAG"..HEAD -- '*/migrations/')" ] \
+             && ! grep -q '^Migrations added: [1-9]' release-notes.md; then
+            echo "release_notes listed no migrations although */migrations/ changed since $OLDEST_TAG"
+            exit 1
+          fi
+
+  tests-postgres:
+    name: Test Suite (Postgres 17)
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+
+    # The full suite again, on the database every deployment runs. SQLite
+    # (above) misses FOR UPDATE rules, varchar lengths, LOWER() on non-ASCII
+    # and connection lifetime; each of these once passed SQLite and broke here.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: golden_erp
+          POSTGRES_USER: golden
+          POSTGRES_PASSWORD: golden_secret
+        ports:
+          - 5432   # random host port: concurrent jobs on one runner box must not collide
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # config.settings.test switches to Postgres only when this is set.
+      - name: Point TEST_DATABASE_URL at the service's host port
+        run: echo "TEST_DATABASE_URL=postgres://golden:golden_secret@localhost:${{ job.services.postgres.ports['5432'] }}/golden_erp" >> "$GITHUB_ENV"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install system runtime & build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libpq-dev \
+            libcairo2 \
+            libpango-1.0-0 \
+            libpangocairo-1.0-0 \
+            libgdk-pixbuf-2.0-0 \
+            shared-mime-info \
+            fonts-dejavu-core \
+            fontconfig
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      - name: Run the full test suite on Postgres
+        run: python manage.py test --noinput --parallel auto --settings=config.settings.test
+
+  docker-verification:
+    name: Container Build & Compose Validation
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate development compose configuration
+        run: docker compose config
+
+      - name: Validate production compose configuration
+        run: |
+          POSTGRES_PASSWORD=secret \
+          DJANGO_SECRET_KEY=secret \
+          ALLOWED_HOSTS=localhost \
+          docker compose -f docker-compose.prod.yml config
+
+      - name: Build Docker container image
+        run: docker build -t golden-erp:ci .
+
+  package-install:
+    name: Package Build & Downstream Install
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install WeasyPrint runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libcairo2 \
+            libpango-1.0-0 \
+            libpangocairo-1.0-0 \
+            libgdk-pixbuf-2.0-0 \
+            shared-mime-info \
+            fonts-dejavu-core \
+            fontconfig
+
+      - name: Build wheel, install into a fresh venv, run a downstream project on it
+        run: bash scripts/check_package_install.sh
+        env:
+          PYTHON: python
+
+  # The public tree is the dev tree minus scripts/release/dev-only.txt. A tracked
+  # file that looks like a working document (handoff, plan, findings, test run,
+  # rehearsal, screenshot, our own deploy files) and is not on that list fails
+  # here, so it cannot reach a release (docs/release-process.md §3.2).
+  release-tree:
+    name: Release tree (working documents are listed as dev-only)
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/release/public_tree.sh --check
+
+  secret-scan:
+    name: Secret Scan (gitleaks)
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+    # gitleaks-action lists the PR's commits through the API; with the repo's
+    # restricted default token that call 403s ("Resource not accessible by
+    # integration") and the job fails on every pull_request with no finding.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The action's SARIF artifact upload assumes the work dir sits under
+          # $HOME; on the self-hosted runner (/opt/runner-instances/...) it
+          # fails with "rootDirectory ... is not a parent directory". The scan
+          # result is the check itself; the artifact adds nothing.
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+
+  storefront:
+    name: Storefront Lint, Types & Tests
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - run: bun install --frozen-lockfile
+        working-directory: storefront
+      # Blocking since F-050. bun audit has no production scope, and the only
+      # runtime dependency (@supabase/supabase-js) plus vite (staging runs
+      # `vite preview`) are clean. The ignored ids are build/lint-time only,
+      # never in the served bundle, and have no in-range fix:
+      #   GHSA-rj75-hqrm-r3gf  postcss-selector-parser 6.0.10, pinned exactly by
+      #                        @tailwindcss/typography (moderate, CSS build CPU)
+      #   GHSA-vfj7-8cjw-p6xm  braces 3.0.3 via typescript-eslint > fast-glob
+      #                        (high, lint-time; no fixed release exists)
+      #   GHSA-f88m-g3jw-g9cj  sharp 0.34 via @builder.io/qwik-city >
+      #   GHSA-rgj7-g3m4-5g8c  vite-imagetools 9 (high, libvips/libheif/librsvg
+      #   GHSA-wq5f-xc86-pv6w  on repo-owned images at build; fix needs vite 8)
+      #   GHSA-mrhx-c7xc-m3w5  zod 3.25.48, pinned exactly by @builder.io/qwik-city
+      #                        (high, DoS on oversized constrained collections; the
+      #                        storefront has no zod$/zod import and ships a static
+      #                        build, so zod never runs; fix needs zod 4 via qwik-city)
+      #   GHSA-g3hv-75wg-m249  minimatch 3/9/10 via eslint, typescript-eslint,
+      #                        eslint-plugin-qwik and vite > stylus > glob (moderate,
+      #                        DoS on an attacker-supplied glob pattern; only our own
+      #                        lint/build globs reach it; fixed only in 11.0.1, out of
+      #                        every range; published 2026-10-30)
+      # Drop an id as soon as a qwik-city or typography release unpins it.
+      - run: >-
+          bun audit
+          --ignore=GHSA-rj75-hqrm-r3gf
+          --ignore=GHSA-vfj7-8cjw-p6xm
+          --ignore=GHSA-f88m-g3jw-g9cj
+          --ignore=GHSA-rgj7-g3m4-5g8c
+          --ignore=GHSA-wq5f-xc86-pv6w
+          --ignore=GHSA-mrhx-c7xc-m3w5
+          --ignore=GHSA-g3hv-75wg-m249
+        working-directory: storefront
+      - run: bun run lint
+        working-directory: storefront
+      - run: bun run build.types
+        working-directory: storefront
+      - run: bun run fmt.check
+        working-directory: storefront
+      - run: bun run test
+        working-directory: storefront
+      - run: bun run build
+        working-directory: storefront
+      # No server-side secret may reach the built bundle (hardening 6.4).
+      - run: scripts/check_bundle_secrets.sh storefront/dist
+      # --with-deps: Chromium's system libraries, which a stock ubuntu-latest
+      # lacks (our runner had them installed by hand).
+      - run: bunx playwright install --with-deps chromium
+        working-directory: storefront
+      - name: Run bun run test:e2e
+        working-directory: storefront
+        run: |
+          PW_PORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+          export PW_PORT
+          bun run test:e2e

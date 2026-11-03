@@ -1,0 +1,61 @@
+<script>
+  // Double-submit guard (F-033). A form marked data-submit-once submits
+  // once: after the first submission its submit controls are disabled and
+  // show a pending state until the response arrives (a navigation, so the
+  // page is replaced) or the page is shown again from the back/forward
+  // cache. The server keeps its own guard (core.once) for anything this
+  // cannot see: a second tab, a retried request, a client without JS.
+  (function () {
+    var PENDING = 'data-submit-pending';
+    function submitters(form) {
+      var out = [], els = form.elements;  // includes controls associated via form="..."
+      for (var i = 0; i < els.length; i++) {
+        var el = els[i];
+        if ((el.tagName === 'BUTTON' && (el.type || 'submit').toLowerCase() === 'submit') ||
+            (el.tagName === 'INPUT' && el.type === 'submit')) out.push(el);
+      }
+      return out;
+    }
+    function lock(form) {
+      form.setAttribute(PENDING, '1');
+      form.setAttribute('aria-busy', 'true');
+      submitters(form).forEach(function (b) {
+        if (b.disabled) return;
+        b.disabled = true;
+        b.setAttribute('data-submit-once-locked', '1');
+        if (b.tagName === 'BUTTON') {
+          b.setAttribute('data-submit-once-html', b.innerHTML);
+          var label = b.getAttribute('data-pending-text') || b.textContent.replace(/\s+/g, ' ').trim() || 'Working';
+          b.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>' + label;
+        }
+      });
+    }
+    function unlock(form) {
+      form.removeAttribute(PENDING);
+      form.removeAttribute('aria-busy');
+      submitters(form).forEach(function (b) {
+        if (!b.hasAttribute('data-submit-once-locked')) return;
+        b.disabled = false;
+        b.removeAttribute('data-submit-once-locked');
+        var html = b.getAttribute('data-submit-once-html');
+        if (html !== null) { b.innerHTML = html; b.removeAttribute('data-submit-once-html'); }
+      });
+    }
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.hasAttribute || !form.hasAttribute('data-submit-once')) return;
+      if (form.hasAttribute(PENDING)) { e.preventDefault(); return; }
+      // Lock after every other submit handler has run: one that cancels the
+      // submit (validation, a fetch that takes over) must not leave the form
+      // locked, and disabling the submitter DURING the event drops its
+      // name/value (_action=save) from the POST. Keyboard submit (Enter)
+      // goes through the same event, so it works the first time and is
+      // refused while pending.
+      setTimeout(function () { if (!e.defaultPrevented) lock(form); }, 0);
+    }, true);
+    window.addEventListener('pageshow', function () {
+      var forms = document.querySelectorAll('form[' + PENDING + ']');
+      for (var i = 0; i < forms.length; i++) unlock(forms[i]);
+    });
+  })();
+</script>

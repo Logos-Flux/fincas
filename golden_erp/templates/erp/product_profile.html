@@ -1,0 +1,807 @@
+{% extends "base.html" %}
+{% load static erp_tags bunny_images %}
+
+{% block title %}{{ page_title }} — Item Profile{% endblock %}
+
+{% block stylesheets %}
+<style>
+  .profile-locked input,
+  .profile-locked select,
+  .profile-locked textarea {
+    pointer-events: none;
+    background-color: var(--bs-gray-100) !important;
+    opacity: .85;
+  }
+  [data-bs-theme="dark"] .profile-locked input,
+  [data-bs-theme="dark"] .profile-locked select,
+  [data-bs-theme="dark"] .profile-locked textarea {
+    background-color: rgba(255,255,255,.06) !important;
+  }
+  .profile-locked .form-check-input { pointer-events: none; }
+  .section-header { cursor: pointer; user-select: none; }
+  .section-header .chevron { transition: transform .2s; }
+  .section-header.collapsed .chevron { transform: rotate(-90deg); }
+  .variant-card { border-left: 3px solid var(--bs-primary); }
+  .variant-card.variant-deleted { opacity: .4; border-left-color: var(--bs-danger); }
+  .lock-badge { font-size: .7rem; }
+  .field-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
+  .json-field { font-family: 'JetBrains Mono', monospace; font-size: .8rem; }
+  .image-preview { max-width: 80px; max-height: 80px; border-radius: .375rem; object-fit: cover; }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="post" novalidate id="profile-form">
+  {% csrf_token %}
+
+  {# ── Header Bar ─────────────────────────────────────────────────────────── #}
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h5 class="font-weight-bolder mb-0">
+        {% if is_new %}
+          <i class="fas fa-plus-circle text-success me-2"></i>New Product
+        {% else %}
+          <i class="fas fa-box me-2"></i>{{ product.title }}
+        {% endif %}
+      </h5>
+      {% if not is_new %}
+      <p class="text-sm text-secondary mb-0">
+        {{ product.part_number|default:"No SKU" }} · {{ product.get_product_type_display }}
+        {% if product.brand %} · {{ product.brand.title }}{% endif %}
+      </p>
+      {% endif %}
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+      {% if not is_new %}
+      <span class="badge lock-badge bg-gradient-warning" id="lock-badge">
+        <i class="fas fa-lock me-1"></i>Locked
+      </span>
+      <button type="button" class="btn btn-outline-primary btn-sm" id="unlock-btn" onclick="toggleLock()">
+        <i class="fas fa-lock-open me-1"></i>Unlock to Edit
+      </button>
+      {% endif %}
+      <div id="save-buttons" {% if not is_new %}style="display:none"{% endif %}>
+        <a href="{% url 'erp-product-list' %}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        <button type="submit" class="btn bg-gradient-primary btn-sm">
+          <i class="fas fa-save me-1"></i>Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {# ── Non-field errors ───────────────────────────────────────────────────── #}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger text-sm">
+    {% for error in form.non_field_errors %}<p class="mb-0">{{ error }}</p>{% endfor %}
+  </div>
+  {% endif %}
+
+  <div id="profile-body" class="{% if not is_new %}profile-locked{% endif %}">
+
+    {# ── Product Image Preview (existing products) ──────────────────────── #}
+    {% if not is_new and primary_image %}
+    <div class="card mb-3">
+      <div class="card-body p-3 d-flex align-items-center gap-3">
+        {% bunny_image_url primary_image.cf_image_id 'thumbnail' as primary_thumb_url %}
+        <img src="{{ primary_thumb_url }}"
+             alt="{{ product.title }}" class="image-preview">
+        <div>
+          <p class="text-sm font-weight-bold mb-0">{{ product.title }}</p>
+          <p class="text-xs text-secondary mb-0">
+            {{ images|length }} image{{ images|length|pluralize }}
+            {% if categories %} · {{ categories|length }} categor{{ categories|length|pluralize:"y,ies" }}{% endif %}
+          </p>
+          {% if updated_at %}
+          <p class="text-xs text-secondary mb-0">Last updated {{ updated_at|date:"M j, Y g:i A" }}</p>
+          {% endif %}
+        </div>
+        {% if product.is_active %}
+        <span class="badge bg-gradient-success ms-auto">Active</span>
+        {% else %}
+        <span class="badge bg-gradient-secondary ms-auto">Inactive</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Parent Product Sections ────────────────────────────────────────── #}
+    {% for section in parent_sections %}
+    <div class="card mb-3">
+      <div class="card-header pb-0 section-header {% if section.collapsed %}collapsed{% endif %}"
+           data-bs-toggle="collapse" data-bs-target="#section-{{ section.id }}">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0 text-sm">
+            <i class="{{ section.icon }} text-primary me-2"></i>{{ section.title }}
+          </h6>
+          <i class="fas fa-chevron-down text-xs chevron"></i>
+        </div>
+      </div>
+      <div class="collapse {% if not section.collapsed %}show{% endif %}" id="section-{{ section.id }}">
+        <div class="card-body pt-2">
+          <div class="row">
+            {% for field_name in section.fields %}
+              {% with field=form|get_form_field:field_name %}
+              {% if field %}
+              <div class="{% if field.field.widget.template_name == 'django/forms/widgets/textarea.html' %}col-12{% else %}col-md-6 col-lg-4{% endif %} mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label field-label text-secondary">
+                  {{ field.label }}
+                  {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {% if field.field.widget.input_type == "checkbox" %}
+                  <div class="form-check form-switch">
+                    {{ field }}
+                  </div>
+                {% elif field.field.widget.template_name == "django/forms/widgets/textarea.html" %}
+                  {{ field|add_class:"form-control form-control-sm json-field" }}
+                {% else %}
+                  {{ field|add_class:"form-control form-control-sm" }}
+                {% endif %}
+                {% if field.errors %}
+                <div class="text-danger text-xs mt-1">{{ field.errors.0 }}</div>
+                {% endif %}
+                {% if field.help_text %}
+                <small class="text-muted text-xs">{{ field.help_text }}</small>
+                {% endif %}
+              </div>
+              {% endif %}
+              {% endwith %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    {# ── Variants Section ───────────────────────────────────────────────── #}
+    <div class="card mb-3">
+      <div class="card-header pb-0 section-header"
+           data-bs-toggle="collapse" data-bs-target="#section-variants">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0 text-sm">
+            <i class="fas fa-layer-group text-primary me-2"></i>
+            Variants
+            <span class="badge bg-gradient-secondary ms-2" id="variant-count">{{ formset.forms|length }}</span>
+          </h6>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-outline-success btn-xs" id="add-variant-btn"
+                    onclick="addVariant()" {% if not is_new %}style="display:none"{% endif %}>
+              <i class="fas fa-plus me-1"></i>Add Variant
+            </button>
+            <i class="fas fa-chevron-down text-xs chevron"></i>
+          </div>
+        </div>
+      </div>
+      <div class="collapse show" id="section-variants">
+        <div class="card-body pt-2" id="variant-container">
+          {{ formset.management_form }}
+
+          {% for vform in formset.forms %}
+          <div class="card variant-card mb-3 {% if vform.instance.pk and vform.DELETE.value %}variant-deleted{% endif %}"
+               id="variant-{{ forloop.counter0 }}">
+            <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+              <h6 class="text-sm mb-0">
+                <i class="fas fa-cube text-info me-2"></i>
+                {% if vform.instance.pk %}
+                  {{ vform.instance.sku|default:"Variant" }}
+                {% else %}
+                  New Variant
+                {% endif %}
+              </h6>
+              <div class="d-flex gap-2 align-items-center">
+                {% if vform.instance.pk %}
+                <span class="text-xs text-secondary">ID: {{ vform.instance.pk|truncatechars:12 }}</span>
+                {% endif %}
+                <div class="form-check form-switch form-switch-sm variant-delete-toggle"
+                     title="Mark for deletion" {% if not is_new %}style="display:none"{% endif %}>
+                  <label class="form-check-label text-xs text-danger">
+                    {{ vform.DELETE|aria_label:"Remove variant" }}
+                    Delete
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="card-body pt-2">
+              {% if vform.non_field_errors %}
+              <div class="alert alert-danger text-xs py-1 px-2 mb-2">
+                {% for error in vform.non_field_errors %}<p class="mb-0">{{ error }}</p>{% endfor %}
+              </div>
+              {% endif %}
+
+              {% for vs in variant_sections %}
+              {% if vs.collapsed %}
+              <details class="mb-2">
+                <summary class="text-xs text-secondary font-weight-bold text-uppercase mb-1" style="cursor:pointer">
+                  {{ vs.title }}
+                </summary>
+                <div class="row ps-2">
+                  {% for fname in vs.fields %}
+                    {% with vf=vform|get_form_field:fname %}
+                    {% if vf %}
+                    <div class="col-md-4 col-lg-3 mb-2">
+                      <label class="form-label field-label text-secondary">
+                        {{ vf.label }}{% if vf.field.required %}<span class="text-danger">*</span>{% endif %}
+                      </label>
+                      {% if vf.field.widget.input_type == "checkbox" %}
+                        <div class="form-check form-switch">{{ vf|aria_label }}</div>
+                      {% else %}
+                        {{ vf|add_class:"form-control form-control-sm" }}
+                      {% endif %}
+                      {% if vf.errors %}<div class="text-danger text-xs mt-1">{{ vf.errors.0 }}</div>{% endif %}
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                  {% endfor %}
+                </div>
+              </details>
+              {% else %}
+              <div class="mb-2">
+                <p class="text-xs text-secondary font-weight-bold text-uppercase mb-1">{{ vs.title }}</p>
+                <div class="row">
+                  {% for fname in vs.fields %}
+                    {% with vf=vform|get_form_field:fname %}
+                    {% if vf %}
+                    <div class="col-md-4 col-lg-3 mb-2">
+                      <label class="form-label field-label text-secondary">
+                        {{ vf.label }}{% if vf.field.required %}<span class="text-danger">*</span>{% endif %}
+                      </label>
+                      {% if vf.field.widget.input_type == "checkbox" %}
+                        <div class="form-check form-switch">{{ vf|aria_label }}</div>
+                      {% else %}
+                        {{ vf|add_class:"form-control form-control-sm" }}
+                      {% endif %}
+                      {% if vf.errors %}<div class="text-danger text-xs mt-1">{{ vf.errors.0 }}</div>{% endif %}
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-sm text-secondary text-center py-3" id="no-variants-msg">No variants yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ── Supplier Costs ──────────────────────────────────────────────────── #}
+    {% if not is_new %}
+    <div class="card mb-3">
+      <div class="card-header pb-0 section-header"
+           data-bs-toggle="collapse" data-bs-target="#section-supplier-costs">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0 text-sm">
+            <i class="fas fa-truck text-primary me-2"></i>
+            Supplier Costs
+            <span class="badge bg-gradient-secondary ms-2">{{ supplier_products|length }}</span>
+          </h6>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-outline-success btn-xs" id="add-supplier-cost-btn"
+                    onclick="openSupplierCostModal('create')" style="display:none">
+              <i class="fas fa-plus me-1"></i>Add Supplier
+            </button>
+            <i class="fas fa-chevron-down text-xs chevron"></i>
+          </div>
+        </div>
+      </div>
+      <div class="collapse show" id="section-supplier-costs">
+        <div class="card-body px-0 pt-0 pb-2">
+          <div class="table-responsive p-0">
+            <table class="table table-sm align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Supplier</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Variant</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Supplier SKU</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Cost</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">UOM</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Unit Cost</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Min Qty</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Lead Time</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Primary</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="supplier-costs-tbody">
+                {% for sp in supplier_products %}
+                <tr data-sp-id="{{ sp.pk }}">
+                  <td class="ps-3">
+                    <span class="text-sm font-weight-bold">{{ sp.supplier.display_name|default:sp.supplier.company_name }}</span>
+                    {% if sp.supplier.supplier_type == "warehouse" %}
+                    <span class="badge badge-sm bg-gradient-info ms-1">WH</span>
+                    {% endif %}
+                  </td>
+                  <td><span class="text-sm">{{ sp.variant.sku }}</span></td>
+                  <td><span class="text-sm">{{ sp.supplier_sku|default:"—" }}</span></td>
+                  <td class="text-end"><span class="text-sm">{{ sp.cost|money }}</span></td>
+                  <td class="text-center">
+                    <span class="text-sm">
+                      {% if sp.qty_per_uom > 1 %}
+                        {{ sp.qty_per_uom }}/{{ sp.purchasing_uom }}
+                      {% else %}
+                        {{ sp.purchasing_uom }}
+                      {% endif %}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <span class="text-sm font-weight-bold">
+                      {% if sp.qty_per_uom > 1 %}
+                        {{ sp.unit_cost|money }}
+                      {% else %}
+                        {{ sp.unit_cost|money }}
+                      {% endif %}
+                    </span>
+                  </td>
+                  <td class="text-center"><span class="text-sm">{{ sp.minimum_order_qty }}</span></td>
+                  <td class="text-center"><span class="text-sm">{{ sp.lead_time_days|default:"—" }}{% if sp.lead_time_days %}d{% endif %}</span></td>
+                  <td class="text-center">
+                    {% if sp.is_primary %}<i class="fas fa-star text-warning"></i>{% endif %}
+                  </td>
+                  <td class="text-end pe-3">
+                    <button type="button" class="btn btn-link text-primary p-0 text-sm btn-edit-sp"
+                            onclick="openSupplierCostModal('edit', '{{ sp.pk }}')" style="display:none">
+                      <i class="fas fa-pencil-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr id="no-supplier-costs-row">
+                  <td colspan="10" class="text-center py-4 text-sm text-secondary">
+                    No supplier costs configured.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Plugin panels (TemplateExtension slot; docs/plugins.md) ──────────── #}
+    {# Inside the profile form: a panel must not contain a <form>.          #}
+    {% if not is_new %}{% plugin_slot "product_profile_panels" %}{% endif %}
+
+    {# ── Timestamps (existing products) ─────────────────────────────────── #}
+    {% if not is_new %}
+    <div class="card mb-3">
+      <div class="card-body py-2 px-3">
+        <div class="row">
+          <div class="col-md-4">
+            <p class="text-xs text-secondary mb-0">Created</p>
+            <p class="text-sm mb-0">{{ product.created_at|date:"M j, Y g:i A" }}</p>
+          </div>
+          <div class="col-md-4">
+            <p class="text-xs text-secondary mb-0">Last Modified</p>
+            <p class="text-sm mb-0">{{ product.updated_at|date:"M j, Y g:i A" }}</p>
+          </div>
+          <div class="col-md-4">
+            <p class="text-xs text-secondary mb-0">ID</p>
+            <p class="text-sm mb-0 font-monospace">{{ product.pk }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div><!-- /profile-body -->
+</form>
+
+{# ── Supplier Cost Modal ─────────────────────────────────────────────── #}
+{% if not is_new %}
+<div class="modal fade" id="supplierCostModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title" id="supplierCostModalTitle">Add Supplier Cost</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-12 mb-3">
+            <label class="form-label field-label text-secondary">Supplier <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" id="sc-supplier-search"
+                   placeholder="Search suppliers..." autocomplete="off">
+            <input type="hidden" id="sc-supplier-id">
+            <div class="list-group position-absolute w-100" id="sc-supplier-results"
+                 style="z-index:1050; display:none; max-height:200px; overflow-y:auto;"></div>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label field-label text-secondary">Variant <span class="text-danger">*</span></label>
+            <select class="form-control form-control-sm" id="sc-variant-id">
+              {% for vform in formset.forms %}
+              {% if vform.instance.pk %}
+              <option value="{{ vform.instance.pk }}">{{ vform.instance.sku }}{% if vform.instance.name %} — {{ vform.instance.name }}{% endif %}</option>
+              {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label field-label text-secondary">Supplier SKU</label>
+            <input type="text" class="form-control form-control-sm" id="sc-supplier-sku">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label field-label text-secondary">Cost <span class="text-danger">*</span></label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">$</span>
+              <input type="number" class="form-control form-control-sm" id="sc-cost" step="0.01" min="0">
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label field-label text-secondary">UOM</label>
+            <select class="form-control form-control-sm" id="sc-purchasing-uom">
+              <option value="each">Each</option>
+              <option value="box">Box</option>
+              <option value="case">Case</option>
+              <option value="pallet">Pallet</option>
+              <option value="lot">Lot</option>
+              <option value="pack">Pack</option>
+              <option value="set">Set</option>
+              <option value="roll">Roll</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label field-label text-secondary">Qty per UOM</label>
+            <input type="number" class="form-control form-control-sm" id="sc-qty-per-uom" value="1" min="1">
+            <small class="text-muted text-xs" id="sc-unit-cost-preview"></small>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label field-label text-secondary">Min Order Qty</label>
+            <input type="number" class="form-control form-control-sm" id="sc-min-order-qty" value="1" min="1">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label field-label text-secondary">Lead Time (days)</label>
+            <input type="number" class="form-control form-control-sm" id="sc-lead-time" min="0">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label field-label text-secondary">Ship From</label>
+            <input type="text" class="form-control form-control-sm" id="sc-shipping-location">
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="form-check form-switch mt-4">
+              <input class="form-check-input" type="checkbox" id="sc-is-primary">
+              <label class="form-check-label text-sm" for="sc-is-primary">Primary supplier</label>
+            </div>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label field-label text-secondary">Notes</label>
+            <textarea class="form-control form-control-sm" id="sc-notes" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn bg-gradient-primary btn-sm" id="sc-save-btn">
+          <i class="fas fa-save me-1"></i>Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── Plugin modals (outside the profile form, so they may hold forms) ── #}
+{% plugin_slot "product_profile_modals" %}
+
+{% endif %}
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function() {
+  // Lock / unlock toggle
+  window.toggleLock = function() {
+    const body = document.getElementById('profile-body');
+    const badge = document.getElementById('lock-badge');
+    const btn = document.getElementById('unlock-btn');
+    const saveButtons = document.getElementById('save-buttons');
+    const addBtn = document.getElementById('add-variant-btn');
+    const isLocked = body.classList.contains('profile-locked');
+
+    var addSpBtn = document.getElementById('add-supplier-cost-btn');
+
+    if (isLocked) {
+      body.classList.remove('profile-locked');
+      badge.innerHTML = '<i class="fas fa-lock-open me-1"></i>Editing';
+      badge.classList.remove('bg-gradient-warning');
+      badge.classList.add('bg-gradient-success');
+      btn.innerHTML = '<i class="fas fa-lock me-1"></i>Lock';
+      saveButtons.style.display = '';
+      if (addBtn) addBtn.style.display = '';
+      if (addSpBtn) addSpBtn.style.display = '';
+      // Show delete toggles and edit buttons
+      document.querySelectorAll('.variant-delete-toggle').forEach(el => el.style.display = '');
+      document.querySelectorAll('.btn-edit-sp').forEach(el => el.style.display = '');
+    } else {
+      body.classList.add('profile-locked');
+      badge.innerHTML = '<i class="fas fa-lock me-1"></i>Locked';
+      badge.classList.remove('bg-gradient-success');
+      badge.classList.add('bg-gradient-warning');
+      btn.innerHTML = '<i class="fas fa-lock-open me-1"></i>Unlock to Edit';
+      saveButtons.style.display = 'none';
+      if (addBtn) addBtn.style.display = 'none';
+      if (addSpBtn) addSpBtn.style.display = 'none';
+      document.querySelectorAll('.variant-delete-toggle').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.btn-edit-sp').forEach(el => el.style.display = 'none');
+    }
+  };
+
+  // Add new variant form (clone empty form template)
+  window.addVariant = function() {
+    const container = document.getElementById('variant-container');
+    const totalInput = document.getElementById('id_variants-TOTAL_FORMS');
+    const idx = parseInt(totalInput.value);
+
+    // Remove "no variants" message if present
+    const noMsg = document.getElementById('no-variants-msg');
+    if (noMsg) noMsg.remove();
+
+    // Get the empty form template from the last formset form
+    // We'll clone the last variant card and clear its values
+    const existingCards = container.querySelectorAll('.variant-card');
+    let template;
+
+    if (existingCards.length > 0) {
+      template = existingCards[existingCards.length - 1].cloneNode(true);
+    } else {
+      // If no cards exist, we need to create a minimal one
+      // This shouldn't happen since Django formset always includes at least `extra` forms
+      return;
+    }
+
+    // Update the cloned card
+    template.id = 'variant-' + idx;
+    template.classList.remove('variant-deleted');
+    template.querySelector('h6').innerHTML = '<i class="fas fa-cube text-info me-2"></i>New Variant';
+
+    // Update all input names/ids from the previous index to the new index
+    const prevIdx = idx - 1;
+    template.querySelectorAll('input, select, textarea').forEach(function(el) {
+      if (el.name) {
+        el.name = el.name.replace('variants-' + prevIdx + '-', 'variants-' + idx + '-');
+      }
+      if (el.id) {
+        el.id = el.id.replace('variants-' + prevIdx + '-', 'variants-' + idx + '-');
+      }
+      // Clear values for text inputs
+      if (el.type === 'text' || el.type === 'number' || el.tagName === 'TEXTAREA') {
+        el.value = '';
+      }
+      // Uncheck checkboxes except is_active and visible_on_website
+      if (el.type === 'checkbox') {
+        if (el.name.includes('-is_active') || el.name.includes('-visible_on_website')) {
+          el.checked = true;
+        } else {
+          el.checked = false;
+        }
+      }
+      // Clear hidden id field
+      if (el.name && el.name.endsWith('-id')) {
+        el.value = '';
+      }
+    });
+
+    // Update labels
+    template.querySelectorAll('label').forEach(function(label) {
+      const forAttr = label.getAttribute('for');
+      if (forAttr) {
+        label.setAttribute('for', forAttr.replace('variants-' + prevIdx + '-', 'variants-' + idx + '-'));
+      }
+    });
+
+    // Show delete toggle
+    const delToggle = template.querySelector('.variant-delete-toggle');
+    if (delToggle) delToggle.style.display = '';
+
+    // Remove the ID display span
+    const idSpan = template.querySelector('.text-xs.text-secondary');
+    if (idSpan && idSpan.textContent.includes('ID:')) idSpan.remove();
+
+    container.appendChild(template);
+    totalInput.value = idx + 1;
+
+    // Update variant count badge
+    updateVariantCount();
+  };
+
+  function updateVariantCount() {
+    const badge = document.getElementById('variant-count');
+    const cards = document.querySelectorAll('.variant-card:not(.variant-deleted)');
+    if (badge) badge.textContent = cards.length;
+  }
+
+  // Track variant delete checkbox changes
+  document.addEventListener('change', function(e) {
+    if (e.target.name && e.target.name.includes('-DELETE')) {
+      const card = e.target.closest('.variant-card');
+      if (card) {
+        card.classList.toggle('variant-deleted', e.target.checked);
+        updateVariantCount();
+      }
+    }
+  });
+
+  // Collapse/expand section headers
+  document.querySelectorAll('.section-header').forEach(function(header) {
+    const target = document.querySelector(header.getAttribute('data-bs-target'));
+    if (target) {
+      target.addEventListener('shown.bs.collapse', function() {
+        header.classList.remove('collapsed');
+      });
+      target.addEventListener('hidden.bs.collapse', function() {
+        header.classList.add('collapsed');
+      });
+    }
+  });
+
+  // ── Supplier Cost Modal ──────────────────────────────────────────────
+  var editingSpId = null;
+  var SUPPLIER_COST_CREATE_URL = '{% url "erp-supplier-cost-create" %}';
+  var SUPPLIER_COST_DETAIL_URL = '{% url "erp-supplier-cost-detail" pk="00000000-0000-0000-0000-000000000000" %}';
+  var SUPPLIER_COST_UPDATE_URL = '{% url "erp-supplier-cost-update" pk="00000000-0000-0000-0000-000000000000" %}';
+  var SUPPLIER_COST_DELETE_URL = '{% url "erp-supplier-cost-delete" pk="00000000-0000-0000-0000-000000000000" %}';
+  var SUPPLIER_SEARCH_URL = '{% url "erp-supplier-search-ajax" %}';
+  var PLACEHOLDER_UUID = '00000000-0000-0000-0000-000000000000';
+
+  window.openSupplierCostModal = function(mode, spId) {
+    var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('supplierCostModal'));
+    var title = document.getElementById('supplierCostModalTitle');
+
+    if (mode === 'edit' && spId) {
+      editingSpId = spId;
+      title.textContent = 'Edit Supplier Cost';
+      fetch(SUPPLIER_COST_DETAIL_URL.replace(PLACEHOLDER_UUID, spId))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          document.getElementById('sc-supplier-search').value = d.supplier_name;
+          document.getElementById('sc-supplier-id').value = d.supplier_id;
+          document.getElementById('sc-variant-id').value = d.variant_id;
+          document.getElementById('sc-supplier-sku').value = d.supplier_sku || '';
+          document.getElementById('sc-cost').value = d.cost;
+          document.getElementById('sc-purchasing-uom').value = d.purchasing_uom;
+          document.getElementById('sc-qty-per-uom').value = d.qty_per_uom;
+          document.getElementById('sc-min-order-qty').value = d.minimum_order_qty;
+          document.getElementById('sc-lead-time').value = d.lead_time_days || '';
+          document.getElementById('sc-shipping-location').value = d.shipping_location || '';
+          document.getElementById('sc-is-primary').checked = d.is_primary;
+          document.getElementById('sc-notes').value = d.notes || '';
+          updateUnitCostPreview();
+          modal.show();
+        });
+    } else {
+      editingSpId = null;
+      title.textContent = 'Add Supplier Cost';
+      document.getElementById('sc-supplier-search').value = '';
+      document.getElementById('sc-supplier-id').value = '';
+      document.getElementById('sc-supplier-sku').value = '';
+      document.getElementById('sc-cost').value = '';
+      document.getElementById('sc-purchasing-uom').value = 'each';
+      document.getElementById('sc-qty-per-uom').value = '1';
+      document.getElementById('sc-min-order-qty').value = '1';
+      document.getElementById('sc-lead-time').value = '';
+      document.getElementById('sc-shipping-location').value = '';
+      document.getElementById('sc-is-primary').checked = false;
+      document.getElementById('sc-notes').value = '';
+      document.getElementById('sc-unit-cost-preview').textContent = '';
+      modal.show();
+    }
+  };
+
+  // Supplier search in modal
+  var scSearchTimer = null;
+  var scSearchInput = document.getElementById('sc-supplier-search');
+  var scResults = document.getElementById('sc-supplier-results');
+  if (scSearchInput) {
+    scSearchInput.addEventListener('input', function() {
+      clearTimeout(scSearchTimer);
+      var q = scSearchInput.value.trim();
+      if (q.length < 1) { scResults.style.display = 'none'; return; }
+      scSearchTimer = setTimeout(function() {
+        fetch(SUPPLIER_SEARCH_URL + '?q=' + encodeURIComponent(q))
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            var items = data.results || [];
+            if (items.length === 0) { scResults.style.display = 'none'; return; }
+            var html = '';
+            items.forEach(function(s) {
+              var badge = s.supplier_type === 'warehouse' ? ' <span class="badge badge-sm bg-gradient-info">WH</span>' : '';
+              html += '<a href="#" class="list-group-item list-group-item-action py-1 px-2 text-sm" data-id="' + s.id + '">'
+                    + s.label + badge + '</a>';
+            });
+            scResults.innerHTML = html;
+            scResults.style.display = '';
+          });
+      }, 250);
+    });
+    scResults.addEventListener('click', function(e) {
+      e.preventDefault();
+      var item = e.target.closest('[data-id]');
+      if (!item) return;
+      document.getElementById('sc-supplier-id').value = item.dataset.id;
+      scSearchInput.value = item.textContent.trim();
+      scResults.style.display = 'none';
+    });
+    document.addEventListener('click', function(e) {
+      if (!scSearchInput.contains(e.target) && !scResults.contains(e.target)) {
+        scResults.style.display = 'none';
+      }
+    });
+  }
+
+  // Unit cost preview
+  function updateUnitCostPreview() {
+    var cost = parseFloat(document.getElementById('sc-cost').value) || 0;
+    var qty = parseInt(document.getElementById('sc-qty-per-uom').value) || 1;
+    var preview = document.getElementById('sc-unit-cost-preview');
+    if (qty > 1 && cost > 0) {
+      preview.textContent = 'Unit cost: $' + (cost / qty).toFixed(4);
+    } else {
+      preview.textContent = '';
+    }
+  }
+  var scCostInput = document.getElementById('sc-cost');
+  var scQtyInput = document.getElementById('sc-qty-per-uom');
+  if (scCostInput) scCostInput.addEventListener('input', updateUnitCostPreview);
+  if (scQtyInput) scQtyInput.addEventListener('input', updateUnitCostPreview);
+
+  // Save supplier cost
+  var scSaveBtn = document.getElementById('sc-save-btn');
+  if (scSaveBtn) {
+    scSaveBtn.addEventListener('click', function() {
+      var supplierId = document.getElementById('sc-supplier-id').value;
+      var variantId = document.getElementById('sc-variant-id').value;
+      var cost = document.getElementById('sc-cost').value;
+      if (!supplierId || !variantId || !cost) {
+        alert('Supplier, variant, and cost are required.');
+        return;
+      }
+
+      var payload = {
+        supplier_id: supplierId,
+        variant_id: variantId,
+        cost: cost,
+        supplier_sku: document.getElementById('sc-supplier-sku').value,
+        purchasing_uom: document.getElementById('sc-purchasing-uom').value,
+        qty_per_uom: document.getElementById('sc-qty-per-uom').value,
+        minimum_order_qty: document.getElementById('sc-min-order-qty').value,
+        lead_time_days: document.getElementById('sc-lead-time').value || null,
+        shipping_location: document.getElementById('sc-shipping-location').value,
+        is_primary: document.getElementById('sc-is-primary').checked,
+        notes: document.getElementById('sc-notes').value,
+      };
+
+      var url = editingSpId
+        ? SUPPLIER_COST_UPDATE_URL.replace(PLACEHOLDER_UUID, editingSpId)
+        : SUPPLIER_COST_CREATE_URL;
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify(payload),
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('supplierCostModal')).hide();
+        // Reload page to show updated data
+        window.location.reload();
+      })
+      .catch(function(err) {
+        alert('Error saving supplier cost.');
+        console.error(err);
+      });
+    });
+  }
+})();
+</script>
+
+{# ── Plugin scripts (TemplateExtension slot) ──────────────────────────── #}
+{% if not is_new %}{% plugin_slot "product_profile_scripts" %}{% endif %}
+
+{% endblock %}

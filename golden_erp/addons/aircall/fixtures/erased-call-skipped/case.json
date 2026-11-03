@@ -1,0 +1,34 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A call whose ref erasure flagged (metadata.erased) is skipped before anything is written.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada",
+        "phone": "+1 202-555-0143"
+      }
+    ],
+    "refs": [
+      {
+        "erased": true,
+        "object_type": "call",
+        "source_id": "1009",
+        "target": "party:ada"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.org",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001.json"
+    }
+  ]
+}

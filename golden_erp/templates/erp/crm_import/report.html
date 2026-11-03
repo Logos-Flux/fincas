@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load labels %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <div>
+    <h1 class="h5 mb-0">{{ page_title }}</h1>
+    <p class="text-xs text-secondary mb-0">{{ job.source }} · {{ job.get_status_display }} · coverage {{ job.coverage }}{% if uncovered %} ({% for r in uncovered %}{% if r.label_key %}{% label r.label_key plural=True case="lower" %}{% else %}{{ r.text|lower }}{% endif %} {{ r.item.coverage.coverage }}{% if not forloop.last %}, {% endif %}{% endfor %}){% endif %}</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'erp-crm-import-job' job.pk %}" class="btn btn-outline-primary btn-sm mb-0">Job overview</a>
+    <a href="{% url 'erp-crm-import-job-list' %}" class="btn btn-outline-secondary btn-sm mb-0">All CRM imports</a>
+  </div>
+</div>
+
+<section class="card mb-4" aria-labelledby="consequence-title">
+  <div class="card-header pb-0">
+    <h2 class="h6 mb-0" id="consequence-title">Marketing consent after this import</h2>
+  </div>
+  <div class="card-body pt-2">
+    <p class="text-sm mb-2"><strong>{{ consequence.contacts_no_consent_for_marketing }} of {{ consequence.contacts }}</strong> imported {% label "parties.person" plural=True case="lower" %} will have no marketing consent in Fincas.</p>
+    <p class="text-sm text-secondary mb-0">{{ consequence.text }}</p>
+  </div>
+</section>
+
+<section class="card mb-4" aria-labelledby="steps-title">
+  <div class="card-header pb-0">
+    <h2 class="h6 mb-1" id="steps-title">By step</h2>
+    <p class="text-xs text-secondary mb-0">Counts only. Where coverage is not complete, every count is "at least". Undo runs newest step first: a step can be undone once nothing later points at it.</p>
+  </div>
+  <div class="card-body px-0 pt-2 pb-2">
+    <div class="table-responsive p-0" tabindex="0" role="region" aria-labelledby="steps-title">
+      <table class="table align-items-center mb-0">
+        <caption class="visually-hidden">Import counts per step</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-3">Step</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">State</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">Coverage</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Rows</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Created</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Linked</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Updated</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Unchanged</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Skipped (N/A)</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Need review</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Approved</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Failed</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-3">Undo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <th scope="row" class="text-sm ps-3">{{ r.item.step }}. {% if r.label_key %}{% label r.label_key plural=True %}{% else %}{{ r.text }}{% endif %}</th>
+            <td class="text-sm ps-2">{{ r.state_text }}{% if r.item.blocked_by %} <span class="text-xs text-secondary">(needs {{ r.item.blocked_by|join:", " }})</span>{% endif %}</td>
+            <td class="text-sm ps-2">{% if r.item.coverage.exact %}{{ r.item.coverage.coverage }}{% else %}<span class="badge badge-sm bg-gradient-warning">{{ r.item.coverage.coverage }}</span>{% if r.item.coverage.reasons %} <span class="text-xs">{{ r.item.coverage.reasons|join:", " }}</span>{% endif %}{% endif %}</td>
+            <td class="text-sm text-end">{% if not r.item.coverage.exact %}≥ {% endif %}{{ r.item.rows }}</td>
+            <td class="text-sm text-end">{{ r.item.applied.created }}</td>
+            <td class="text-sm text-end">{{ r.item.applied.linked }}</td>
+            <td class="text-sm text-end">{{ r.item.applied.updated }}</td>
+            <td class="text-sm text-end">{{ r.item.unchanged }}</td>
+            <td class="text-sm text-end">{{ r.skipped }}</td>
+            <td class="text-sm text-end">{{ r.item.need_review.total }}</td>
+            <td class="text-sm text-end">{{ r.item.approved_pending }}</td>
+            <td class="text-sm text-end">{{ r.failed_or_pending }}</td>
+            <td class="text-sm ps-3">{% if r.item.undo.available %}Available{% elif r.item.undo.undo_first %}After {{ r.item.undo.undo_first|length }} later step{{ r.item.undo.undo_first|length|pluralize }}{% elif r.item.undo.applied_rows %}Not available{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" class="text-sm ps-3">Total</th>
+            <td></td><td></td>
+            <td class="text-sm text-end">{% if not totals.exact %}≥ {% endif %}{{ totals.rows }}</td>
+            <td class="text-sm text-end" colspan="3">{{ totals.applied }} applied</td>
+            <td class="text-sm text-end">{{ totals.unchanged }}</td>
+            <td class="text-sm text-end">{{ totals.skipped }}</td>
+            <td class="text-sm text-end">{{ totals.need_review }}</td>
+            <td class="text-sm text-end">{{ totals.approved_pending }}</td>
+            <td class="text-sm text-end">{{ totals.failed }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="card mb-4" aria-labelledby="reasons-title">
+  <div class="card-header pb-0">
+    <h2 class="h6 mb-0" id="reasons-title">Reasons and flags</h2>
+  </div>
+  <div class="card-body pt-2">
+    <dl class="row text-sm mb-0">
+      {% for r in rows %}{% if r.item.skipped or r.item.failed.by_code or r.item.flags or r.item.dependency_pending %}
+      <dt class="col-sm-3">{% if r.label_key %}{% label r.label_key plural=True %}{% else %}{{ r.text }}{% endif %}</dt>
+      <dd class="col-sm-9">
+        {% if r.item.skipped %}<div>Skipped (N/A): {% for code, n in r.item.skipped.items %}{{ code }} {{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+        {% if r.item.failed.by_code %}<div>Failed: {% for code, n in r.item.failed.by_code.items %}{{ code }} {{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+        {% if r.item.dependency_pending %}<div>Waiting for a reviewed dependency: {{ r.item.dependency_pending }}</div>{% endif %}
+        {% if r.item.flags %}<div>Flags: {% for code, n in r.item.flags.items %}{{ code }} {{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+      </dd>
+      {% endif %}{% empty %}{% endfor %}
+    </dl>
+    <p class="text-xs text-secondary mb-0">Rows that need a reviewer are decided on the review screens; failed rows are retried with <code>manage.py crm_import retry --job {{ job.pk }}</code>.</p>
+  </div>
+</section>
+
+<section class="card mb-4" aria-labelledby="deals-title">
+  <div class="card-header pb-0">
+    <h2 class="h6 mb-0" id="deals-title">{% label "crm.engagement" plural=True %} from the source</h2>
+  </div>
+  <div class="card-body pt-2">
+    <ul class="text-sm mb-0">
+      <li>By source outcome: {% for status, n in deals.source_status.items %}{{ status }} {{ n }}{% if not forloop.last %}, {% endif %}{% empty %}none{% endfor %}</li>
+      <li>Closed without stage history: {{ deals.closed_without_history }}</li>
+      <li>Without a company or contact: {{ deals.without_party }}</li>
+      <li>Amount unknown (kept empty, never zero): {{ deals.amount_unknown }}</li>
+      <li>Known amounts, at least: {% for currency, total in deals.known_amounts_at_least.items %}{{ total }} {{ currency }}{% if not forloop.last %}, {% endif %}{% empty %}none{% endfor %}</li>
+    </ul>
+  </div>
+</section>
+
+<section class="card mb-4" aria-labelledby="consent-title">
+  <div class="card-header pb-0">
+    <h2 class="h6 mb-0" id="consent-title">Consent facts</h2>
+  </div>
+  <div class="card-body pt-2">
+    <ul class="text-sm mb-0">
+      <li>Withdrawals: {{ consent.withdrawals }}</li>
+      <li>Suppressions: {{ consent.suppressions }}{% if consent.suppressions_by_reason %} ({% for code, n in consent.suppressions_by_reason.items %}{{ code }} {{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}){% endif %}</li>
+      <li>Grants with a time and a basis: {{ consent.grants }}; without (not recorded): {{ consent.grants_not_recorded }}</li>
+    </ul>
+  </div>
+</section>
+{% endblock %}

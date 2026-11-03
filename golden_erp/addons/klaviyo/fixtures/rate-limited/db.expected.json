@@ -1,0 +1,26 @@
+{
+  "communications": [],
+  "consents": [
+    {
+      "channel": "email",
+      "occurred_at": "2026-02-01T10:00:00Z",
+      "party": "party:ada",
+      "purpose": "marketing",
+      "source": "portal",
+      "state": "granted"
+    }
+  ],
+  "external_refs": [],
+  "outbox": [
+    {
+      "consumer": "klaviyo.profile",
+      "event": "push",
+      "idempotency_key": "sync:ada:1",
+      "object": "party:ada",
+      "state": "pending"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

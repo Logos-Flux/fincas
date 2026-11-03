@@ -1,0 +1,48 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000017",
+    "internalDate": "1772460000000",
+    "labelIds": [
+      "INBOX",
+      "Label_8"
+    ],
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "grace@example.net"
+        },
+        {
+          "name": "To",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "Subject",
+          "value": "Customer label"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<x-0017@example.net>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        }
+      ],
+      "mimeType": "multipart/mixed"
+    },
+    "sizeEstimate": 4200,
+    "snippet": "Order question",
+    "threadId": "19b0000000000017"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000017",
+    "query": {
+      "format": "metadata"
+    }
+  },
+  "schema_version": 1
+}

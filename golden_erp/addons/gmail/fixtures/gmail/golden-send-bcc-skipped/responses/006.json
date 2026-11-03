@@ -1,0 +1,78 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000012",
+    "internalDate": "1772460000000",
+    "labelIds": [
+      "INBOX"
+    ],
+    "payload": {
+      "body": {
+        "size": 0
+      },
+      "filename": "",
+      "headers": [
+        {
+          "name": "From",
+          "value": "ada@example.com"
+        },
+        {
+          "name": "To",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "Subject",
+          "value": "Not from golden"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<CAF-ada-0012@mail.example.com>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        },
+        {
+          "name": "X-Golden-Email-Log",
+          "value": "00000000-0000-4000-8000-000000000000"
+        }
+      ],
+      "mimeType": "multipart/mixed",
+      "parts": [
+        {
+          "body": {
+            "size": 0
+          },
+          "filename": "",
+          "headers": [],
+          "mimeType": "multipart/alternative",
+          "partId": "0",
+          "parts": [
+            {
+              "body": {
+                "data": "aGk",
+                "size": 2
+              },
+              "filename": "",
+              "headers": [],
+              "mimeType": "text/plain",
+              "partId": "0.0"
+            }
+          ]
+        }
+      ]
+    },
+    "sizeEstimate": 4200,
+    "snippet": "hi",
+    "threadId": "19b0000000000012"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000012",
+    "query": {
+      "format": "full"
+    }
+  },
+  "schema_version": 1
+}

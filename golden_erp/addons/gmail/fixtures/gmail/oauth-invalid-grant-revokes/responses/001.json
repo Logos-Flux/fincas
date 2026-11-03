@@ -1,0 +1,15 @@
+{
+  "payload": {
+    "error": "invalid_grant",
+    "error_description": "Token has been expired or revoked."
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "POST",
+    "path": "/token"
+  },
+  "response": {
+    "status": 400
+  },
+  "schema_version": 1
+}

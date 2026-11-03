@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "settings": {
+    "list_id": "XFIX01",
+    "segment_lists": {
+      "saved_filter:5e9f1c2a-7b3d-4c8e-9a10-0f1e2d3c4b5a": "XFIX02"
+    }
+  }
+}

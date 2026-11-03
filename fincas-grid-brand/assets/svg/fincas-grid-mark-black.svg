@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="142" height="142" viewBox="0 0 142 142" role="img" aria-labelledby="title desc">
+  <title id="title">Fincas monochrome symbol</title>
+  <desc id="desc">Single-color black Fincas Grid symbol.</desc>
+<rect x="0.0000" y="0.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+<rect x="50.0000" y="0.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+<rect x="100.0000" y="0.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+<rect x="0.0000" y="50.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+<rect x="50.0000" y="50.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+<rect x="0.0000" y="100.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+</svg>

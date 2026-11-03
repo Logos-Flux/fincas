@@ -1,0 +1,12 @@
+{
+  "description": "the manifest's source does not start with its provider",
+  "manifest": [
+    {
+      "op": "set",
+      "path": [
+        "provider"
+      ],
+      "value": "othercrm"
+    }
+  ]
+}

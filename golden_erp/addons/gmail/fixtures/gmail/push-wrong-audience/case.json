@@ -1,0 +1,49 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A Google-signed push token minted for another audience (another tenant's, another service's) is refused 401 and enqueues nothing.",
+  "second_run_requests": [],
+  "seed": {
+    "grants": [
+      {
+        "owner": "staff:rep",
+        "subject": "rep@example.org",
+        "sync_state": {
+          "cursor": {
+            "history_id": "1000"
+          },
+          "initial_sync_done": true
+        }
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      },
+      {
+        "email": "grace@example.net",
+        "family": "Hopper",
+        "given": "Grace",
+        "key": "grace"
+      }
+    ],
+    "staff": [
+      {
+        "email": "rep@example.org",
+        "key": "rep"
+      },
+      {
+        "email": "boss@example.org",
+        "key": "boss"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "status": 401,
+      "webhook": "inbound/push.json"
+    }
+  ]
+}

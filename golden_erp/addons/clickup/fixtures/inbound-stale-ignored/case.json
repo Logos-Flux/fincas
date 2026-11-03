@@ -1,0 +1,45 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "An inbound copy older than the last edit ClickUp acknowledged changes nothing.",
+  "seed": {
+    "engagements": [
+      {
+        "key": "deal",
+        "number": "EN-00042",
+        "party": "ada"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.com",
+        "key": "sam"
+      }
+    ],
+    "tasks": [
+      {
+        "assignee": "sam",
+        "assignee_clickup": "81000001",
+        "clickup_id": "86a0fx01",
+        "date_updated": "1772460000000",
+        "due": "2026-03-05",
+        "engagement": "deal",
+        "key": "t1",
+        "list": "901",
+        "title": "Call Ada back"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001-stale.json"
+    }
+  ]
+}

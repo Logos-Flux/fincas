@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "source_mismatch",
+      "file": "manifest.json",
+      "line": null,
+      "field": "source"
+    }
+  ],
+  "warnings": []
+}

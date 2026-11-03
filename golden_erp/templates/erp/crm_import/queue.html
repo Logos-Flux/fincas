@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+{% comment %}
+  /erp/imports/crm/<job>/<type>/ — the review queue (phase5-importer.md
+  4.6-4.9): confidence ascending, chips with counts, side-by-side rows,
+  keyboard, bulk actions, claims, the progress header and every empty state
+  of 4.7. Without JS every action is a plain form POST.
+{% endcomment %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+  <div>
+    <h1 class="h5 mb-0">Review {{ plural|lower }}</h1>
+    <p class="text-xs text-secondary mb-0"><a class="text-decoration-underline" href="{% url 'erp-crm-import-job' job.pk %}">{{ job.source }}</a> · {{ job.get_status_display }} · coverage {{ coverage.coverage }}{% if coverage.reason_text %} ({{ coverage.reason_text }}){% endif %}</p>
+  </div>
+  <a href="{% url 'erp-crm-import-job' job.pk %}" class="btn btn-sm btn-outline-secondary mb-0">Job overview</a>
+</div>
+
+<p class="visually-hidden" role="status" aria-live="polite" id="crm-queue-status"></p>
+
+{% if not header.total %}
+  {% if coverage.exact %}
+  <div class="card mb-4"><div class="card-body"><p class="text-sm mb-0">The source has no {{ plural|lower }}.</p></div></div>
+  {% else %}
+  <div class="alert alert-warning text-sm" role="note"><div>
+    <strong>{{ plural }}: coverage {{ coverage.coverage }}</strong> — the export could not read {% if coverage.coverage == "unknown" %}them{% else %}all of them{% endif %}{% if coverage.reason_text %} ({{ coverage.reason_text }}){% endif %}. 0 rows here does not mean the source has none.
+  </div></div>
+  {% endif %}
+{% else %}
+
+<section class="card mb-3" aria-labelledby="progress-title">
+  <div class="card-body py-2">
+    <h2 class="visually-hidden" id="progress-title">Progress</h2>
+    <div id="crm-queue-header">{% include "erp/crm_import/_queue_header.html" %}</div>
+  </div>
+</section>
+
+{% if not header.remaining and not filters.narrowed %}
+<div class="card mb-3"><div class="card-body">
+  <p class="text-sm mb-2">All {{ header.total|intcomma }} {{ plural|lower }} are decided. {{ header.approved|intcomma }} approved, {{ header.skipped|intcomma }} skipped{% if header.failed %}, {{ header.failed|intcomma }} failed{% endif %}.</p>
+  {% if can_run %}
+  <div class="d-flex flex-wrap gap-2">
+    {% if header.approved_pending %}
+    <form method="post" action="{% url 'erp-crm-import-action' job.pk %}" class="d-inline">
+      {% csrf_token %}<input type="hidden" name="object_type" value="{{ object_type }}">
+      <button type="submit" name="action" value="apply" class="btn btn-sm bg-gradient-primary mb-0">Apply {{ header.approved_pending|intcomma }} {{ plural|lower }}</button>
+    </form>
+    {% endif %}
+    {% if header.failed %}
+    <form method="post" action="{% url 'erp-crm-import-action' job.pk %}" class="d-inline">
+      {% csrf_token %}<input type="hidden" name="object_type" value="{{ object_type }}">
+      <button type="submit" name="action" value="retry" class="btn btn-sm btn-outline-dark mb-0">Retry {{ header.failed|intcomma }} failed</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+</div></div>
+{% endif %}
+
+<section class="card mb-4" aria-labelledby="queue-title">
+  <div class="card-header pb-0">
+    <div class="w-100">
+      <h2 class="h6 mb-2" id="queue-title">Rows <span class="text-xs text-secondary fw-normal">{{ view_count|intcomma }} in this view · lowest confidence first{% if filters.order == "desc" %} (flipped: highest first){% endif %}</span></h2>
+      <form method="get" class="row g-2 align-items-center mb-2" aria-label="Filter rows">
+        {% if filters.decision %}<input type="hidden" name="decision" value="{{ filters.decision }}">{% endif %}
+        {% if filters.band %}<input type="hidden" name="band" value="{{ filters.band }}">{% endif %}
+        {% if filters.flag %}<input type="hidden" name="flag" value="{{ filters.flag }}">{% endif %}
+        {% if filters.mine %}<input type="hidden" name="mine" value="1">{% endif %}
+        <div class="col-auto">
+          <select name="state" aria-label="Row state" class="form-select form-select-sm" data-auto-submit>
+            {% for value, label in states %}<option value="{{ value }}"{% if filters.state == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-auto">
+          <select name="order" aria-label="Sort order" class="form-select form-select-sm" data-auto-submit>
+            <option value="asc"{% if filters.order == "asc" %} selected{% endif %}>Lowest confidence first</option>
+            <option value="desc"{% if filters.order == "desc" %} selected{% endif %}>Highest confidence first</option>
+          </select>
+        </div>
+        <div class="col-auto"><button type="submit" class="btn btn-sm btn-outline-primary mb-0">Apply</button></div>
+        {% if filters.narrowed %}<div class="col-auto"><a class="text-sm text-decoration-underline" href="{{ clear_url }}">Clear filters</a></div>{% endif %}
+      </form>
+      {% for group in chips %}
+      <div class="d-flex flex-wrap align-items-center gap-1 mb-1" role="group" aria-label="{{ group.title }} filters (undecided rows)">
+        <span class="text-xxs text-uppercase text-secondary me-1">{{ group.title }}</span>
+        {% for chip in group.items %}
+        <a href="{{ base_url }}{% if chip.query %}?{{ chip.query }}{% endif %}" class="badge badge-sm {% if chip.active %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} text-decoration-none"{% if chip.active %} aria-current="true"{% endif %}>{{ chip.label }}: {{ chip.count|intcomma }} left</a>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card-body pt-2">
+    {% if frozen %}
+    <p class="text-sm text-secondary">This job is {{ job.get_status_display|lower }}: its rows cannot be decided now.</p>
+    {% elif not can_apply %}
+    <p class="text-sm text-secondary">You can look at this queue. Deciding, claiming and bulk actions need “Can apply and undo CRM imports”.</p>
+    {% endif %}
+    {% if not ai_on %}
+    <p class="text-xs text-secondary">AI suggestions are off for this job, so there is no AI column. They are optional (suggestions only, never a decision) and are turned on per job with the <code>ai_match</code> option (<code>manage.py crm_import stage --ai-hints</code>, or <code>manage.py crm_import ai --job {{ job.pk }} --enable</code>); they would go through the llmhub purpose <code>crm_match_propose</code>{% if ai_route %} (route <code>{{ ai_route }}</code>){% else %}, which this deployment has not configured yet{% endif %}. The model sees comparisons (same family name, same e-mail domain, …), never names or contact details.</p>
+    {% elif ai_blocked %}
+    <p class="text-xs text-secondary">AI suggestions are on for this job but cannot run: {{ ai_reason|default:"the llmhub purpose crm_match_propose has no route" }}.</p>
+    {% endif %}
+
+    {% if can_apply %}
+    <form method="post" id="bulk-form" action="{% url 'erp-crm-import-bulk' job.pk object_type %}" class="border rounded p-2 mb-3" aria-label="Bulk actions">
+      {% csrf_token %}
+      <input type="hidden" name="query" value="{{ view_query }}">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <button type="submit" name="action" value="approve_eligible" class="btn btn-sm bg-gradient-primary mb-0"{% if not eligible %} disabled{% endif %} aria-describedby="eligible-help">Approve {{ eligible|intcomma }} row{{ eligible|pluralize }}</button>
+        <span class="text-xs text-secondary" id="eligible-help">All unflagged rows at ≥ {{ threshold|floatformat:2 }} in this view: never a flagged row, a domain-only link, a conflict or a row someone else claimed.</span>
+      </div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="form-check mb-0"><input type="checkbox" class="form-check-input" id="crm-select-all"><label class="form-check-label text-sm" for="crm-select-all">Select all on this page</label></span>
+        <button type="submit" name="action" value="approve_selected" class="btn btn-sm btn-outline-dark mb-0">Approve selected</button>
+        <button type="submit" name="action" value="create_selected" class="btn btn-sm btn-outline-dark mb-0">Create new for selected</button>
+        <label class="visually-hidden" for="bulk-reason">Reason for skipping the selected rows</label>
+        <select name="reason" id="bulk-reason" class="form-select form-select-sm w-auto">
+          <option value="">Skip reason…</option>
+          {% for value, label in skip_reasons %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+        <button type="submit" name="action" value="skip_selected" class="btn btn-sm btn-outline-secondary mb-0">Skip selected</button>
+        <button type="submit" name="action" value="rematch_selected" class="btn btn-sm btn-outline-secondary mb-0">Re-run matching for selected</button>
+        <button type="submit" name="action" value="rematch_batch" class="btn btn-sm btn-outline-secondary mb-0">Re-run matching for all undecided</button>
+      </div>
+      {% if ai_ready %}
+      <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+        <button type="submit" name="action" value="ai_suggest" class="btn btn-sm btn-outline-info mb-0"{% if not ai_pending or not ai_budget_left %} disabled{% endif %} aria-describedby="ai-help">Run AI suggestions</button>
+        <span class="text-xs text-secondary" id="ai-help">{{ ai_pending|intcomma }}{% if ai_pending_more %}+{% endif %} undecided row{{ ai_pending|pluralize }} in this view without a suggestion; one call each, at most {{ ai_web_limit }} per click (more: <code>manage.py crm_import ai --job {{ job.pk }}</code>). Budget: {{ ai_budget_left|intcomma }} of {{ ai_budget|intcomma }} calls left. Route <code>{{ ai_route }}</code>. Suggestions never decide a row.</span>
+      </div>
+      {% endif %}
+      <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+        <button type="submit" name="action" value="claim" class="btn btn-sm btn-outline-primary mb-0">Claim next {{ claim_batch }}</button>
+        {% if header.mine %}<button type="submit" name="action" value="release" class="btn btn-sm btn-outline-secondary mb-0">Release my {{ header.mine|intcomma }} claim{{ header.mine|pluralize }}</button>{% endif %}
+        <span class="text-xs text-secondary">A claim keeps others off your rows for {{ claim_ttl_minutes }} minutes.</span>
+      </div>
+    </form>
+    {% endif %}
+
+    {% if can_run and failed_codes %}
+    <form method="post" action="{% url 'erp-crm-import-action' job.pk %}" class="d-flex flex-wrap align-items-center gap-2 mb-3" aria-label="Retry failed rows">
+      {% csrf_token %}<input type="hidden" name="object_type" value="{{ object_type }}">
+      <label class="text-sm mb-0" for="retry-code">Retry failed rows</label>
+      <select name="code" id="retry-code" class="form-select form-select-sm w-auto">
+        <option value="">All {{ header.failed|intcomma }}</option>
+        {% for code, n in failed_codes %}<option value="{{ code }}">{{ code }} ({{ n|intcomma }})</option>{% endfor %}
+      </select>
+      <button type="submit" name="action" value="retry" class="btn btn-sm btn-outline-dark mb-0">Retry</button>
+    </form>
+    {% endif %}
+
+    <details class="mb-2">
+      <summary class="text-xs">Keyboard shortcuts</summary>
+      <ul class="text-xs mb-0 mt-1">
+        <li><kbd>j</kbd> / <kbd>↓</kbd> next row, <kbd>k</kbd> / <kbd>↑</kbd> previous row, <kbd>Enter</kbd> open or close the row</li>
+        <li><kbd>a</kbd> approve, <kbd>r</kbd> reject (create new instead of the link; skip otherwise), <kbd>c</kbd> create new, <kbd>s</kbd> or <kbd>n</kbd> skip (N/A)</li>
+        <li><kbd>1</kbd>–<kbd>5</kbd> pick that candidate, <kbd>x</kbd> select the row for a bulk action</li>
+        <li>After a decision the next undecided row opens.</li>
+      </ul>
+    </details>
+
+    {% if items %}
+    <ol class="list-unstyled mb-0" id="crm-queue" aria-label="{{ plural }} to review">
+      {% for item in items %}{% include "erp/crm_import/_queue_row.html" %}{% endfor %}
+    </ol>
+    <nav class="d-flex flex-wrap gap-2 mt-3" aria-label="Queue pages">
+      {% if not is_first_page %}<a class="btn btn-sm btn-outline-secondary mb-0" href="{{ base_url }}{% if first_query %}?{{ first_query }}{% endif %}">First page</a>{% endif %}
+      {% if next_query %}<a class="btn btn-sm btn-outline-primary mb-0" href="{{ base_url }}?{{ next_query }}">Next rows</a>{% endif %}
+    </nav>
+    {% elif filters.narrowed %}
+    <p class="text-sm mb-0">No rows match these filters. <a class="text-decoration-underline" href="{{ clear_url }}">Clear filters</a></p>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function () {
+{% include "erp/_list_a11y_js.html" %}
+
+  var list = document.getElementById("crm-queue");
+  var status = document.getElementById("crm-queue-status");
+  var all = document.getElementById("crm-select-all");
+  if (all) all.addEventListener("change", function () {
+    document.querySelectorAll(".crm-select").forEach(function (box) { box.checked = all.checked; });
+  });
+  if (!list) return;
+
+  function say(text) { status.textContent = ""; setTimeout(function () { status.textContent = text; }, 50); }
+  function rows() { return Array.prototype.slice.call(list.querySelectorAll(".crm-review-row")); }
+  function current() {
+    var el = document.activeElement;
+    return el && el.closest ? el.closest(".crm-review-row") : null;
+  }
+  function focusRow(row, open) {
+    if (!row) return;
+    var details = row.querySelector(".crm-row-details");
+    if (open && details) details.open = true;
+    var summary = row.querySelector(".crm-row-summary");
+    if (summary) { summary.focus(); summary.scrollIntoView({block: "nearest"}); }
+  }
+  function nextUndecided(from) {
+    var all = rows(), i = all.indexOf(from);
+    for (var j = i + 1; j < all.length; j++) if (all[j].dataset.decidable === "1") return all[j];
+    return null;
+  }
+  var busy = false;
+  function submit(form, button) {
+    if (busy) return;
+    busy = true;  // one decision in flight at a time
+    var row = form.closest(".crm-review-row");
+    var data = new FormData(form);
+    if (button && button.name) data.append(button.name, button.value);
+    fetch(form.getAttribute("action"), {method: "POST", body: data, credentials: "same-origin",
+                        headers: {"Accept": "application/json", "X-CSRFToken": data.get("csrfmiddlewaretoken")}})
+      .then(function (r) {
+        var type = r.headers.get("Content-Type") || "";
+        if (type.indexOf("application/json") === -1) throw new Error("not json");
+        return r.json();
+      })
+      .then(function (out) {
+        busy = false;
+        say(out.message);
+        var header = document.getElementById("crm-queue-header");
+        if (header && out.header_html) header.innerHTML = out.header_html;
+        if (!out.ok) { focusRow(row, true); return; }
+        var holder = document.createElement("div");
+        holder.innerHTML = out.row_html.trim();
+        var fresh = holder.firstElementChild;
+        row.replaceWith(fresh);
+        bind(fresh);
+        var next = nextUndecided(fresh);
+        if (next) focusRow(next, true); else focusRow(fresh, false);
+      })
+      .catch(function () {
+        busy = false;
+        // Fall back to a plain POST, keeping the pressed button's name and value.
+        if (button && button.name) {
+          var keep = document.createElement("input");
+          keep.type = "hidden"; keep.name = button.name; keep.value = button.value;
+          form.appendChild(keep);
+        }
+        form.submit();
+      });
+  }
+  function bind(scope) {
+    scope.querySelectorAll(".crm-decide-form").forEach(function (form) {
+      form.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        submit(form, ev.submitter);
+      });
+    });
+  }
+  bind(list);
+
+  document.addEventListener("keydown", function (ev) {
+    if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
+    var t = ev.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    var row = current();
+    var key = ev.key;
+    if (key === "j" || key === "k" || ((key === "ArrowDown" || key === "ArrowUp") && row)) {
+      var all = rows();
+      if (!all.length) return;
+      var i = row ? all.indexOf(row) : -1;
+      var down = key === "j" || key === "ArrowDown";
+      var target = down ? all[Math.min(i + 1, all.length - 1)] : all[Math.max(i - 1, 0)];
+      ev.preventDefault();
+      focusRow(target, false);
+      return;
+    }
+    if (!row) return;
+    if (key === "x") {
+      var box = row.querySelector(".crm-select");
+      if (box) { box.checked = !box.checked; say(box.checked ? "Selected" : "Not selected"); ev.preventDefault(); }
+      return;
+    }
+    var button = Array.prototype.find.call(row.querySelectorAll("[data-shortcut]"), function (b) {
+      return b.dataset.shortcut.split(" ").indexOf(key) !== -1 && !b.disabled;
+    });
+    if (button) {
+      ev.preventDefault();
+      submit(button.form, button);
+    }
+  });
+})();
+</script>
+{% endblock %}

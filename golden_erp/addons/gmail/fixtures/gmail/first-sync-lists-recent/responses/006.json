@@ -1,0 +1,74 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000019",
+    "internalDate": "1772355600000",
+    "labelIds": [
+      "INBOX"
+    ],
+    "payload": {
+      "body": {
+        "size": 0
+      },
+      "filename": "",
+      "headers": [
+        {
+          "name": "From",
+          "value": "ada@example.com"
+        },
+        {
+          "name": "To",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "Subject",
+          "value": "Old thread"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<CAF-ada-0019@mail.example.com>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        }
+      ],
+      "mimeType": "multipart/mixed",
+      "parts": [
+        {
+          "body": {
+            "size": 0
+          },
+          "filename": "",
+          "headers": [],
+          "mimeType": "multipart/alternative",
+          "partId": "0",
+          "parts": [
+            {
+              "body": {
+                "data": "ZnJvbSBsYXN0IHdlZWs",
+                "size": 14
+              },
+              "filename": "",
+              "headers": [],
+              "mimeType": "text/plain",
+              "partId": "0.0"
+            }
+          ]
+        }
+      ]
+    },
+    "sizeEstimate": 4200,
+    "snippet": "from last week",
+    "threadId": "19b0000000000019"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000019",
+    "query": {
+      "format": "full"
+    }
+  },
+  "schema_version": 1
+}

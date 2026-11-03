@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "hash_mismatch",
+      "file": "manifest.json",
+      "line": null,
+      "field": "files.deals.jsonl"
+    }
+  ],
+  "warnings": []
+}

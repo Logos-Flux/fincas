@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load static erp_tags %}
+
+{% block title %}{{ price_list.name }} — Price List{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "price_list_detail", "price_list_id": "{{ price_list.id }}", "price_list_name": "{{ price_list.name|escapejs }}"}'>
+{% endblock %}
+
+{% block content %}
+{# Header Card #}
+<div class="row">
+  <div class="col-12 mb-4">
+    <div class="card">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h5 class="font-weight-bolder mb-1">{{ price_list.name }}</h5>
+            <p class="text-sm text-secondary mb-0">
+              {{ price_list.get_price_list_type_display }} · {{ price_list.currency }}
+              {% if price_list.valid_from %} · From {{ price_list.valid_from }}{% endif %}
+              {% if price_list.valid_to %} to {{ price_list.valid_to }}{% endif %}
+            </p>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-gradient-{{ price_list.price_list_type|status_color:status_colors }}">{{ price_list.get_price_list_type_display }}</span>
+            {% if price_list.is_default %}<span class="badge bg-gradient-info">Default</span>{% endif %}
+            {% if price_list.is_active %}
+            <span class="badge bg-gradient-success">Active</span>
+            {% else %}
+            <span class="badge bg-gradient-secondary">Inactive</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="{% url 'erp-pricelist-edit' price_list.pk %}" class="btn bg-gradient-dark btn-sm me-2">
+            <i class="fas fa-edit me-1"></i> Edit
+          </a>
+          <a href="{% url 'erp-pricelist-list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to List
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if price_list.description %}
+<div class="card mb-4">
+  <div class="card-body p-4">
+    <p class="text-sm mb-0">{{ price_list.description }}</p>
+  </div>
+</div>
+{% endif %}
+
+{# Controls summary #}
+{% if price_list.margin_floor_percent or price_list.discount_cap_percent %}
+<div class="row mb-4">
+  {% if price_list.margin_floor_percent %}
+  <div class="col-md-3">
+    <div class="card">
+      <div class="card-body p-3 text-center">
+        <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Margin Floor</p>
+        <p class="text-lg font-weight-bolder mb-0">{{ price_list.margin_floor_percent }}%</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% if price_list.discount_cap_percent %}
+  <div class="col-md-3">
+    <div class="card">
+      <div class="card-body p-3 text-center">
+        <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Discount Cap</p>
+        <p class="text-lg font-weight-bolder mb-0">{{ price_list.discount_cap_percent }}%</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# Price List Items #}
+<div class="card mb-4">
+  <div class="card-header pb-0">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">Items ({{ items|length }})</h6>
+    </div>
+  </div>
+  <div class="card-body px-0 pt-0 pb-2">
+    <div class="table-responsive p-0">
+      <table class="table align-items-center mb-0">
+        <thead>
+          <tr>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">SKU</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Product</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Min Qty</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Price</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valid From</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valid To</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Active</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td class="ps-3">
+              <span class="text-sm font-weight-bold">{{ item.variant.sku }}</span>
+            </td>
+            <td>
+              <a href="{% url 'erp-product-detail' item.variant.product.pk %}" class="text-sm text-primary">
+                {{ item.variant.name|default:item.variant.product.title }}
+              </a>
+            </td>
+            <td class="text-end"><span class="text-sm">{{ item.min_qty|floatformat:0 }}</span></td>
+            <td class="text-end"><span class="text-sm font-weight-bold">{{ item.price|money }}</span></td>
+            <td><span class="text-sm">{{ item.valid_from|default:"—" }}</span></td>
+            <td><span class="text-sm">{{ item.valid_to|default:"—" }}</span></td>
+            <td class="text-center">
+              {% if item.is_active %}
+              <span class="text-success"><i class="fas fa-check"></i></span>
+              {% else %}
+              <span class="text-secondary"><i class="fas fa-times"></i></span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-4 text-sm text-secondary">No items in this price list yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

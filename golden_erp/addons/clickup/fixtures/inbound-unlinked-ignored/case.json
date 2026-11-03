@@ -1,0 +1,35 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "Tasks with neither golden's id nor an engagement number, and tasks in an unmapped list, are ClickUp's own business: nothing is written.",
+  "seed": {
+    "engagements": [
+      {
+        "key": "deal",
+        "number": "EN-00042",
+        "party": "ada"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.com",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001-unlinked.json"
+    },
+    {
+      "ingest": "inbound/002-other-list.json"
+    }
+  ]
+}

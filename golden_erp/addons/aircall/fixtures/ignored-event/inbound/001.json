@@ -1,0 +1,14 @@
+{
+  "payload": {
+    "data": {
+      "first_name": "Ada",
+      "id": 3001
+    },
+    "event": "contact.created",
+    "resource": "contact",
+    "timestamp": 1772461200,
+    "token": "fixture-webhook-secret-1"
+  },
+  "provider": "aircall",
+  "schema_version": 1
+}

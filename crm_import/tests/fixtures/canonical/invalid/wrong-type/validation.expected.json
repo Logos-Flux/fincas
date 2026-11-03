@@ -1,0 +1,18 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "wrong_type",
+      "file": "deals.jsonl",
+      "line": 1,
+      "field": "data.amount"
+    },
+    {
+      "code": "wrong_type",
+      "file": "deals.jsonl",
+      "line": 2,
+      "field": "archived"
+    }
+  ],
+  "warnings": []
+}

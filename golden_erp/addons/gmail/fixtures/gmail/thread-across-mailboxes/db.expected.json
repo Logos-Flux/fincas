@@ -1,0 +1,131 @@
+{
+  "communications": [
+    {
+      "direction": "inbound",
+      "engagement": "engagement:visit",
+      "kind": "email",
+      "occurred_at": "2026-03-02T14:00:00Z",
+      "participants": [
+        {
+          "address": "ada@example.com",
+          "party": "party:ada",
+          "role": "from"
+        },
+        {
+          "address": "boss@example.org",
+          "party": null,
+          "role": "to"
+        },
+        {
+          "address": "rep@example.org",
+          "party": null,
+          "role": "to"
+        }
+      ],
+      "party": "party:ada",
+      "provider": "gmail",
+      "status": "completed",
+      "subject": "Site visit",
+      "thread_key": "mid:9d6066eb1fe0906fd5e5aa989479c5db8801d0ea"
+    },
+    {
+      "direction": "inbound",
+      "engagement": "engagement:visit",
+      "kind": "email",
+      "occurred_at": "2026-03-02T14:45:00Z",
+      "participants": [
+        {
+          "address": "rep@example.org",
+          "party": null,
+          "role": "cc"
+        },
+        {
+          "address": "ada@example.com",
+          "party": "party:ada",
+          "role": "from"
+        },
+        {
+          "address": "boss@example.org",
+          "party": null,
+          "role": "to"
+        }
+      ],
+      "party": "party:ada",
+      "provider": "gmail",
+      "status": "completed",
+      "subject": "Re: Site visit",
+      "thread_key": "mid:9d6066eb1fe0906fd5e5aa989479c5db8801d0ea"
+    },
+    {
+      "direction": "outbound",
+      "engagement": "engagement:visit",
+      "kind": "email",
+      "occurred_at": "2026-03-01T10:00:00Z",
+      "participants": [],
+      "party": "party:ada",
+      "provider": "manual",
+      "status": "completed",
+      "subject": "Call about visit",
+      "thread_key": "mid:9d6066eb1fe0906fd5e5aa989479c5db8801d0ea"
+    },
+    {
+      "direction": "outbound",
+      "engagement": "engagement:visit",
+      "kind": "email",
+      "occurred_at": "2026-03-02T14:30:00Z",
+      "participants": [
+        {
+          "address": "rep@example.org",
+          "party": null,
+          "role": "cc"
+        },
+        {
+          "address": "boss@example.org",
+          "party": null,
+          "role": "from"
+        },
+        {
+          "address": "ada@example.com",
+          "party": "party:ada",
+          "role": "to"
+        }
+      ],
+      "party": "party:ada",
+      "provider": "gmail",
+      "status": "completed",
+      "subject": "Re: Site visit",
+      "thread_key": "mid:9d6066eb1fe0906fd5e5aa989479c5db8801d0ea"
+    }
+  ],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {},
+      "object_type": "message",
+      "source": "gmail",
+      "source_id": "mid:49182f968000ec3df96650e1cbaaa61249d075f9a45040f86ba08551729ccec3",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    },
+    {
+      "metadata": {},
+      "object_type": "message",
+      "source": "gmail",
+      "source_id": "mid:9d6066eb1fe0906fd5e5aa989479c5db8801d0eaba2f1016efbaa3a65f181c2e",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    },
+    {
+      "metadata": {},
+      "object_type": "message",
+      "source": "gmail",
+      "source_id": "mid:b291d93308122281897c5b0a606f4e7193d0953f3f898ccca711ec3e51e50adf",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    }
+  ],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

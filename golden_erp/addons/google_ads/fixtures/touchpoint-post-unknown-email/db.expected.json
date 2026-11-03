@@ -1,0 +1,24 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": [
+    {
+      "channel": "email",
+      "occurred_at": "2026-02-21T10:00:00Z",
+      "party": "party:ada",
+      "utm_campaign": "",
+      "utm_source": ""
+    },
+    {
+      "channel": "paid_search",
+      "occurred_at": "2026-02-20T10:00:00Z",
+      "party": "party:ada",
+      "utm_campaign": "spring",
+      "utm_source": "google"
+    }
+  ]
+}

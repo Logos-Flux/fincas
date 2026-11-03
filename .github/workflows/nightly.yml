@@ -1,0 +1,381 @@
+name: Nightly journeys
+
+# The back-office harness on a fresh seed, every night on main and on
+# demand on any ref (docs/release-hardening-plan.md 9.4; docs/release-testing.md).
+# A dispatched run on a candidate tag is the cutover bar's evidence.
+on:
+  schedule:
+    - cron: "15 3 * * *"   # 03:15 UTC
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to test (branch, tag or SHA)"
+        required: false
+        default: "main"
+      full_sweep:
+        description: "Also run the full theme sweep, sharded by theme"
+        type: boolean
+        required: false
+        default: false
+      r12_only:
+        description: "Run only R12 (the adopter path), not the journeys"
+        type: boolean
+        required: false
+        default: false
+
+# One nightly at a time. Within a nightly, every job that serves the back
+# office picks a free loopback port of its own: the two self-hosted runners
+# share one container, so a fixed port (8771 until 2026-10-27) made a sweep
+# shard that started while the other runner's job was serving fail to bind,
+# log into the OTHER job's server with its own seeded password and die on
+# "Invalid credentials" (five shards in run 40464248563).
+concurrency:
+  group: nightly-journeys
+  cancel-in-progress: false
+
+jobs:
+  journeys:
+    name: Journeys on a fresh seed
+    if: ${{ inputs.r12_only != true }}
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: golden_harness
+          POSTGRES_USER: golden
+          POSTGRES_PASSWORD: golden_secret
+        ports:
+          - 5432   # random host port: concurrent jobs on one runner box must not collide
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout the requested ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      # Queue time is the runner's problem, not the code's: report it apart
+      # from the run time so a slow night is not read as a slow harness.
+      - name: Log queue time (job start minus run creation)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          created=$(gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --json createdAt -q .createdAt 2>/dev/null || true)
+          now=$(date -u +%s)
+          if [ -n "$created" ]; then
+            queued=$(( now - $(date -u -d "$created" +%s) ))
+            echo "queue_seconds=$queued" >> "$GITHUB_ENV"
+            echo "Queued for ${queued}s before this job started (run created $created)." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "queue_seconds=" >> "$GITHUB_ENV"
+            echo "Queue time unknown (could not read the run's createdAt)." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "run_started=$now" >> "$GITHUB_ENV"
+
+      - name: Point DATABASE_URL at the service's host port
+        run: |
+          echo "DATABASE_URL=postgres://golden:golden_secret@localhost:${{ job.services.postgres.ports['5432'] }}/golden_harness" >> "$GITHUB_ENV"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install system runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libpq-dev postgresql-client \
+            libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 \
+            shared-mime-info fonts-dejavu-core fontconfig curl
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install the storefront tooling and Chromium
+        working-directory: storefront
+        run: |
+          bun install --frozen-lockfile
+          bunx playwright install --with-deps chromium
+
+      # Flake rule (plan 9.4): one automatic retry per failed step. The
+      # harness server, log and report come from scripts/harness/run.sh; the
+      # Postgres service is used as is (CI mode: never created or dropped).
+      - name: Run every journey (retries 1)
+        id: harness
+        continue-on-error: true
+        env:
+          PYTHON: python
+          HARNESS_RETRIES: "1"
+          GOLDEN_HARNESS_DEBUG: "0"
+        run: |
+          set +e
+          HARNESS_PORT=$(python -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+          export HARNESS_PORT
+          timeout 50m bash scripts/harness/run.sh --journey all --retries 1
+          echo "rc=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Classify the outcome (infra vs journeys)
+        env:
+          RC: ${{ steps.harness.outputs.rc }}
+        run: |
+          ended=$(date -u +%s)
+          echo "Run time: $(( ended - run_started ))s (queue: ${queue_seconds:-?}s)." | tee -a "$GITHUB_STEP_SUMMARY"
+          report=$(find .runs -mindepth 2 -maxdepth 2 -name report.md 2>/dev/null | head -1)
+          if [ -n "$report" ]; then
+            { echo; cat "$report"; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          case "$RC" in
+            0) echo "journeys: nothing failed that is not a known finding" ;;
+            124) echo "::error title=infra::the harness hit the 50-minute cap (infrastructure timeout, not a journey failure)"; echo "INFRA: timeout" >> "$GITHUB_STEP_SUMMARY"; exit 2 ;;
+            2) echo "::error title=infra::the harness could not start (preflight: tools, settings module, database)"; echo "INFRA: preflight" >> "$GITHUB_STEP_SUMMARY"; exit 2 ;;
+            *) echo "::error title=journeys::a step failed that is not a known finding (see the report above)"; exit 1 ;;
+          esac
+
+      # Fresh-seed runs hold synthetic data only, so their artefacts may be
+      # uploaded (plan section 3). Logins and the service key never are.
+      - name: Upload the run directory (fresh seed only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harness-run-${{ github.run_id }}
+          path: |
+            .runs/**
+            !.runs/**/logins.txt
+            !.runs/**/api-key.txt
+            !.runs/harness.env
+          retention-days: 14
+          if-no-files-found: ignore
+          # .runs/ is a dot directory: upload-artifact v4.4+ skips hidden paths
+          # unless told otherwise, so every nightly since 2026-10-20 printed
+          # "No files were found with the provided path" and kept nothing.
+          include-hidden-files: true
+
+  # Journey R12, the adopter path (docs/release-hardening-plan.md §1 item 7):
+  # docs/getting-started.md followed literally in a clean directory, on a
+  # wheel built from the ref, with Postgres 17 from the page's own docker run
+  # on a free loopback port, timed against the five-minute budget, ending in
+  # a first invoice clicked through in Chromium. After a release, the same
+  # script takes --pip-spec fincas==X.Y.Z (publish.yml runs it on TestPyPI).
+  r12:
+    name: R12 adopter path (getting started to first invoice)
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The page's own prerequisite line (WeasyPrint's libraries), plus curl.
+      - name: Install system runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-venv libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 shared-mime-info fonts-dejavu-core curl
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install Playwright and Chromium
+        working-directory: storefront
+        run: |
+          bun install --frozen-lockfile
+          bunx playwright install --with-deps chromium
+
+      - name: Run docs/getting-started.md to a first invoice (budget 300 s)
+        run: |
+          set -o pipefail
+          mkdir -p "$RUNNER_TEMP/r12"
+          TMPDIR="$RUNNER_TEMP/r12" bash scripts/release/r12_fresh_install.sh --python python | tee r12.log
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### R12 adopter path"
+            echo '```'
+            grep -E '^(R12|   |     )' r12.log 2>/dev/null || echo "no output (the step did not start)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      # A failed run keeps its work directory: logs and the Playwright trace
+      # only (synthetic data; never the venv or the generated .env).
+      - name: Upload the R12 logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r12-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/r12/*/run.log
+            ${{ runner.temp }}/r12/*/getting-started.sh
+            ${{ runner.temp }}/r12/*/playwright.log
+            ${{ runner.temp }}/r12/*/playwright/**
+            ${{ runner.temp }}/r12/*/fincas-trial/server.log
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # The full theme sweep (criterion 8) on demand, sharded by theme so a 60
+  # minute shard cap holds; its wall time is in each shard's summary.
+  themes:
+    name: List the built-in themes
+    if: ${{ inputs.full_sweep == true }}
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: list
+        # settings/base.py refuses to import without DJANGO_SECRET_KEY unless
+        # DEBUG is set; without it this step printed a traceback, the output
+        # was empty and the sweep matrix was never created (every full_sweep
+        # dispatch before 2026-10-27 ended that way, with no shard to blame).
+        env:
+          DEBUG: "1"
+        run: |
+          pip install -q -r requirements/base.txt
+          list=$(python -c 'import json, sys; sys.path.insert(0, "."); from golden_erp.settings import base; print(json.dumps([t["name"] if isinstance(t, dict) else t for t in base.ERP_THEMES]))')
+          [ -n "$list" ] || { echo "::error title=themes::ERP_THEMES produced no list (the settings import failed above)"; exit 1; }
+          echo "themes: $list"
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+
+  theme-sweep:
+    name: Theme sweep (${{ matrix.theme }})
+    needs: themes
+    if: ${{ inputs.full_sweep == true }}
+    runs-on: ${{ vars.CI_RUNS_ON && fromJSON(vars.CI_RUNS_ON) || 'ubuntu-latest' }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        theme: ${{ fromJson(needs.themes.outputs.list) }}
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: golden_harness
+          POSTGRES_USER: golden
+          POSTGRES_PASSWORD: golden_secret
+        ports:
+          - 5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install system runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libpq-dev postgresql-client libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+            libgdk-pixbuf-2.0-0 shared-mime-info fonts-dejavu-core fontconfig curl
+      - run: pip install -r requirements/dev.txt
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - working-directory: storefront
+        run: |
+          bun install --frozen-lockfile
+          bunx playwright install --with-deps chromium
+      - name: Seed, serve and sweep one theme
+        env:
+          DATABASE_URL: postgres://golden:golden_secret@localhost:${{ job.services.postgres.ports['5432'] }}/golden_harness
+          GOLDEN_HARNESS: "1"
+          DJANGO_SETTINGS_MODULE: config.settings.harness
+          ALLOWED_HOSTS: 127.0.0.1,localhost
+          SWEEP_THEMES: ${{ matrix.theme }}
+        run: |
+          started=$(date -u +%s)
+          GOLDEN_PORTAL_COMPANY=$(python -c 'from core.release_test import HARNESS_COMPANY_ID; print(HARNESS_COMPANY_ID)')
+          export GOLDEN_PORTAL_COMPANY
+          export HARNESS_RUN_DIR="$PWD/.runs/sweep-${{ matrix.theme }}"
+          # A free port of this job's own (see the note above `concurrency`),
+          # and proof that the server answering it is the one started here.
+          GOLDEN_HARNESS_PORT=$(python -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+          export GOLDEN_HARNESS_PORT
+          if curl -fsS -o /dev/null "http://127.0.0.1:$GOLDEN_HARNESS_PORT/erp/login/" 2>/dev/null; then
+            echo "::error title=sweep::something already answers on port $GOLDEN_HARNESS_PORT"; exit 1
+          fi
+          python manage.py migrate --noinput | tail -1
+          python manage.py seed_release_test --runs-dir "$HARNESS_RUN_DIR" --no-my-day | tail -3
+          python manage.py demo_roll_dates --force | tail -1
+          python manage.py runserver "127.0.0.1:$GOLDEN_HARNESS_PORT" --noreload > "$HARNESS_RUN_DIR/server.stdout" 2>&1 &
+          server_pid=$!
+          for _ in $(seq 1 90); do curl -fsS -o /dev/null "http://127.0.0.1:$GOLDEN_HARNESS_PORT/erp/login/" && break; sleep 1; done
+          kill -0 "$server_pid" 2>/dev/null || {
+            echo "::error title=sweep::the server for theme ${{ matrix.theme }} exited (port $GOLDEN_HARNESS_PORT)"
+            grep -vE 'weasyprint|^$' "$HARNESS_RUN_DIR/server.stdout" | tail -20; exit 1; }
+          echo "server on port $GOLDEN_HARNESS_PORT (pid $server_pid)"
+          read -r SWEEP_USER SWEEP_PASS _ < <(grep '^harness-staff ' "$HARNESS_RUN_DIR/logins.txt")
+          export SWEEP_USER SWEEP_PASS ERP_URL="http://127.0.0.1:$GOLDEN_HARNESS_PORT" SWEEP_OUT="$HARNESS_RUN_DIR/sweep"
+          # The sweep's own exit code must count: without pipefail a crash in
+          # the script (2026-10-27: three shards died in a Playwright
+          # TimeoutError) left a stack trace in the summary and the grep below,
+          # finding no nonzero count, passed the shard.
+          set -o pipefail
+          (cd storefront && node scripts/erp-theme-sweep.mjs) | tail -3 | tee "$HARNESS_RUN_DIR/sweep-summary.txt"
+          echo "theme ${{ matrix.theme }}: $(( $(date -u +%s) - started ))s" | tee -a "$GITHUB_STEP_SUMMARY"
+          tail -1 "$HARNESS_RUN_DIR/sweep-summary.txt" >> "$GITHUB_STEP_SUMMARY"
+          # A shard passes only when it reports a positive number of checks AND
+          # the baseline holds: 0 off-palette, 0 contrast, 0 serious axe,
+          # 0 horizontal scroll (CLAUDE.md).
+          grep -Eq '^[1-9][0-9]* checks: ' "$HARNESS_RUN_DIR/sweep-summary.txt" \
+            || { echo "::error title=sweep::theme ${{ matrix.theme }} reported no checks (the sweep did not finish)"; exit 1; }
+          ! grep -Eq '[1-9][0-9]* (off-palette|contrast|serious axe|with horizontal)' "$HARNESS_RUN_DIR/sweep-summary.txt"
+      # What the server saw: the one record of whether a login that timed
+      # out ever reached Django (2026-10-27: a shard died in loginStaff and
+      # the server log had already been cleaned off the runner).
+      - name: Server log (on failure)
+        if: failure()
+        run: grep -vE 'weasyprint|^$' ".runs/sweep-${{ matrix.theme }}/server.stdout" | tail -60 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: theme-sweep-${{ matrix.theme }}-${{ github.run_id }}
+          path: |
+            .runs/sweep-${{ matrix.theme }}/sweep/report.md
+            .runs/sweep-${{ matrix.theme }}/sweep/report.json
+            .runs/sweep-${{ matrix.theme }}/server.stdout
+          retention-days: 14
+          if-no-files-found: ignore
+          # .runs/ is a dot directory: upload-artifact v4.4+ skips hidden paths
+          # unless told otherwise, so every nightly since 2026-10-20 printed
+          # "No files were found with the provided path" and kept nothing.
+          include-hidden-files: true

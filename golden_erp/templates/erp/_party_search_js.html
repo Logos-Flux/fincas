@@ -1,0 +1,146 @@
+{# The party picker (parties.widgets.PartySearchInput): every input with data-party-search becomes a combobox over erp-party-search. The hidden input takes the field's name and submits the picked party's id, or the typed text (an exact email still resolves). Same look as document_form.html's ajax search. #}
+<script>
+(function () {
+  function escHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;"}[c];
+    });
+  }
+
+  function enhance(input, n) {
+    var hidden = document.createElement("input");
+    hidden.type = "hidden";
+    hidden.name = input.name;
+    hidden.value = input.value;
+    input.removeAttribute("name");
+    if (input.getAttribute("data-party-label")) input.value = input.getAttribute("data-party-label");
+
+    var wrapper = document.createElement("div");
+    wrapper.className = "position-relative";
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+    wrapper.appendChild(hidden);
+
+    var listId = "party-search-list-" + n;
+    var list = document.createElement("ul");
+    list.id = listId;
+    list.className = "list-group position-absolute w-100 mb-0";
+    list.setAttribute("role", "listbox");
+    // List items are transparent in the skins: give the list the opaque surface colour.
+    list.style.cssText = "z-index:1050; display:none; max-height:260px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,.3); background:var(--tblr-bg-surface, #fff);";
+    wrapper.appendChild(list);
+    var status = document.createElement("div");
+    status.className = "visually-hidden";
+    status.setAttribute("role", "status");
+    wrapper.appendChild(status);
+
+    input.setAttribute("role", "combobox");
+    input.setAttribute("aria-autocomplete", "list");
+    input.setAttribute("aria-expanded", "false");
+    input.setAttribute("aria-controls", listId);
+
+    var items = [], active = -1, timer = null, seq = 0;
+
+    function close() {
+      list.style.display = "none";
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-activedescendant");
+      active = -1;
+    }
+    function open() {
+      list.style.display = "block";
+      input.setAttribute("aria-expanded", "true");
+    }
+    function highlight(i) {
+      var options = list.querySelectorAll("[role=option]");
+      options.forEach(function (el, j) {
+        el.classList.toggle("active", j === i);
+        el.setAttribute("aria-selected", j === i ? "true" : "false");
+      });
+      active = i;
+      if (i >= 0 && options[i]) {
+        input.setAttribute("aria-activedescendant", options[i].id);
+        options[i].scrollIntoView({block: "nearest"});
+      } else {
+        input.removeAttribute("aria-activedescendant");
+      }
+    }
+    function pick(i) {
+      var item = items[i];
+      if (!item) return;
+      hidden.value = item.id;
+      input.value = item.label;
+      close();
+      status.textContent = "Picked " + item.label;
+    }
+    function render(results) {
+      items = results;
+      list.innerHTML = "";
+      if (!results.length) {
+        var empty = document.createElement("li");
+        empty.className = "list-group-item text-xs text-secondary";
+        empty.textContent = input.getAttribute("data-party-empty") || 'No match. Use "New" to add one.';
+        list.appendChild(empty);
+        status.textContent = "No match";
+        open();
+        return;
+      }
+      results.forEach(function (item, i) {
+        var li = document.createElement("li");
+        li.id = listId + "-" + i;
+        li.setAttribute("role", "option");
+        li.setAttribute("aria-selected", "false");
+        li.className = "list-group-item list-group-item-action text-xs py-2";
+        li.style.cursor = "pointer";
+        // Names and emails are user data: escape before innerHTML.
+        li.innerHTML = '<span class="font-weight-bold">' + escHtml(item.name) + "</span>"
+          + ' <span class="opacity-7">· ' + escHtml(item.kind_label) + "</span>"
+          + (item.email ? '<br><span class="text-break">' + escHtml(item.email) + "</span>" : "");
+        li.addEventListener("mousedown", function (e) { e.preventDefault(); pick(i); });
+        list.appendChild(li);
+      });
+      status.textContent = results.length + (results.length === 1 ? " match" : " matches");
+      open();
+    }
+    function search() {
+      var q = input.value.trim();
+      if (q.length < 2) { close(); return; }
+      var url = input.getAttribute("data-party-search") + "?q=" + encodeURIComponent(q);
+      if (input.getAttribute("data-party-kind")) url += "&kind=" + encodeURIComponent(input.getAttribute("data-party-kind"));
+      if (input.getAttribute("data-party-company")) url += "&company=" + encodeURIComponent(input.getAttribute("data-party-company"));
+      if (input.getAttribute("data-party-exclude")) url += "&exclude=" + encodeURIComponent(input.getAttribute("data-party-exclude"));
+      var mine = ++seq;
+      fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}, credentials: "same-origin"})
+        .then(function (r) { return r.ok ? r.json() : {results: []}; })
+        .then(function (data) { if (mine === seq) render(data.results || []); })
+        .catch(function () { if (mine === seq) close(); });
+    }
+
+    input.addEventListener("input", function () {
+      hidden.value = input.value;  // typed text submits as is until a result is picked
+      clearTimeout(timer);
+      timer = setTimeout(search, 300);
+    });
+    input.addEventListener("keydown", function (e) {
+      var shown = list.style.display !== "none" && items.length;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (!shown) { search(); return; }
+        highlight(Math.min(active + 1, items.length - 1));
+      } else if (e.key === "ArrowUp" && shown) {
+        e.preventDefault();
+        highlight(Math.max(active - 1, 0));
+      } else if (e.key === "Enter" && shown && active >= 0) {
+        e.preventDefault();
+        pick(active);
+      } else if (e.key === "Escape" && list.style.display !== "none") {
+        e.preventDefault();
+        close();
+      }
+    });
+    input.addEventListener("blur", function () { setTimeout(close, 150); });
+  }
+
+  document.querySelectorAll("input[data-party-search]").forEach(enhance);
+})();
+</script>

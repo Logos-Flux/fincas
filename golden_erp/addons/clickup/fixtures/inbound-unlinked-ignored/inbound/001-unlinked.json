@@ -1,0 +1,30 @@
+{
+  "payload": {
+    "assignees": [],
+    "custom_fields": [],
+    "date_closed": null,
+    "date_created": "1772460000000",
+    "date_done": null,
+    "date_updated": "1772463600000",
+    "description": "",
+    "due_date": null,
+    "due_date_time": false,
+    "id": "86a0fx03",
+    "list": {
+      "id": "901"
+    },
+    "markdown_description": "",
+    "name": "Order coffee",
+    "priority": {
+      "id": "3",
+      "priority": "normal"
+    },
+    "status": {
+      "status": "to do",
+      "type": "open"
+    },
+    "url": "https://app.clickup.com/t/86a0fx03"
+  },
+  "provider": "clickup",
+  "schema_version": 1
+}

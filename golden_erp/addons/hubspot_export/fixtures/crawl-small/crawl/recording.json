@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "payload": {
+    "recorded_at": "2026-10-01T09:00:00Z",
+    "recorder": "invented-fixture-recorder 1.0",
+    "account": {
+      "portalId": 1234567,
+      "timeZone": "US/Eastern",
+      "companyCurrency": "USD",
+      "uiDomain": "app.hubspot.com",
+      "dataHostingLocation": "na1",
+      "accountType": "STANDARD"
+    }
+  }
+}

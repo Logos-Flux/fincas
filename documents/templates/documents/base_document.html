@@ -1,0 +1,351 @@
+{% load static humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{% block doc_title %}Document{% endblock %}</title>
+<style>
+  /* Vendored fonts, injected by get_font_face_css(). Previously an @import
+     of fonts.googleapis.com, which made WeasyPrint issue a blocking HTTPS
+     request on EVERY render: 0.79s -> 0.41s on a 40-line quote, and it put a
+     third party in the invoice-send path where an outage became a render
+     failure and font substitution silently changed pagination. */
+  {{ font_face_css|safe }}
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 13px;
+    color: #222;
+    line-height: 1.4;
+  }
+
+  .document {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+  }
+
+  /* Header */
+  .doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 32px 36px 20px;
+    border-bottom: 3px solid {{ brand.colors.forest }};
+  }
+  .doc-header .company-info {
+    display: block;
+  }
+  .doc-header .company-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  .doc-header .company-name {
+    font-family: Barlow, sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: {{ brand.colors.forest }};
+    letter-spacing: -0.3px;
+  }
+  .doc-header .company-details {
+    font-size: 11px;
+    color: #777;
+    margin-top: 3px;
+    line-height: 1.5;
+  }
+  .doc-header .doc-title-block { text-align: right; }
+  .doc-header .doc-type {
+    font-family: Barlow, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: {{ brand.colors.forest }};
+  }
+  .doc-header .doc-number {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: {{ brand.colors.blue }};
+    margin-top: 2px;
+  }
+  .doc-header .doc-dates {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #777;
+    line-height: 1.6;
+  }
+  .doc-header .doc-dates strong { color: #555; }
+
+  /* Addresses */
+  .doc-addresses {
+    display: flex;
+    gap: 24px;
+    padding: 20px 36px;
+    background: #fafbfc;
+    border-bottom: 1px solid #eee;
+  }
+  .doc-addresses .addr-block { flex: 1; }
+  .addr-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .addr-block .name {
+    font-weight: 600;
+    color: {{ brand.colors.forest }};
+  }
+  .addr-block .detail-label { color: #555; font-weight: 600; }
+
+  /* Line items */
+  .doc-line-items { padding: 0 36px; }
+  .doc-line-items table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  .doc-line-items th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid {{ brand.colors.forest }};
+    white-space: nowrap;
+  }
+  .doc-line-items th:first-child { padding-left: 0; }
+  .doc-line-items th:last-child { padding-right: 0; }
+  .doc-line-items th.col-center { text-align: center; }
+  .doc-line-items th.col-right { text-align: right; }
+  .doc-line-items td {
+    padding: 12px 12px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+  }
+  .doc-line-items td:first-child { padding-left: 0; }
+  .doc-line-items td:last-child { padding-right: 0; }
+  .doc-line-items .col-sku {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    color: {{ brand.colors.bronze }};
+    white-space: nowrap;
+  }
+  .doc-line-items .col-desc { line-height: 1.5; color: #444; }
+  .doc-line-items .col-center { text-align: center; white-space: nowrap; }
+  .doc-line-items .col-right { text-align: right; white-space: nowrap; }
+  .doc-line-items .col-total { text-align: right; white-space: nowrap; font-weight: 600; }
+
+  /* Totals */
+  .doc-totals {
+    padding: 0 36px 24px;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+  .doc-totals .totals-block { width: 260px; }
+  .totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    font-size: 13px;
+  }
+  .totals-row .label { color: #666; }
+  .totals-row.grand-total {
+    padding: 12px 0 8px;
+    font-size: 16px;
+    font-weight: 700;
+    border-top: 2px solid {{ brand.colors.forest }};
+    color: {{ brand.colors.forest }};
+    font-family: Barlow, sans-serif;
+  }
+  .totals-row .amount-paid { color: {{ brand.colors.green }}; font-weight: 600; }
+  .totals-row.balance-due { font-size: 15px; font-weight: 700; font-family: Barlow, sans-serif; }
+  .totals-row.balance-due .label { color: #555; }
+
+  /* Status banner */
+  .doc-status-banner {
+    margin: 0 36px 24px;
+    padding: 14px 16px;
+    border-radius: 6px;
+    text-align: center;
+    font-family: Barlow, sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 1.5px;
+  }
+  .doc-status-banner.status-paid {
+    background: linear-gradient(135deg, #e8f5e9, #f1f8f2);
+    border: 1px solid #a5d6a7;
+    color: {{ brand.colors.green }};
+  }
+  .doc-status-banner.status-open,
+  .doc-status-banner.status-sent {
+    background: linear-gradient(135deg, #fff3e0, #fff8f0);
+    border: 1px solid #ffcc80;
+    color: #e65100;
+  }
+  .doc-status-banner.status-overdue {
+    background: linear-gradient(135deg, #fce4ec, #fff0f3);
+    border: 1px solid #ef9a9a;
+    color: #c62828;
+  }
+  .doc-status-banner.status-partial {
+    background: linear-gradient(135deg, #fff8e1, #fffde7);
+    border: 1px solid #ffe082;
+    color: #f57f17;
+  }
+  .doc-status-banner.status-draft {
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    color: #757575;
+  }
+  .doc-status-banner.status-void,
+  .doc-status-banner.status-cancelled {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    color: #999;
+    text-decoration: line-through;
+  }
+  .doc-status-banner .status-detail {
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    letter-spacing: 0;
+    margin-left: 10px;
+  }
+
+  /* Payment section (invoice-specific) */
+  {% block extra_styles %}{% endblock %}
+
+  /* Footer */
+  .doc-footer {
+    padding: 16px 36px;
+    background: #fafbfc;
+    border-top: 1px solid #eee;
+    font-size: 11px;
+    color: #999;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .doc-footer a { color: {{ brand.colors.blue }}; text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="document">
+
+  <!-- Header -->
+  <div class="doc-header">
+    <div class="company-info">
+      <div class="company-name">{{ brand.company_name }}</div>
+      <div class="company-details">
+        {{ brand.address_line1 }}<br>
+        {{ brand.address_line2 }}<br>
+        {{ brand.email }} &bull; {{ brand.phone }}
+      </div>
+    </div>
+    <div class="doc-title-block">
+      {% if logo_data_uri %}
+      <img src="{{ logo_data_uri }}" alt="{{ brand.company_name }}" class="company-logo" />
+      {% endif %}
+      <div class="doc-type">{% block doc_type %}DOCUMENT{% endblock %}</div>
+      <div class="doc-number">{% block doc_number %}{% endblock %}</div>
+      <div class="doc-dates">{% block doc_dates %}{% endblock %}</div>
+    </div>
+  </div>
+
+  <!-- Addresses -->
+  <div class="doc-addresses">
+    {% block addresses %}
+    <div class="addr-block">
+      <div class="addr-label">Bill To</div>
+      <div style="line-height: 1.6;">
+        {% if bill_to %}
+        <span class="name">{{ bill_to.name }}</span><br>
+        {# Lines come from _postal_lines(); empty ones are dropped there. #}
+        {% for line in bill_to.lines %}{{ line }}<br>{% endfor %}
+        {% if bill_to.email %}<span style="color: {{ brand.colors.blue }};">{{ bill_to.email }}</span><br>{% endif %}
+        {% if bill_to.phone %}{{ bill_to.phone }}{% endif %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="addr-block">
+      <div class="addr-label">Ship To</div>
+      <div style="line-height: 1.6;">
+        {% if ship_to %}
+        <span class="name">{{ ship_to.name }}</span><br>
+        {% for line in ship_to.lines %}{{ line }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="addr-block">
+      <div class="addr-label">Order Details</div>
+      <div style="line-height: 1.6;">
+        {% block order_details %}{% endblock %}
+      </div>
+    </div>
+    {% endblock %}
+  </div>
+
+  <!-- Line Items -->
+  <div class="doc-line-items">
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Description</th>
+          <th class="col-center">Qty</th>
+          <th class="col-right" style="padding-right: 16px;">Unit Price</th>
+          <th class="col-right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in line_items %}
+        <tr>
+          <td class="col-sku">{{ item.sku }}</td>
+          <td class="col-desc">{{ item.description }}</td>
+          <td class="col-center">{{ item.quantity|floatformat:0 }}</td>
+          <td class="col-right" style="padding-right: 16px;">${{ item.unit_price|floatformat:2|intcomma }}</td>
+          <td class="col-total">${{ item.line_total|floatformat:2|intcomma }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Totals -->
+  <div class="doc-totals">
+    <div class="totals-block">
+      <div class="totals-row"><span class="label">Subtotal</span><span>${{ totals.subtotal|floatformat:2|intcomma }}</span></div>
+      {% if totals.discount and totals.discount > 0 %}
+      <div class="totals-row"><span class="label">Discount</span><span>&minus;${{ totals.discount|floatformat:2|intcomma }}</span></div>
+      {% endif %}
+      <div class="totals-row"><span class="label">Shipping &amp; Handling</span><span>${{ totals.shipping|floatformat:2|intcomma }}</span></div>
+      <div class="totals-row"><span class="label">Tax</span><span>${{ totals.tax|floatformat:2|intcomma }}</span></div>
+      <div class="totals-row grand-total"><span>Total</span><span>${{ totals.grand_total|floatformat:2|intcomma }}</span></div>
+      {% block totals_extra %}{% endblock %}
+    </div>
+  </div>
+
+  <!-- Status Banner -->
+  {% block status_banner %}{% endblock %}
+
+  <!-- Payment Section -->
+  {% block payment_section %}{% endblock %}
+
+  <!-- Footer -->
+  <div class="doc-footer">
+    Thank you for your business!<br>
+    <a href="https://{{ brand.website }}">{{ brand.website }}</a>
+    &bull; {{ brand.email }} &bull; {{ brand.phone }}
+  </div>
+
+</div>
+</body>
+</html>

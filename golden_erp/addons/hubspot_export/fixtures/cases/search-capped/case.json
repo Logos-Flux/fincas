@@ -1,0 +1,12 @@
+{
+  "description": "Contacts recorded from the search endpoint, whose total says 10,000: the cap, not the truth (2.13 row 1).",
+  "base": "crawl-small",
+  "added": {
+    "contact": [
+      "search_cap"
+    ],
+    "consent": [
+      "search_cap"
+    ]
+  }
+}

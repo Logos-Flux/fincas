@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+{% comment %}"Approve selected" with flagged rows asks first, listing their flags (phase5-importer.md 4.8).{% endcomment %}
+<section class="card mb-4" aria-labelledby="confirm-title">
+  <div class="card-header pb-0"><h1 class="h6 mb-0" id="confirm-title">Approve flagged {{ plural|lower }}?</h1></div>
+  <div class="card-body">
+    <p class="text-sm">{{ flagged|length }} of the {{ ids|length }} selected row{{ ids|length|pluralize }} {% if flagged|length == 1 %}is{% else %}are{% endif %} flagged. A flag means the importer is not sure; approving says you checked.</p>
+    <ul class="text-sm">
+      {% for number, flags in flagged %}<li>Row {{ number }}: {{ flags|join:", " }}</li>{% endfor %}
+    </ul>
+    <form method="post" action="{% url 'erp-crm-import-bulk' job.pk object_type %}" class="d-flex flex-wrap gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="query" value="{{ query }}">
+      <input type="hidden" name="confirm" value="1">
+      {% for id in ids %}<input type="hidden" name="ids" value="{{ id }}">{% endfor %}
+      <button type="submit" name="action" value="approve_selected" class="btn btn-sm bg-gradient-primary mb-0">Approve all {{ ids|length }}</button>
+      <a href="{{ back }}" class="btn btn-sm btn-outline-secondary mb-0">Back to the queue</a>
+    </form>
+  </div>
+</section>
+{% endblock %}

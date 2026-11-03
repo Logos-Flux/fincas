@@ -1,0 +1,16 @@
+[
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:api_key>"
+    },
+    "json": {
+      "email": "ada@example.com",
+      "golden_id": "party:ada",
+      "name": "Ada Lovelace"
+    },
+    "method": "PATCH",
+    "path": "/v1/contacts/fx_ct_0002",
+    "query": {}
+  }
+]

@@ -1,0 +1,54 @@
+{
+  "_comment": "docs/release-hardening-plan.md section 5: seven role agents, a goal and no click-path, each on a non-Claude model from the LiteLLM gateway, a different family per role where possible. `login` is the role seeded by seed_release_test (logins.txt). Model ids are the LIVE gateway's (keys.sh --show names, not the local config.yaml copy); the run log pins the one used.",
+  "personas": [
+    {
+      "id": "sales-rep",
+      "login": "sales",
+      "model": "qwen3.8-max",
+      "family": "Qwen",
+      "goal": "You are a sales rep on your second week. A new customer, Riverside Fabrication, phoned asking for a quote for 4 heavy-duty brackets (search the catalog for 'BRK'). Create the customer if they do not exist, create the quote with those lines, and send it to them by email. Then find the quote again from the customers page to confirm it is attached to the customer."
+    },
+    {
+      "id": "sales-manager",
+      "login": "sales-manager",
+      "model": "glm-5.2",
+      "family": "GLM",
+      "goal": "You manage the sales team. Find out which deals are stalled (no activity for a while) and which quotes were lost this month, reopen one lost deal with a note explaining why, and look at the pipeline or conversion report to see this month's numbers."
+    },
+    {
+      "id": "warehouse",
+      "login": "warehouse",
+      "model": "deepseek-v4-pro",
+      "family": "DeepSeek",
+      "goal": "You work in the warehouse. A purchase order has arrived from a supplier: find a purchase order that is still open, receive it (fully or partially), and check that stock on hand for one of its products went up. Then find which products are low on stock."
+    },
+    {
+      "id": "purchasing",
+      "login": "purchasing",
+      "model": "k3-256k",
+      "family": "Kimi",
+      "goal": "You do purchasing. Find a sales order that needs products bought in, raise a purchase order to a supplier for its lines, and check the supplier's details are complete (contact, address). Then look for any purchase orders that have been open for a long time."
+    },
+    {
+      "id": "bookkeeper",
+      "login": "bookkeeper",
+      "model": "qwen3.8-flash",
+      "family": "Qwen (flash)",
+      "goal": "You keep the books. Find an invoice that is unpaid, record a payment against it, check the customer's balance, then open the trial balance or accounts-receivable report and confirm the books still balance. Try to close the current period if there is a way."
+    },
+    {
+      "id": "admin",
+      "login": "superuser",
+      "model": "deepseek-v4-flash-0731",
+      "family": "DeepSeek (flash)",
+      "goal": "You are the system administrator setting the company up. Add a new staff user with the sales role, rename the word 'Engagement' to 'Deal' everywhere if the system allows it, set up a webhook subscription to https://example.com/hook for order events, and check the pipeline stages for the sales pipeline."
+    },
+    {
+      "id": "newcomer",
+      "login": "staff",
+      "model": "glm-5.2-free",
+      "family": "GLM (free lane; the Gemini free lane was out of quota and deepseek-v4-flash-free does not exist upstream, 2026-10-18)",
+      "goal": "You just joined the company and were given a login with no instructions. Work out what this system is for, what you are expected to do today (there may be a 'my day' or dashboard page), find one customer and one order, and try to do something useful such as adding a task or a note. Say what confused you."
+    }
+  ]
+}

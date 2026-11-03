@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% load crm_tags static erp_tags labels tz %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "list", "entity": "Engagement"}'>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+       <div class="w-100">
+        <div class="row align-items-center">
+          <div class="col-lg-6 col-7">
+            <h1 class="h6 mb-0">{{ page_title }}</h1>
+          </div>
+          <div class="col-lg-6 col-5 text-end">
+            <a href="{% url 'erp-crm-engagement-create' %}" class="btn bg-gradient-primary btn-sm mb-0">
+              <i class="fas fa-plus me-1" aria-hidden="true"></i> New {{ entity_label|lower }}
+            </a>
+            {% include "erp/_list_export.html" %}
+            {% include "erp/_column_chooser.html" %}
+          </div>
+        </div>
+
+        <nav class="d-flex flex-wrap gap-2 mt-3" aria-label="Saved filters">
+          {% for key, text in chips %}
+          <a href="?{% if chip_query %}{{ chip_query }}&amp;{% endif %}chip={{ key }}"
+             class="btn btn-sm mb-0 {% if key == active_chip %}bg-gradient-primary{% else %}btn-outline-secondary{% endif %}"
+             {% if key == active_chip %}aria-current="page"{% endif %}>{{ text }}</a>
+          {% endfor %}
+        </nav>
+        {% include "erp/_saved_filters.html" %}
+        {% if notice %}<p class="text-sm text-secondary mt-2 mb-0" role="status">{{ notice }}</p>{% endif %}
+
+        <details class="erp-filters mt-2" open>
+        <summary class="btn btn-outline-secondary btn-sm mb-2">Filters{% if active_filter_count %} ({{ active_filter_count }} active){% endif %}</summary>
+        <form method="get" class="row g-2 align-items-start" id="engagement-filters">
+          {% if active_chip %}<input type="hidden" name="chip" value="{{ active_chip }}">{% endif %}
+          <div class="col-md-3">
+            <div class="input-group mb-2">
+              <span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span>
+              <input type="search" name="q" value="{{ search_query }}" class="form-control form-control-sm"
+                     aria-label="Search by number, title or counterparty name" placeholder="Number, title or name">
+            </div>
+          </div>
+          <div class="col-md-auto col-6">
+            <select name="stage" class="form-control form-control-sm mb-2" aria-label="Filter by {% label 'crm.stage' case='lower' %}" data-auto-submit>
+              <option value="">{% label "crm.stage" %}: all</option>
+              {% for pipeline in filters.pipelines %}
+              <optgroup label="{{ pipeline.name }}">
+                {% for stage in pipeline.active_stages %}
+                <option value="{{ stage.pk }}"{% if filters.active.stage == stage.pk|stringformat:"s" %} selected{% endif %}>{{ stage.name }}</option>
+                {% endfor %}
+              </optgroup>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-auto col-6">
+            <select name="owner" class="form-control form-control-sm mb-2" aria-label="Filter by owner" data-auto-submit>
+              <option value="">Owner: any</option>
+              <option value="none"{% if filters.active.owner == "none" %} selected{% endif %}>Unassigned</option>
+              {% for value, text in filters.owners %}
+              <option value="{{ value }}"{% if filters.active.owner == value %} selected{% endif %}>{{ text }}</option>
+              {% endfor %}
+              {% for group_label, pairs in filters.owner_groups %}
+              <optgroup label="{{ group_label }}">{% for value, text in pairs %}<option value="{{ value }}"{% if filters.active.owner == value %} selected{% endif %}>{{ text }}</option>{% endfor %}</optgroup>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-auto col-6">
+            <select name="source" class="form-control form-control-sm mb-2" aria-label="Filter by source" data-auto-submit>
+              <option value="">Source: any</option>
+              {% for value, text in filters.sources %}
+              <option value="{{ value }}"{% if filters.active.source == value %} selected{% endif %}>{{ text }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% include "erp/_list_sort_inputs.html" %}
+          <div class="col-md-auto col-12">
+            <button type="submit" class="btn btn-outline-primary btn-sm mb-2">Apply</button>
+          </div>
+        </form>
+        </details>
+       </div>
+      </div>
+
+      <div class="card-body px-0 pt-0 pb-2">
+        {% if show_rules and object_list %}
+        <div class="erp-select-toggle-wrap px-3 pt-2">
+          <label class="text-sm mb-0 d-inline-flex align-items-center gap-1"><input type="checkbox" class="form-check-input mt-0 erp-select-toggle" form="erp-no-form" aria-controls="engagement-bulk"> Select rows</label>
+        </div>
+        {% endif %}
+        {% if show_rules and object_list %}
+        <form method="post" action="{% url 'erp-crm-engagement-bulk' %}" id="engagement-bulk" class="erp-bulk-panel">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <fieldset class="d-flex flex-wrap gap-2 align-items-end px-3 py-2">
+            <legend class="text-sm font-weight-bold mb-1 w-100">With the selected rows</legend>
+            <div>
+              <label for="bulk-action" class="form-label text-xs mb-0">Action</label>
+              <select id="bulk-action" name="action" class="form-control form-control-sm">
+                <option value="assign">Assign owner</option>
+                <option value="follow_up">Add a "Follow up" task due tomorrow</option>
+                <option value="lose">Close as lost</option>
+              </select>
+            </div>
+            <div>
+              <label for="bulk-owner" class="form-label text-xs mb-0">Owner</label>
+              <select id="bulk-owner" name="owner" class="form-control form-control-sm">
+                <option value="">—</option>
+                {% for value, text in bulk_owners %}<option value="{{ value }}">{{ text }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label for="bulk-reason" class="form-label text-xs mb-0">Loss reason</label>
+              <select id="bulk-reason" name="loss_reason" class="form-control form-control-sm">
+                <option value="">—</option>
+                {% for value, text in bulk_reasons %}<option value="{{ value }}">{{ text }}</option>{% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn bg-gradient-dark btn-sm mb-0">Apply to selected</button>
+          </fieldset>
+        </form>
+        {% endif %}
+        {% include "erp/_list_live_region.html" %}
+    <div class="table-responsive p-0">
+          {% timezone viewer_tz %}
+          <table class="table align-items-center mb-0" id="engagement-list-table">
+            {% include "erp/_list_caption.html" %}
+            <thead>
+              <tr>
+                {% if show_rules %}<th scope="col" class="ps-3 erp-select-col"><span class="visually-hidden">Select</span></th>{% endif %}
+                {% include "erp/crm/_list_header.html" with first_padded=show_rules %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for eng in object_list %}
+              <tr>
+                {% if show_rules %}
+                <td class="ps-3 erp-select-col"><input type="checkbox" form="engagement-bulk" name="ids" value="{{ eng.pk }}" class="form-check-input" aria-label="Select {{ eng.number }}"></td>
+                {% endif %}
+                {% for col in visible_columns %}
+                {% if col.id == "number" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}">
+                  <a href="{% url 'erp-crm-engagement-detail' eng.pk %}" class="text-sm font-weight-bold text-primary">{{ eng.number }}</a>
+                  <div class="text-xs text-secondary text-truncate" style="max-width: min(22rem, 50vw);">{{ eng.title }}</div>
+                  {% if eng.rules %}
+                  <div class="mt-1">{% for rule in eng.rules %}<span class="badge badge-sm bg-gradient-warning me-1">{{ rule }}</span>{% endfor %}</div>
+                  {% endif %}
+                </td>
+                {% elif col.id == "party" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}">
+                  {% if eng.party %}
+                  <a href="{% url 'erp-party-detail' eng.party_id %}" class="text-sm text-primary">{{ eng.party.display_name }}</a>
+                  {% else %}<span class="badge badge-sm bg-gradient-warning">No counterparty</span>{% endif %}
+                </td>
+                {% elif col.id == "stage" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}">
+                  {% if eng.status == "open" %}
+                  <span class="text-sm">{{ eng.stage.name }}</span>
+                  {% if eng.in_stage %}<div class="text-xs text-secondary">{{ eng.stage_entered_at|timesince }} in stage</div>{% endif %}
+                  {% elif eng.status == "won" %}<span class="badge badge-sm bg-gradient-success">Won</span>{% if eng.stage %} <span class="text-xs text-secondary">at {{ eng.stage.name }}</span>{% endif %}
+                  {% else %}<span class="badge badge-sm bg-gradient-secondary">Lost: {{ eng.loss_label }}</span>{% if eng.stage %} <span class="text-xs text-secondary">at {{ eng.stage.name }}</span>{% endif %}
+                  {% endif %}
+                </td>
+                {% elif col.id == "next_action" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}">
+                  {% if eng.next_task %}
+                  <span class="text-sm">{{ eng.next_task.title }}</span>
+                  {% if eng.next_action_due_at %}
+                  <div class="text-xs {% if eng.overdue %}text-danger font-weight-bold{% else %}text-secondary{% endif %}" title="{{ eng.next_action_due_at|date:'Y-m-d H:i T' }}">
+                    {% if eng.overdue %}Overdue {{ eng.next_action_due_at|timesince }}{% else %}Due in {{ eng.next_action_due_at|timeuntil }}{% endif %}
+                  </div>
+                  {% else %}<div class="text-xs text-secondary">No due date</div>{% endif %}
+                  {% elif eng.status == "open" %}<span class="badge badge-sm bg-gradient-warning">None</span>
+                  {% else %}<span class="text-sm text-secondary">—</span>{% endif %}
+                </td>
+                {% elif col.id == "expected_value" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{% if eng.expected_value is not None %}{{ eng.expected_value|money:eng.currency }}{% else %}<span aria-hidden="true">—</span><span class="visually-hidden">unknown</span>{% endif %}</span></td>
+                {% elif col.id == "weighted_value" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{% if eng.weighted_value is not None %}{{ eng.weighted_value|money:eng.currency }}{% else %}<span aria-hidden="true">—</span><span class="visually-hidden">unknown</span>{% endif %}</span></td>
+                {% elif col.id == "owner" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{{ eng.owner|profile_name }}</span></td>
+                {% elif col.id == "owner_team" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{% if eng.owner_team %}{{ eng.owner_team.name }}{% if not eng.owner_team.is_active %} (archived){% endif %}{% else %}—{% endif %}</span></td>
+                {% elif col.id == "pipeline" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{{ eng.pipeline.name }}</span></td>
+                {% elif col.id == "probability" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{% if eng.effective_probability is not None %}{{ eng.effective_probability }}%{% else %}—{% endif %}</span></td>
+                {% elif col.id == "source" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{{ eng.source_text|default:"Unknown" }}</span></td>
+                {% elif col.id == "loss_reason" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{{ eng.loss_label|default:"—" }}</span></td>
+                {% elif col.id == "last_activity_at" %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}">
+                  <span class="text-sm" title="{{ eng.last_activity_at|date:'Y-m-d H:i T' }}">{% if eng.last_activity_at %}{{ eng.last_activity_at|timesince }} ago{% else %}—{% endif %}</span>
+                  {% if eng.stale_days is not None %}<div><span class="badge badge-sm bg-gradient-secondary">Stale · {{ eng.stale_days }} d</span></div>{% endif %}
+                </td>
+                {% else %}
+                <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}">{% list_cell eng col %}</td>
+                {% endif %}
+                {% endfor %}
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="{% if show_rules %}{{ visible_columns|length|add:1 }}{% else %}{{ visible_columns|length }}{% endif %}" class="text-center py-4 text-sm text-secondary">No {{ entity_label_plural|lower }} here.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% endtimezone %}
+        </div>
+      </div>
+
+      {% if is_paginated %}
+      <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <p class="text-sm text-secondary mb-0">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }}</p>
+        <nav aria-label="Pages">
+          <ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?{% if page_query %}{{ page_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous page"><i class="fas fa-angle-left" aria-hidden="true"></i></a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?{% if page_query %}{{ page_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next page"><i class="fas fa-angle-right" aria-hidden="true"></i></a></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% include "erp/_list_responsive.html" %}
+{% endblock %}
+
+{% block javascripts %}
+{% include "erp/_list_a11y_script.html" %}
+<script>
+(function() {
+{% include "erp/_list_tools_js.html" %}
+})();
+</script>
+{% endblock %}

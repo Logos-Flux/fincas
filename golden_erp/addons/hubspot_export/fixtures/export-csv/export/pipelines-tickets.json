@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/pipelines/tickets",
+    "query": {},
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "0",
+        "label": "Partner Pipeline",
+        "displayOrder": 0,
+        "archived": false,
+        "createdAt": "2022-01-04T09:00:00.000Z",
+        "updatedAt": "2024-01-02T09:00:00.000Z",
+        "stages": [
+          {
+            "id": "1",
+            "label": "New partner",
+            "displayOrder": 0,
+            "metadata": {
+              "ticketState": "OPEN"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          },
+          {
+            "id": "2",
+            "label": "Onboarding",
+            "displayOrder": 1,
+            "metadata": {
+              "ticketState": "OPEN"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          },
+          {
+            "id": "3",
+            "label": "Active partner",
+            "displayOrder": 2,
+            "metadata": {
+              "ticketState": "CLOSED"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          },
+          {
+            "id": "4",
+            "label": "Ended",
+            "displayOrder": 3,
+            "metadata": {
+              "ticketState": "CLOSED"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          }
+        ]
+      }
+    ]
+  }
+}

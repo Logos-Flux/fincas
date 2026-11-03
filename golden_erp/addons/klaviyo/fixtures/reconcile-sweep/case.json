@@ -1,0 +1,65 @@
+{
+  "klaviyo": {
+    "consents": [
+      {
+        "occurred_at": "2026-02-01T10:00:00Z",
+        "party": "ada",
+        "state": "granted"
+      },
+      {
+        "occurred_at": "2026-02-01T10:00:00Z",
+        "party": "grace",
+        "state": "withdrawn"
+      }
+    ],
+    "marketable": [
+      "ada",
+      "grace",
+      "linus"
+    ],
+    "profiles": [
+      {
+        "address": "grace@example.net",
+        "lists": [],
+        "party": "grace",
+        "source_id": "01FIXTUREPROFILEGRACE00000",
+        "state": "unsubscribed"
+      }
+    ]
+  },
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "The reconcile sweep finds parties from the consent side (consent rows send no signal): a granted party is pushed, an already-unsubscribed profile and a party with no consent send nothing; the second sweep enqueues nothing new.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      },
+      {
+        "email": "grace@example.net",
+        "family": "Hopper",
+        "given": "Grace",
+        "key": "grace"
+      },
+      {
+        "email": "linus@example.org",
+        "family": "Pauling",
+        "given": "Linus",
+        "key": "linus"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "enqueue": {
+        "consumer": "klaviyo.reconcile",
+        "key": "reconcile:1"
+      }
+    },
+    {
+      "drain": true
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "A note recorded with only its truncated body preview: communications are partial, truncated_export.",
+  "base": "crawl-small",
+  "added": {
+    "communication": [
+      "truncated_export"
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+Date,Transaction Type,Num,Account,Debit,Credit,Unknown1,Notes
+01/15/2025,Invoice,1001,Sales,100.00,,x,note
+,,,,,,,
+01/16/2025,Invoice,1002,Sales,200.00,,y,note2

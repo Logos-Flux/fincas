@@ -1,0 +1,155 @@
+[build-system]
+# >=77: SPDX string `license` (PEP 639); also covers recursive ** package-data (>=62.3).
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fincas"
+version = "0.4.1"
+description = "Django commerce and back-office platform: orders, invoicing, accounting, inventory, CRM and a storefront API"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [
+    { name = "Fincas Contributors" }
+]
+keywords = [
+    "django", "erp", "commerce", "crm", "accounting", "inventory",
+    "back-office", "headless-commerce", "orders", "invoicing",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 6.0",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business",
+    "Topic :: Office/Business :: Financial :: Accounting",
+]
+dependencies = [
+    "django>=6.0,<6.1",
+    "djangorestframework>=3.16,<4",
+    "django-filter>=25.2,<26",
+    "django-cors-headers>=4.9,<5",
+    "python-dotenv>=1.2,<2",
+    "dj-database-url>=3.1,<4",
+    "whitenoise>=6.12,<7",
+    "requests>=2.32,<3",
+    "django-anymail[mailgun]>=13.0,<14",
+    "weasyprint>=70.0,<71",
+    "openpyxl>=3.1,<4",
+    "easypost>=9.0,<10",
+    # Security floors (F-050): PyJWT 2.15, pypdf 6.19, urllib3 2.8 (transitive).
+    "PyJWT>=2.15,<3",
+    "cryptography>=50.0,<51",
+    "httpx>=0.28,<1",
+    "mcp>=1.0,<2",
+    "boto3>=1.43,<2",
+    "pypdf>=6.19,<7",
+    "urllib3>=2.8,<3",
+    "psycopg2-binary>=2.9,<3",
+    "redis>=5.0,<6",
+    "drf-spectacular>=0.28,<1",
+    "phonenumbers>=9.0,<10",
+]
+[project.urls]
+Homepage = "https://github.com/Logos-Flux/fincas"
+Repository = "https://github.com/Logos-Flux/fincas"
+Documentation = "https://github.com/Logos-Flux/fincas/blob/main/docs/README.md"
+Changelog = "https://github.com/Logos-Flux/fincas/blob/main/CHANGELOG.md"
+Issues = "https://github.com/Logos-Flux/fincas/issues"
+
+# [project].dependencies mirrors requirements/base.txt, so the wheel alone is a
+# complete runtime install. The server stack (requirements/prod.txt) is an extra.
+
+[project.optional-dependencies]
+prod = [
+    "uvicorn>=0.51,<1",
+    "gunicorn>=25.1,<26",
+    "sentry-sdk[django]>=2.0,<3",
+]
+
+# Package layout: docs/packaging.md. The wheel ships golden_erp (settings, urls,
+# project-level templates/static, and golden_erp.addons: the CRM adapters a
+# downstream lists in GOLDEN_PLUGINS) and the Django app packages as top-level
+# packages. Top-level `addons` is only the deprecated import shim for the old
+# spelling (#120), removed in v0.6.0. config/ is golden's own project shell and is never shipped: a
+# downstream project has its own config package.
+[tool.setuptools.packages.find]
+where = ["."]
+namespaces = false
+include = [
+    "golden_erp", "golden_erp.*",
+    "accounting", "accounting.*",
+    "chat", "chat.*",
+    "communications", "communications.*",
+    "content", "content.*",
+    "core", "core.*",
+    "crm", "crm.*",
+    "crm_import", "crm_import.*",
+    "customers", "customers.*",
+    "discounts", "discounts.*",
+    "documents", "documents.*",
+    "erp_assist", "erp_assist.*",
+    "fulfillment", "fulfillment.*",
+    "inventory", "inventory.*",
+    "llmhub", "llmhub.*",
+    "orders", "orders.*",
+    "parties", "parties.*",
+    "payments", "payments.*",
+    "portal", "portal.*",
+    "pricing", "pricing.*",
+    "products", "products.*",
+    "purchasing", "purchasing.*",
+    "reporting", "reporting.*",
+    "unify", "unify.*",
+    "webhooks", "webhooks.*",
+    "addons",  # deprecated alias of golden_erp.addons; remove in v0.6.0
+]
+exclude = [
+    "config", "config.*",
+    "storefront", "storefront.*",
+    "scripts", "scripts.*",
+    "docs", "docs.*",
+    "requirements", "requirements.*",
+    "brainstorming", "brainstorming.*",
+]
+
+[tool.setuptools]
+# Ship only what package-data lists; MANIFEST.in is not used.
+include-package-data = false
+
+[tool.setuptools.package-data]
+# Applies to every package: templates, static and fixtures dirs (at any depth
+# below a package, e.g. accounting/tests/fixtures), plus app data files.
+# Migrations are Python packages and ship as code.
+"*" = [
+    "templates/**/*",
+    "static/**/*",
+    "fixtures/**/*",
+    "data/**/*",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["migrations", "static", "staticfiles"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/settings/*.py" = ["F403", "F405"]
+"accounting/erp_views.py" = ["E402", "E741"]
+
+
+[tool.coverage.run]
+# Parallel test workers (manage.py test --parallel) each write .coverage.<pid>;
+# CI combines them (coverage combine) before reporting.
+parallel = true
+concurrency = ["multiprocessing"]

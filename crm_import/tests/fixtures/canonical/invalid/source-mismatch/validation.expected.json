@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "source_mismatch",
+      "file": "deals.jsonl",
+      "line": 2,
+      "field": "source"
+    }
+  ],
+  "warnings": []
+}

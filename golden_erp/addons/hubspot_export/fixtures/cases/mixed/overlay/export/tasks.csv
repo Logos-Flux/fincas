@@ -1,0 +1,3 @@
+﻿Record ID,Task Title,Task Type,Task Status,Priority,Due date,Completed at,Owner,Create date,Associated Contact IDs,Associated Company IDs,Associated Deal IDs,Associated Ticket IDs
+601,Call Ann about the retrofit,Call,Not started,High,2026-09-20 11:00,,Avery Example,2026-09-20 11:00,301,,401,
+602,Send onboarding pack,Email,Completed,Medium,2026-07-02 05:00,2026-07-03 07:00,Blair Sample,2026-07-02 05:00,303,,,502

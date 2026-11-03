@@ -1,0 +1,281 @@
+/* ERP chat assistant — drawer styles.
+   Colours are theme tokens (--brand-t-*, see golden_erp/static/assets/css/themes/), so the
+   drawer follows every ERP theme in both modes; the old body.dark-mode variants
+   were Soft UI leftovers that no longer matched anything. Markup reuses Tabler
+   utility classes, so this file is layout + chat-specific bits. */
+
+/* ---- Floating action button ---- */
+.erp-chat-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--brand-t-accent);
+  color: var(--brand-t-on-accent);
+  font-size: 22px;
+  box-shadow: 0 6px 20px rgba(var(--brand-t-accent-rgb), 0.35);
+  cursor: pointer;
+  z-index: 1040;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.erp-chat-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(var(--brand-t-accent-rgb), 0.45);
+}
+
+.erp-chat-fab:active {
+  transform: translateY(0);
+}
+
+/* ---- Drawer container ---- */
+.erp-chat-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  max-width: 95vw;
+  height: 100vh;
+  background: var(--brand-t-surface);
+  color: var(--brand-t-text);
+  border-left: 1px solid var(--brand-t-border);
+  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  z-index: 1050;
+}
+
+.erp-chat-drawer.open {
+  transform: translateX(0);
+}
+
+/* ---- Header ---- */
+.erp-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--brand-t-border);
+  flex-shrink: 0;
+}
+
+.erp-chat-header select {
+  width: auto;
+  min-width: 120px;
+  font-size: 12px;
+}
+
+/* ---- Two-column body (history sidebar + transcript) ---- */
+.erp-chat-body {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;  /* required so children with overflow:auto behave */
+}
+
+.erp-chat-history {
+  width: 0;
+  flex-shrink: 0;
+  border-right: 1px solid var(--brand-t-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--brand-t-card);
+  transition: width 0.2s ease;
+}
+
+.erp-chat-history.open {
+  width: 160px;
+}
+
+.erp-chat-history-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--brand-t-border);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand-t-muted);
+  flex-shrink: 0;
+}
+
+.erp-chat-history-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.erp-chat-history-item {
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--brand-t-border);
+  color: var(--brand-t-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.erp-chat-history-item:hover {
+  background: var(--brand-t-hover);
+}
+
+.erp-chat-history-item.active {
+  background: color-mix(in srgb, var(--brand-t-accent) 16%, var(--brand-t-card));
+  color: var(--brand-t-bright);
+  font-weight: 600;
+}
+
+.erp-chat-history-item .timestamp {
+  display: block;
+  font-size: 10px;
+  color: var(--brand-t-muted);
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+/* ---- Transcript area ---- */
+.erp-chat-transcript {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.erp-chat-empty {
+  margin: auto;
+  max-width: 280px;
+}
+
+/* Message bubbles */
+.erp-chat-msg {
+  max-width: 90%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  line-height: 1.5;
+  font-size: 14px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.erp-chat-msg-user {
+  align-self: flex-end;
+  background: var(--brand-t-accent);
+  color: var(--brand-t-on-accent);
+  border-bottom-right-radius: 4px;
+}
+
+.erp-chat-msg-assistant {
+  align-self: flex-start;
+  background: var(--brand-t-card);
+  color: var(--brand-t-text);
+  border: 1px solid var(--brand-t-border);
+  border-bottom-left-radius: 4px;
+}
+
+/* Tool call indicator (chip-like row inside the transcript) */
+.erp-chat-tool-call {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: color-mix(in srgb, var(--brand-t-warning) 12%, var(--brand-t-surface));
+  border: 1px solid color-mix(in srgb, var(--brand-t-warning) 45%, var(--brand-t-surface));
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--brand-t-text);
+  font-family: var(--font-mono);
+  max-width: 100%;
+}
+
+.erp-chat-tool-call.success {
+  background: color-mix(in srgb, var(--brand-t-success) 12%, var(--brand-t-surface));
+  border-color: color-mix(in srgb, var(--brand-t-success) 45%, var(--brand-t-surface));
+}
+
+.erp-chat-tool-call.error {
+  background: color-mix(in srgb, var(--brand-t-error) 12%, var(--brand-t-surface));
+  border-color: color-mix(in srgb, var(--brand-t-error) 45%, var(--brand-t-surface));
+}
+
+.erp-chat-tool-call .tool-name {
+  font-weight: 600;
+}
+
+.erp-chat-tool-call .tool-result-summary {
+  opacity: 0.85;
+}
+
+/* Inline error bubble */
+.erp-chat-msg-error {
+  align-self: stretch;
+  background: color-mix(in srgb, var(--brand-t-error) 12%, var(--brand-t-surface));
+  border: 1px solid color-mix(in srgb, var(--brand-t-error) 45%, var(--brand-t-surface));
+  color: var(--brand-t-text);
+  font-size: 13px;
+}
+
+/* ---- Input row ---- */
+.erp-chat-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--brand-t-border);
+  flex-shrink: 0;
+}
+
+.erp-chat-input-row textarea {
+  resize: none;
+  max-height: 120px;
+  font-size: 14px;
+}
+
+.erp-chat-input-row button[type="submit"] {
+  flex-shrink: 0;
+  height: 38px;
+  width: 38px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- Status footer ---- */
+.erp-chat-status {
+  padding: 4px 16px 8px;
+  font-size: 11px;
+  font-style: italic;
+  text-align: center;
+  min-height: 22px;
+}
+
+/* ---- Streaming cursor for in-progress messages ---- */
+.erp-chat-msg-streaming::after {
+  content: "▍";
+  animation: erp-chat-blink 1s steps(2) infinite;
+  margin-left: 2px;
+  opacity: 0.6;
+}
+
+@keyframes erp-chat-blink {
+  0%, 50% { opacity: 0.6; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Gateway mode: the concrete model last observed on the selected lane. */
+.erp-chat-model-name {
+  max-width: 160px;
+}
+
+/* Picker and readout share the ~36px header row; the readout yields. */
+.erp-chat-header select + .erp-chat-model-name {
+  max-width: 110px;
+}

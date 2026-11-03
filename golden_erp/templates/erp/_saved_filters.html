@@ -1,0 +1,44 @@
+{% comment %}
+  Saved filters (phase4-fields.md 5.4), after any built-in chips. Each chip
+  loads through ?saved=<id>, which re-validates its parameters against the
+  list's allow-lists; a chip whose conditions no longer all apply says so.
+{% endcomment %}
+{% if saved_filters %}
+<div class="d-flex flex-wrap gap-2 mt-3 align-items-center erp-saved-filters">
+  {% if saved_filters.items %}
+  <span class="text-xs text-secondary" id="saved-filters-label">Saved filters:</span>
+  <ul class="list-unstyled d-flex flex-wrap gap-2 mb-0" aria-labelledby="saved-filters-label">
+    {% for chip in saved_filters.items %}
+    <li class="d-flex align-items-center gap-1">
+      <a href="?saved={{ chip.id }}" class="btn btn-sm mb-0 {% if chip.active %}bg-gradient-primary{% else %}btn-outline-secondary{% endif %}"{% if chip.active %} aria-current="true"{% endif %}>{{ chip.name }}{% if chip.shared %} <i class="fas fa-users ms-1" aria-hidden="true"></i><span class="visually-hidden"> (shared)</span>{% endif %}{% if chip.stale %}<span class="ms-1">· {{ chip.stale_text }}</span>{% endif %}</a>
+      {% if chip.can_edit %}
+      <form method="post" class="d-inline mb-0">
+        {% csrf_token %}
+        <input type="hidden" name="list_action" value="delete_filter">
+        <input type="hidden" name="filter" value="{{ chip.id }}">
+        <input type="hidden" name="query" value="{{ list_query }}">
+        <button type="submit" class="btn btn-link btn-sm mb-0 px-1 text-secondary" aria-label="Delete saved filter {{ chip.name }}"><i class="fas fa-times" aria-hidden="true"></i></button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if saved_filters.can_save %}
+  <details class="d-inline-block erp-save-filter">
+    <summary class="btn btn-link btn-sm mb-0 text-primary" style="list-style:none">Save this view</summary>
+    <form method="post" class="d-flex flex-wrap gap-2 mt-2 align-items-center">
+      {% csrf_token %}
+      <input type="hidden" name="list_action" value="save_filter">
+      <input type="hidden" name="query" value="{{ list_query }}">
+      <input type="text" name="name" maxlength="80" required class="form-control form-control-sm w-auto" aria-label="Saved filter name" placeholder="Name">
+      <select name="visibility" class="form-control form-control-sm w-auto" aria-label="Who sees this filter">
+        <option value="private">Only me</option>
+        <option value="tenant">Everyone in my company</option>
+      </select>
+      <button type="submit" class="btn btn-outline-primary btn-sm mb-0">Save</button>
+    </form>
+  </details>
+  {% endif %}
+</div>
+{% endif %}

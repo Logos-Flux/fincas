@@ -1,0 +1,26 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {},
+      "object_type": "contact",
+      "source": "fixture",
+      "source_id": "fx_ct_0001",
+      "source_url": "https://app.fixture.example.com/contacts/fx_ct_0001",
+      "target": "parties.party:party:ada"
+    }
+  ],
+  "outbox": [
+    {
+      "consumer": "fixture.contact",
+      "event": "push",
+      "idempotency_key": "contact:ada:1",
+      "object": "party:ada",
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

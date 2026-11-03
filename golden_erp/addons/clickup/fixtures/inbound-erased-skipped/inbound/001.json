@@ -1,0 +1,36 @@
+{
+  "payload": {
+    "assignees": [
+      {
+        "email": "sam@example.com",
+        "id": 81000001,
+        "username": "81000001"
+      }
+    ],
+    "custom_fields": [],
+    "date_closed": "1772463600000",
+    "date_created": "1772460000000",
+    "date_done": "1772463600000",
+    "date_updated": "1772463600000",
+    "description": "",
+    "due_date": "1772773199999",
+    "due_date_time": false,
+    "id": "86a0fx01",
+    "list": {
+      "id": "901"
+    },
+    "markdown_description": "",
+    "name": "Call Ada back",
+    "priority": {
+      "id": "3",
+      "priority": "normal"
+    },
+    "status": {
+      "status": "complete",
+      "type": "closed"
+    },
+    "url": "https://app.clickup.com/t/86a0fx01"
+  },
+  "provider": "clickup",
+  "schema_version": 1
+}

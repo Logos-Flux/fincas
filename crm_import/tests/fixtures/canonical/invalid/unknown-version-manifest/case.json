@@ -1,0 +1,12 @@
+{
+  "description": "a manifest of a newer schema version stops validation",
+  "manifest": [
+    {
+      "op": "set",
+      "path": [
+        "schema_version"
+      ],
+      "value": 99
+    }
+  ]
+}

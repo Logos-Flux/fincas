@@ -1,0 +1,38 @@
+{
+  "klaviyo": {
+    "consents": [
+      {
+        "occurred_at": "2026-02-01T10:00:00Z",
+        "party": "ada",
+        "state": "granted"
+      }
+    ],
+    "marketable": [
+      "ada"
+    ]
+  },
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A party with an email-marketing grant is upserted by email and subscribed to the list with golden's consent time, once; a second sync of the unchanged party sends nothing.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "enqueue": {
+        "consumer": "klaviyo.profile",
+        "key": "sync:ada:1",
+        "object": "party:ada"
+      }
+    },
+    {
+      "drain": true
+    }
+  ]
+}

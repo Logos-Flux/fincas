@@ -1,0 +1,98 @@
+{
+  "payload": {
+    "history": [
+      {
+        "id": "1001",
+        "messages": [
+          {
+            "id": "19b0000000000003",
+            "threadId": "19b0000000000003"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b0000000000003",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b0000000000003"
+            }
+          }
+        ]
+      },
+      {
+        "id": "1002",
+        "messages": [
+          {
+            "id": "19b0000000000004",
+            "threadId": "19b0000000000004"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b0000000000004",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b0000000000004"
+            }
+          }
+        ]
+      },
+      {
+        "id": "1003",
+        "messages": [
+          {
+            "id": "19b0000000000005",
+            "threadId": "19b0000000000005"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b0000000000005",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b0000000000005"
+            }
+          }
+        ]
+      },
+      {
+        "id": "1004",
+        "messages": [
+          {
+            "id": "19b0000000000006",
+            "threadId": "19b0000000000006"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b0000000000006",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b0000000000006"
+            }
+          }
+        ]
+      }
+    ],
+    "historyId": "1010"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/history",
+    "query": {
+      "historyTypes": "messageAdded",
+      "maxResults": "50",
+      "startHistoryId": "1000"
+    }
+  },
+  "schema_version": 1
+}

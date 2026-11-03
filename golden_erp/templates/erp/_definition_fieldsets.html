@@ -1,0 +1,43 @@
+{% load erp_tags %}
+{% comment %}
+  The deployment's field definitions as fieldsets, one per definition group
+  (docs/crm/phase4-fields.md 3.3, 5.2, 5.7). Context: ``form`` (a form with
+  core.sidecar_forms.DefinitionFieldsMixin). ``wrap_cards``: each group in its
+  own card (the generic form page) instead of a bare fieldset.
+{% endcomment %}
+{% for section in form.definition_sections %}
+{% if wrap_cards %}<div class="card mb-4">{% endif %}
+<fieldset class="{% if wrap_cards %}card-body{% else %}mb-3{% endif %}">
+  <legend class="{% if wrap_cards %}h6 mb-3{% else %}text-xs text-uppercase text-secondary font-weight-bolder mb-2{% endif %}">{{ section.title }}</legend>
+  <div class="row">
+    {% for field_name in section.fields %}
+    {% with field=form|get_form_field:field_name %}
+    {% if field %}
+    <div class="col-md-6 mb-3">
+      {% if field.field.widget.allow_multiple_selected and field.field.widget.input_type == "checkbox" %}
+      <fieldset{% if field.help_text %} aria-describedby="{{ field.auto_id }}_help"{% endif %}>
+        <legend class="form-label text-sm mb-1">{{ field.label }}{% if field.field.required %} <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span>{% endif %}</legend>
+        {% for option in field %}
+        <div class="form-check">
+          {{ option.tag }}
+          <label class="form-check-label text-sm" for="{{ option.id_for_label }}">{{ option.choice_label }}</label>
+        </div>
+        {% endfor %}
+      </fieldset>
+      {% else %}
+      <label for="{{ field.id_for_label }}" class="form-label text-sm">{{ field.label }}{% if field.field.required %} <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span>{% endif %}</label>
+      {{ field|add_class:"form-control form-control-sm" }}
+      {% endif %}
+      {% if field.errors %}<div class="text-danger text-xs mt-1" id="{{ field.auto_id }}_error">{{ field.errors.0 }}</div>{% endif %}
+      {% if field.help_text %}<small class="form-text text-secondary text-xs d-block" id="{{ field.auto_id }}_help">{{ field.help_text }}</small>{% endif %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endfor %}
+  </div>
+</fieldset>
+{% if wrap_cards %}</div>{% endif %}
+{% endfor %}
+{% if form.hidden_definitions %}
+<p class="text-xs text-secondary">{{ form.hidden_definitions|length }} personal-data field{{ form.hidden_definitions|length|pluralize }} {{ form.hidden_definitions|length|pluralize:"is,are" }} hidden: viewing personal data needs the “Can export personal data columns from CRM lists” permission.</p>
+{% endif %}

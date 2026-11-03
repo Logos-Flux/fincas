@@ -1,0 +1,28 @@
+{
+  "description": "the same association when contact coverage is partial: a warning, not an error",
+  "manifest": [
+    {
+      "op": "set",
+      "path": [
+        "objects",
+        "contact",
+        "coverage"
+      ],
+      "value": "partial"
+    },
+    {
+      "op": "set",
+      "path": [
+        "objects",
+        "contact",
+        "reasons"
+      ],
+      "value": [
+        {
+          "code": "search_cap",
+          "detail": "search API stops at 10,000"
+        }
+      ]
+    }
+  ]
+}

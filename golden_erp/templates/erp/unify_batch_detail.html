@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} — {{ batch.source_name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <div class="row align-items-end">
+          <div class="col-md-5">
+            <h6 class="mb-0">{{ batch.source_name }}</h6>
+            <p class="text-xs text-secondary mb-0">
+              {{ batch.get_status_display }} · {{ report.completeness.percent }}% complete ·
+              {{ auto_approvable }} auto-approvable · {{ needs_review }} need review ·
+              LLM {{ batch.llm_calls_used }}/{{ batch.llm_call_budget }}
+            </p>
+          </div>
+          <div class="col-md-7">
+            <form method="get" class="row g-2 justify-content-end">
+              <div class="col-auto">
+                <select name="state" aria-label="Filter by row state" class="form-control form-control-sm" data-auto-submit>
+                  <option value="">All states</option>
+                  {% for value, label in states %}
+                  <option value="{{ value }}" {% if state_filter == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary btn-sm mb-0">Apply</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        {% if messages %}
+        <div role="status">
+          {% for message in messages %}
+          <div class="alert alert-warning text-sm mb-2">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" class="mb-3">
+          {% csrf_token %}
+          <div class="d-flex flex-wrap gap-2" role="group" aria-label="Batch actions">
+            <button type="submit" name="action" value="propose-mappings" class="btn btn-outline-dark mb-0">Propose mappings</button>
+            <button type="submit" name="action" value="propose-dedupes" class="btn btn-outline-dark mb-0">Propose dedupes</button>
+            <button type="submit" name="action" value="approve-high-confidence" class="btn btn-outline-dark mb-0">Auto-approve ≥0.95</button>
+            <button type="submit" name="action" value="approve-selected" class="btn bg-gradient-primary btn-sm mb-0">Approve selected</button>
+            <button type="submit" name="action" value="reject-selected" class="btn btn-outline-secondary mb-0">Reject selected</button>
+            <button type="submit" name="action" value="start-apply" class="btn btn-outline-secondary mb-0">Start apply run</button>
+          </div>
+
+          <div class="table-responsive p-0 mt-3">
+            <table class="table align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Pick</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">#</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">State</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Conf</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Raw row</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Mapping</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in rows %}
+                <tr>
+                  <td class="text-center">
+                    <input type="checkbox" name="rows" value="{{ r.pk }}" aria-label="Select row {{ r.row_number }}">
+                  </td>
+                  <td class="text-center text-sm">{{ r.row_number }}</td>
+                  <td class="text-center text-sm">{{ r.get_mapping_state_display }}</td>
+                  <td class="text-center text-sm">{{ r.mapping_confidence|default:"—" }}</td>
+                  <td class="text-xs">{{ r.raw }}</td>
+                  <td class="text-xs">
+                    {% if r.proposed_mapping %}{{ r.proposed_mapping }}{% elif r.mapped_values %}{{ r.mapped_values }}{% else %}—{% endif %}
+                    {% if r.error %}<div class="text-danger">{{ r.error|truncatechars:160 }}</div>{% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-sm text-secondary py-4">No rows in this state.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </form>
+
+        <h6 class="mt-4">Apply runs</h6>
+        {% for run in runs %}
+        <form method="post" class="row g-2 align-items-center mb-2">
+          {% csrf_token %}
+          <input type="hidden" name="run" value="{{ run.pk }}">
+          <div class="col-auto text-sm">{{ run.kind }} · {{ run.get_status_display }} · by {{ run.actor }}</div>
+          <div class="col-auto">
+            <button type="submit" name="action" value="apply-chunk" class="btn btn-sm btn-outline-dark mb-0">Apply next chunk (200)</button>
+            <button type="submit" name="action" value="cancel-run" class="btn btn-sm btn-outline-secondary mb-0">Cancel</button>
+          </div>
+          <div class="col-auto">
+            <input type="text" name="undo_token" placeholder="undo token" aria-label="Undo token" class="form-control form-control-sm">
+          </div>
+          <div class="col-auto">
+            <button type="submit" name="action" value="undo-run" class="btn btn-sm btn-outline-secondary mb-0">Undo run</button>
+          </div>
+        </form>
+        {% empty %}
+        <p class="text-sm text-secondary">No apply runs yet — approve rows, then start one.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% include "erp/_list_a11y_script.html" %}
+{% endblock %}

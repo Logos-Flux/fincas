@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "errors": [],
+  "warnings": [
+    {
+      "code": "unresolved_ref",
+      "file": "associations.jsonl",
+      "line": 4,
+      "field": "data.to_ref"
+    }
+  ]
+}

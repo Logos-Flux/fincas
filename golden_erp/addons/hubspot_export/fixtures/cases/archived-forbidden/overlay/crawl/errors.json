@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "payload": {
+    "results": [
+      {
+        "method": "GET",
+        "path": "/crm/v3/objects/contacts",
+        "query": {
+          "archived": "true"
+        },
+        "status": 403
+      }
+    ]
+  }
+}

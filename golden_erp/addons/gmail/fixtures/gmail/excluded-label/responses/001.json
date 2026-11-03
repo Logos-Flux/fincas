@@ -1,0 +1,118 @@
+{
+  "payload": {
+    "history": [
+      {
+        "id": "1001",
+        "messages": [
+          {
+            "id": "19b0000000000014",
+            "threadId": "19b0000000000014"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b0000000000014",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b0000000000014"
+            }
+          }
+        ]
+      },
+      {
+        "id": "1002",
+        "messages": [
+          {
+            "id": "19b0000000000015",
+            "threadId": "19b0000000000015"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b0000000000015",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b0000000000015"
+            }
+          }
+        ]
+      },
+      {
+        "id": "1003",
+        "messages": [
+          {
+            "id": "19b0000000000016",
+            "threadId": "19b0000000000016"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b0000000000016",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b0000000000016"
+            }
+          }
+        ]
+      },
+      {
+        "id": "1004",
+        "messages": [
+          {
+            "id": "19b0000000000017",
+            "threadId": "19b0000000000017"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b0000000000017",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b0000000000017"
+            }
+          }
+        ]
+      },
+      {
+        "id": "1005",
+        "messages": [
+          {
+            "id": "19b0000000000024",
+            "threadId": "19b0000000000024"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b0000000000024",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b0000000000024"
+            }
+          }
+        ]
+      }
+    ],
+    "historyId": "1010"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/history",
+    "query": {
+      "historyTypes": "messageAdded",
+      "maxResults": "50",
+      "startHistoryId": "1000"
+    }
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,74 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000013",
+    "internalDate": "1772460000000",
+    "labelIds": [
+      "INBOX"
+    ],
+    "payload": {
+      "body": {
+        "size": 0
+      },
+      "filename": "",
+      "headers": [
+        {
+          "name": "From",
+          "value": "ada@example.com"
+        },
+        {
+          "name": "To",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "Subject",
+          "value": "Spec sheet"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<CAF-ada-0013@mail.example.com>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        }
+      ],
+      "mimeType": "multipart/mixed",
+      "parts": [
+        {
+          "body": {
+            "size": 0
+          },
+          "filename": "",
+          "headers": [],
+          "mimeType": "multipart/alternative",
+          "partId": "0",
+          "parts": [
+            {
+              "body": {
+                "data": "PGh0bWw-PGhlYWQ-PHN0eWxlPnB7Y29sb3I6cmVkfTwvc3R5bGU-PC9oZWFkPjxib2R5PjxwPkhlbGxvJm5ic3A7UmVwLDwvcD48cD5TZWUgdGhlIDxiPnNwZWM8L2I-IGJlbG93Ljxicj5UaGFua3M8L3A-PHNjcmlwdD54KCk8L3NjcmlwdD48L2JvZHk-PC9odG1sPg",
+                "size": 151
+              },
+              "filename": "",
+              "headers": [],
+              "mimeType": "text/html",
+              "partId": "0.1"
+            }
+          ]
+        }
+      ]
+    },
+    "sizeEstimate": 4200,
+    "snippet": "",
+    "threadId": "19b0000000000013"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000013",
+    "query": {
+      "format": "full"
+    }
+  },
+  "schema_version": 1
+}

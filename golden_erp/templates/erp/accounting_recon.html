@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load erp_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <div class="row align-items-end">
+          <div class="col-md-4">
+            <h6 class="mb-0">Reconciliation</h6>
+            <p class="text-xs text-secondary mb-0">{{ company }} · GL vs source documents, all-time</p>
+          </div>
+          <div class="col-md-8">
+            <form method="get" class="row g-2 justify-content-end">
+              <div class="col-auto">
+                <select name="fiscal_period" aria-label="Fiscal period" class="form-control form-control-sm" data-auto-submit>
+                  <option value="">All periods</option>
+                  {% for p in periods %}
+                  <option value="{{ p.pk }}" {% if selected_period and selected_period.pk == p.pk %}selected{% endif %}>
+                    {{ p.name }} ({{ p.get_status_display }})
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary btn-sm mb-0">Apply</button>
+              </div>
+              <div class="col-auto">
+                <a href="?export=csv" class="btn btn-outline-secondary btn-sm mb-0">CSV</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body pt-3">
+        {% if selected_period and selected_period.status != "open" %}
+        <div class="alert alert-secondary text-sm" role="status">
+          {{ selected_period.name }} is {{ selected_period.get_status_display|lower }} —
+          balances below are all-time; the period badge marks what is frozen.
+        </div>
+        {% endif %}
+        {% if setup_error %}
+        <div class="alert alert-warning text-sm" role="status">
+          Reconciliation is not configured: {{ setup_error }}
+          Create the missing posting rule before trusting these balances.
+        </div>
+        {% endif %}
+
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <div class="card card-body text-center {% if out_of_balance %}border-danger{% endif %}">
+              <p class="text-xs text-secondary mb-1">Out-of-balance entries</p>
+              <h4 class="mb-0">{{ out_of_balance|length }}</h4>
+              {% if out_of_balance %}
+              <a class="text-xs" href="{% url 'erp-accounting-entries' %}">Review in journal</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive p-0" tabindex="0" role="region" aria-label="Reconciliation by source">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Control</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">GL balance</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Subledger</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Difference</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Basis</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr>
+                <td class="text-sm">{{ row.label }}</td>
+                <td class="text-sm text-end">{{ row.gl|money }}</td>
+                <td class="text-sm text-end">{{ row.subledger|money }}</td>
+                <td class="text-sm text-end"><strong>{{ row.diff|money }}</strong></td>
+                <td class="text-xs text-secondary">{{ row.note }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-sm text-secondary py-4">
+                Nothing to reconcile yet.
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% include "erp/_list_a11y_script.html" %}
+{% endblock %}

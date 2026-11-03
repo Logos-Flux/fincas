@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/calls",
+    "query": {
+      "limit": "100",
+      "archived": "true"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": []
+  }
+}

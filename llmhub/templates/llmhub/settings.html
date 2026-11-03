@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}LLM Settings{% endblock %}
+
+{% block content %}
+<div id="llm-settings" data-test-url="{% url 'erp-llm-test' 'PURPOSE' %}"
+     data-models-refresh-url="{% url 'erp-llm-models-refresh' %}"
+     data-timeout-ms="{% widthratio test_timeout_s 1 1000 %}">
+
+  {# The page's job, stated first: this page observes and assigns — it does not swap models. #}
+  <p class="text-secondary mb-3">
+    Observe and assign LLM routing and rotate the ERP's caller token — swapping which model a lane
+    serves happens in the gateway's admin UI, not here.
+  </p>
+
+  {% if snap.key_undecryptable %}
+  <div class="alert alert-danger" role="alert">
+    <strong>Stored key undecryptable — re-enter it.</strong>
+    The encryption key changed under the stored caller token{% if key_derived %} (it is derived from
+    <code>SECRET_KEY</code>, which was rotated){% endif %}. It is being treated as unset
+    {% if snap.api_key %}and the environment's key is in use{% else %}and no key resolves{% endif %}.
+  </div>
+  {% endif %}
+
+  {% if snap.base_url_rejected %}
+  <div class="alert alert-danger" role="alert">
+    <strong>Stored base URL ignored.</strong> <code>{{ row.gateway_base_url }}</code> is not in
+    <code>LLMHUB_ALLOWED_BASE_URLS</code> ({{ allowed_base_urls|join:", " }}), so it is treated as unset.
+    Save an allowed URL, or clear the field to use the environment's.
+  </div>
+  {% endif %}
+
+  {% if not is_gateway %}
+  <div class="alert alert-warning" role="status">
+    <strong>DIRECT mode.</strong> ERP chat and purpose calls go straight to providers with the
+    environment's keys. Direct mode restores ERP chat and research only — other services that call
+    the gateway recover through their own break-glass flags (an ops action, not this page).
+  </div>
+  {% endif %}
+
+  {% if not_configured %}
+  <div class="card mb-3 border-warning">
+    <div class="card-body">
+      <h3 class="card-title">Not configured yet</h3>
+      <p class="mb-2">Two ways to get a first completion:</p>
+      <ol class="mb-0">
+        <li><strong>Direct keys</strong> — set <code>ANTHROPIC_API_KEY</code> (chat) and/or
+          <code>OPENAI_API_KEY</code> (+ <code>OPENAI_BASE_URL</code> for any OpenAI-compatible provider)
+          in the environment, restart, and run <code>manage.py llmhub_check</code>.</li>
+        <li><strong>Bring your own gateway</strong> — choose Gateway below, enter its base URL and
+          your caller token, then assign a lane to each purpose.</li>
+      </ol>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Status header: is this thing working? ───────────────────────────── #}
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-3 align-items-center">
+        <div class="col-auto">
+          <div class="text-secondary small">Mode</div>
+          <span class="badge fs-4 {% if is_gateway %}bg-purple text-purple-fg{% else %}bg-warning text-warning-fg{% endif %}">
+            {% if is_gateway %}GATEWAY{% else %}DIRECT{% endif %}
+          </span>
+          <div class="text-secondary small mt-1">from {{ snap.mode_source }}</div>
+        </div>
+        <div class="col-auto border-start ps-3">
+          <div class="text-secondary small">Last test</div>
+          {% if latest_test %}
+            <div><span class="status-dot {% if latest_test.status == 'ok' %}status-green{% elif latest_test.status == 'skipped' %}status-secondary{% else %}status-red{% endif %} me-1"></span>
+              {{ latest_test.purpose }}: {% if latest_test.status == 'ok' %}OK{% else %}{{ latest_test.category }}{% endif %}</div>
+            <div class="text-secondary small">{{ latest_test.at|slice:":10" }} {{ latest_test.at|slice:"11:16" }} UTC</div>
+          {% else %}
+            <div class="text-secondary">Never run</div>
+          {% endif %}
+        </div>
+        <div class="col border-start ps-3">
+          <div class="text-secondary small mb-1">Lane health</div>
+          <div class="d-flex flex-wrap gap-3">
+            {% for p in purposes %}
+              <span title="{% if p.test %}{{ p.test.status }} · {{ p.test.category|default:'ok' }} · {{ p.test.at }}{% else %}not tested{% endif %}">
+                <span class="status-dot {% if not p.test %}status-secondary{% elif p.test.status == 'ok' %}status-green{% elif p.test.status == 'skipped' %}status-secondary{% else %}status-red{% endif %} me-1"></span>{{ p.spec.label }}
+              </span>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="col-auto">
+          <button type="button" class="btn btn-outline-primary" data-llm-test-all>
+            <i class="ti ti-activity me-1"></i>Test all lanes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-8">
+
+      {# ── Connection ─────────────────────────────────────────────────── #}
+      <div class="card mb-3">
+        <div class="card-header"><h3 class="card-title">Connection</h3></div>
+        <div class="card-body">
+          <form method="post" action="{% url 'erp-llm-connection' %}" id="llm-connection-form"
+                data-current-mode="{{ snap.mode }}" data-lane-count="{{ lane_map_count }}">
+            {% csrf_token %}
+            {% if connection_form.non_field_errors %}
+              <div class="alert alert-danger">{{ connection_form.non_field_errors|join:" " }}</div>
+            {% endif %}
+            <div class="mb-3">
+              <div class="form-label">Mode</div>
+              <div class="form-selectgroup form-selectgroup-boxes d-flex flex-wrap gap-2">
+                {% for radio in connection_form.mode %}
+                <label class="form-selectgroup-item flex-fill">
+                  {{ radio.tag }}
+                  <span class="form-selectgroup-label d-flex align-items-center p-3">
+                    <span class="me-3"><span class="form-selectgroup-check"></span></span>
+                    <span><strong>{{ radio.data.value|upper }}</strong><br>
+                      <span class="text-secondary small">{{ radio.choice_label }}</span></span>
+                  </span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="{{ connection_form.gateway_base_url.id_for_label }}">{{ connection_form.gateway_base_url.label }}</label>
+                {{ connection_form.gateway_base_url }}
+                <div class="form-hint">{{ connection_form.gateway_base_url.help_text }}
+                  {% if allowed_base_urls %}Allowed: {{ allowed_base_urls|join:", " }}.{% endif %}</div>
+                {% for err in connection_form.gateway_base_url.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ connection_form.new_api_key.id_for_label }}">Caller token</label>
+                <div class="mb-1">
+                  {% if key_fingerprint %}
+                    <code>{{ key_fingerprint }}</code>
+                    <span class="badge {% if key_source == 'db' %}bg-green-lt{% else %}bg-yellow-lt{% endif %}">from {{ key_source }}</span>
+                    {% if key_source == 'env' %}
+                      <span class="form-help" tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                            data-bs-content="No token is stored here, so the environment's key is in use (fallback_to_env is on). Paste the caller token to store it. fallback_to_env itself is an ops toggle (Django admin / shell), not a page control."
+                            aria-label="What does from env mean?">?</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-danger">No key resolves</span>
+                  {% endif %}
+                </div>
+                {{ connection_form.new_api_key }}
+                <div class="form-hint">{{ connection_form.new_api_key.help_text }}</div>
+                {% for err in connection_form.new_api_key.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+                {% if has_db_key %}
+                <label class="form-check mt-2">
+                  {{ connection_form.clear_api_key }}
+                  <span class="form-check-label">{{ connection_form.clear_api_key.label }}</span>
+                </label>
+                {% endif %}
+              </div>
+            </div>
+            <div class="mt-3">
+              <button type="submit" class="btn btn-primary">Save connection</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {# ── Purpose → lane ─────────────────────────────────────────────── #}
+      <div class="card mb-3">
+        <div class="card-header d-block">
+          <h3 class="card-title">Purpose → {% if is_gateway %}lane{% else %}model{% endif %} assignment</h3>
+          <div class="text-secondary small mt-1">
+            {% if is_gateway %}
+              Lanes are named pipes; what flows through them is set in the gateway's admin UI — see the
+              gateway topology doc. "Last observed" is the concrete model a real call reported.
+            {% else %}
+              Direct mode: each purpose names a concrete provider model id.
+            {% endif %}
+          </div>
+        </div>
+        {% if models_list and not models_list.ok %}
+        <div class="alert alert-warning m-3 mb-0" role="status">
+          {% if models_403 %}{{ runbook_403 }}{% else %}
+          Gateway unreachable ({{ models_list.error_category }}: {{ models_list.error_message }}) — showing
+          last-known lane assignments{% if models_list.as_of %}; lane list as of {{ models_list.as_of|date:"M j, H:i" }}{% else %}; dropdowns disabled{% endif %}.
+          {% endif %}
+        </div>
+        {% endif %}
+        <form method="post" action="{% url 'erp-llm-lanes' %}">
+          {% csrf_token %}
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead><tr><th>Purpose</th><th>{% if is_gateway %}Lane{% else %}Model{% endif %}</th><th>Last observed</th><th class="w-1">Test</th></tr></thead>
+              <tbody aria-live="polite">
+                {% for p in purposes %}
+                <tr data-purpose="{{ p.name }}">
+                  <td><strong>{{ p.spec.label }}</strong>
+                    <div class="text-secondary small">{{ p.spec.description }}</div></td>
+                  <td>
+                    {% if is_gateway and vocabulary %}
+                      <select name="lane_{{ p.name }}" class="form-select form-select-sm" aria-label="Lane for {{ p.spec.label }}">
+                        <option value="" {% if not p.assigned %}selected{% endif %}>(default{% if p.spec.gateway_route %}: {{ p.spec.gateway_route }}{% endif %})</option>
+                        {% for lane in vocabulary %}<option value="{{ lane }}" {% if lane == p.assigned %}selected{% endif %}>{{ lane }}</option>{% endfor %}
+                        {% if p.assigned and p.missing_on_gateway %}<option value="{{ p.assigned }}" selected>{{ p.assigned }} (missing on gateway)</option>{% endif %}
+                      </select>
+                    {% elif is_gateway %}
+                      <code>{{ p.route.value|default:"—" }}</code>
+                      <div class="text-secondary small">lane list unavailable — dropdown disabled</div>
+                    {% else %}
+                      <input type="text" name="lane_{{ p.name }}" value="{{ p.assigned }}" class="form-control form-control-sm"
+                             placeholder="{{ p.spec.direct_route|default:'model id' }}" aria-label="Model for {{ p.spec.label }}">
+                    {% endif %}
+                    <div class="small mt-1">
+                      resolves to <code>{{ p.route.value|default:"(nothing)" }}</code> <span class="text-secondary">from {{ p.route.source }}</span>
+                      {% if p.missing_on_gateway %}<span class="text-danger ms-1">(missing on gateway)</span>{% endif %}
+                    </div>
+                  </td>
+                  <td>
+                    {% if p.observed %}<code>{{ p.observed.model }}</code><div class="text-secondary small">{{ p.observed.at|date:"M j, H:i" }}</div>
+                    {% else %}<span class="text-secondary">not observed yet</span>{% endif %}
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-llm-test="{{ p.name }}">Test</button>
+                    <div class="small mt-1" data-llm-result="{{ p.name }}">
+                      {% if p.test %}<span class="{% if p.test.status == 'ok' %}text-success{% elif p.test.status == 'skipped' %}text-secondary{% else %}text-danger{% endif %}">
+                        {% if p.test.status == 'ok' %}OK {{ p.test.elapsed_ms }}ms{% elif p.test.status == 'skipped' %}{{ p.test.message }}{% else %}{{ p.test.category }}{% endif %}</span>{% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if not is_gateway or vocabulary %}
+          <div class="card-footer text-end"><button type="submit" class="btn btn-primary btn-sm">Save assignments</button></div>
+          {% endif %}
+        </form>
+
+        {% if external_purposes %}
+        <div class="card-body border-top">
+          <div class="text-secondary small mb-2">
+            Owned by other services — changed in their code/env, shown here for the whole map (read-only).
+          </div>
+          <table class="table table-sm mb-0">
+            <thead><tr><th>Purpose</th><th>Lane</th><th>Owner</th><th>Door</th></tr></thead>
+            <tbody>
+              {% for x in external_purposes %}
+              <tr><td>{{ x.label }}</td><td><code>{{ x.route }}</code></td><td>{{ x.owner }}</td><td>{{ x.door }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      {# ── Chat models ─────────────────────────────────────────────────── #}
+      <div class="card mb-3">
+        <div class="card-header d-block">
+          <h3 class="card-title">Chat models</h3>
+          <div class="text-secondary small mt-1">
+            {% if is_gateway %}The chat drawer's picker: one row per lane.
+            {% else %}Direct mode uses the code registry; these rows apply in gateway mode.{% endif %}
+          </div>
+        </div>
+        {% if chat_rows %}
+        <div class="list-group list-group-flush">
+          {% for m in chat_rows %}
+          <div class="list-group-item">
+            <div class="d-flex align-items-center gap-2">
+              <div class="flex-fill">
+                <strong>{{ m.label }}</strong>
+                {% if m.is_default %}<span class="badge bg-purple-lt ms-1">default</span>{% endif %}
+                {% if not m.enabled %}<span class="badge bg-secondary-lt ms-1">disabled</span>{% endif %}
+                <div class="small"><code>{{ m.route }}</code>{% if m.missing_on_gateway %} <span class="text-danger">(missing on gateway)</span>{% endif %}</div>
+                {% if m.observed %}<div class="text-secondary small">last observed {{ m.observed.model }}</div>{% endif %}
+              </div>
+              <div class="btn-list flex-nowrap">
+                <form method="post" action="{% url 'erp-llm-model-action' m.pk 'up' %}">{% csrf_token %}
+                  <button class="btn btn-sm btn-ghost-secondary btn-icon" aria-label="Move {{ m.label }} up" {% if forloop.first %}disabled{% endif %}><i class="ti ti-arrow-up"></i></button></form>
+                <form method="post" action="{% url 'erp-llm-model-action' m.pk 'down' %}">{% csrf_token %}
+                  <button class="btn btn-sm btn-ghost-secondary btn-icon" aria-label="Move {{ m.label }} down" {% if forloop.last %}disabled{% endif %}><i class="ti ti-arrow-down"></i></button></form>
+                {% if not m.is_default %}
+                <form method="post" action="{% url 'erp-llm-model-action' m.pk 'default' %}">{% csrf_token %}
+                  <button class="btn btn-sm btn-ghost-secondary btn-icon" aria-label="Make {{ m.label }} the default"><i class="ti ti-star"></i></button></form>
+                {% endif %}
+                <form method="post" action="{% url 'erp-llm-model-action' m.pk 'toggle' %}">{% csrf_token %}
+                  <button class="btn btn-sm btn-ghost-secondary btn-icon" aria-label="{% if m.enabled %}Disable{% else %}Enable{% endif %} {{ m.label }}"><i class="ti {% if m.enabled %}ti-eye-off{% else %}ti-eye{% endif %}"></i></button></form>
+                {% if not m.is_default %}
+                <form method="post" action="{% url 'erp-llm-model-action' m.pk 'delete' %}"
+                      data-llm-confirm="Delete {{ m.label }}?{% if m.session_count %} {{ m.session_count }} chat session(s) still use it and will fall back to the default.{% endif %}">{% csrf_token %}
+                  <button class="btn btn-sm btn-ghost-danger btn-icon" aria-label="Delete {{ m.label }}"><i class="ti ti-trash"></i></button></form>
+                {% endif %}
+              </div>
+            </div>
+            <details class="mt-2" {% if m.pk in edit_forms %}open{% endif %}>
+              <summary class="small text-secondary">Edit</summary>
+              <form method="post" action="{% url 'erp-llm-model-edit' m.pk %}" class="mt-2">
+                {% csrf_token %}
+                {% for fname, errs in m.edit_errors.items %}<div class="invalid-feedback d-block">{{ fname }}: {{ errs|join:" " }}</div>{% endfor %}
+                <input type="hidden" name="m{{ m.pk }}-key" value="{{ m.key }}">
+                <div class="row g-2">
+                  <div class="col-6"><label class="form-label small">Label</label><input class="form-control form-control-sm" name="m{{ m.pk }}-label" value="{{ m.label }}" required></div>
+                  <div class="col-6"><label class="form-label small">{% if is_gateway %}Lane{% else %}Route{% endif %}</label><input class="form-control form-control-sm" name="m{{ m.pk }}-route" value="{{ m.route }}" list="llm-vocabulary" required></div>
+                  <div class="col-6"><label class="form-label small">Cost hint</label><input class="form-control form-control-sm" name="m{{ m.pk }}-cost_hint" value="{{ m.cost_hint }}"></div>
+                  <div class="col-3"><label class="form-label small">Max tokens</label><input type="number" min="1" class="form-control form-control-sm" name="m{{ m.pk }}-max_tokens" value="{{ m.max_tokens|default_if_none:'' }}"></div>
+                  <div class="col-3"><label class="form-label small">Sort</label><input type="number" min="0" class="form-control form-control-sm" name="m{{ m.pk }}-sort" value="{{ m.sort }}"></div>
+                  <div class="col-12"><label class="form-check"><input type="checkbox" class="form-check-input" name="m{{ m.pk }}-enabled" {% if m.enabled %}checked{% endif %}><span class="form-check-label">Enabled</span></label></div>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary mt-2">Save</button>
+              </form>
+            </details>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="card-body text-secondary">
+          No models configured — the chat drawer uses the <em>{{ purposes.0.spec.label }}</em> lane
+          (<code>{{ purposes.0.route.value|default:"unassigned" }}</code>). Add a row to offer a choice.
+        </div>
+        {% endif %}
+        <div class="card-footer">
+          <details {% if model_form.errors %}open{% endif %}>
+            <summary class="small">Add a chat model</summary>
+            <form method="post" action="{% url 'erp-llm-model-add' %}" class="mt-2">
+              {% csrf_token %}
+              {% for field in model_form %}{% if field.name != "sort" %}
+              <div class="mb-2">
+                {% if field.field.widget.input_type == "checkbox" %}
+                  <label class="form-check">{{ field }} <span class="form-check-label">{{ field.label }}</span></label>
+                {% else %}
+                  <label class="form-label small" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  {% if field.name == "route" %}<input type="text" name="{{ field.html_name }}" id="{{ field.id_for_label }}" value="{{ field.value|default_if_none:'' }}" class="form-control form-control-sm" list="llm-vocabulary" required>{% else %}{{ field }}{% endif %}
+                {% endif %}
+                {% for err in field.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+              </div>
+              {% endif %}{% endfor %}
+              <button type="submit" class="btn btn-sm btn-primary">Add</button>
+            </form>
+          </details>
+          <datalist id="llm-vocabulary">{% for lane in vocabulary %}<option value="{{ lane }}">{% endfor %}</datalist>
+        </div>
+      </div>
+
+      {# ── Audit ─────────────────────────────────────────────────────────── #}
+      <div class="card mb-3">
+        <div class="card-header"><h3 class="card-title">Audit log</h3>
+          <div class="card-actions text-secondary small">latest {{ audit_rows|length }} of {{ audit_total }}</div></div>
+        {% if audit_rows %}
+        <div class="list-group list-group-flush">
+          {% for a in audit_rows %}
+          <div class="list-group-item py-2">
+            <div class="d-flex justify-content-between small">
+              <span class="badge bg-azure-lt">{{ a.get_action_display }}</span>
+              <span class="text-secondary">{{ a.created_at|date:"M j, H:i" }}</span>
+            </div>
+            <div class="small mt-1"><code>{{ a.field }}</code>
+              {% if a.old_masked or a.new_masked %}{{ a.old_masked }} → {{ a.new_masked }}{% endif %}</div>
+            <div class="text-secondary small">{{ a.actor.get_username|default:"system / shell" }}{% if a.detail %} · {{ a.detail }}{% endif %}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="card-body text-secondary">No changes recorded yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# Mode change confirm — a deliberately heavy control. #}
+  <div class="modal fade" id="llm-mode-modal" tabindex="-1" aria-labelledby="llm-mode-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="llm-mode-modal-title">Switch LLM mode?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cancel"></button></div>
+      <div class="modal-body">
+        <p data-llm-mode-copy></p>
+        <p class="mb-0">Direct mode restores ERP chat and research only; other services that call the
+          gateway recover only through their own break-glass flags (an ops action, not this page).</p>
+        <p class="text-warning mt-2 mb-0" data-llm-orphans></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-link" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" data-llm-mode-confirm>Switch mode</button>
+      </div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="{% static 'llmhub/settings.js' %}" defer></script>
+{% endblock %}

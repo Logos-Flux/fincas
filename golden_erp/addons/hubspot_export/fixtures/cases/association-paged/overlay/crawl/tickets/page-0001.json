@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/tickets",
+    "query": {
+      "limit": "100",
+      "associations": "contacts,companies"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "501",
+        "properties": {
+          "hs_object_id": "501",
+          "subject": "Riley referral partnership",
+          "content": "<p>Refers patent work to us.</p>",
+          "hs_pipeline": "0",
+          "hs_pipeline_stage": "3",
+          "hubspot_owner_id": "102",
+          "createdate": "2023-01-10T09:00:00.000Z",
+          "closed_date": "2023-02-01T09:00:00.000Z",
+          "hs_lastmodifieddate": "2023-02-01T09:00:00.000Z"
+        },
+        "createdAt": "2023-01-10T09:00:00.000Z",
+        "updatedAt": "2023-02-01T09:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "contacts": {
+            "results": [
+              {
+                "id": "302",
+                "type": "ticket_to_contact"
+              }
+            ],
+            "paging": {
+              "next": {
+                "after": "MTAw",
+                "link": "https://api.hubapi.com/crm/v3/objects/tickets/501/associations/contacts?after=MTAw"
+              }
+            }
+          },
+          "companies": {
+            "results": [
+              {
+                "id": "204",
+                "type": "ticket_to_company"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "502",
+        "properties": {
+          "hs_object_id": "502",
+          "subject": "Sample Legal onboarding",
+          "hs_pipeline": "0",
+          "hs_pipeline_stage": "2",
+          "hs_ticket_priority": "HIGH",
+          "createdate": "2026-07-01T09:00:00.000Z",
+          "hs_lastmodifieddate": "2026-09-01T09:00:00.000Z"
+        },
+        "createdAt": "2026-07-01T09:00:00.000Z",
+        "updatedAt": "2026-09-01T09:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "contacts": {
+            "results": [
+              {
+                "id": "303",
+                "type": "ticket_to_contact"
+              }
+            ]
+          },
+          "companies": {
+            "results": [
+              {
+                "id": "202",
+                "type": "ticket_to_company"
+              },
+              {
+                "id": "202",
+                "type": "ticket_to_company_unlabeled"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

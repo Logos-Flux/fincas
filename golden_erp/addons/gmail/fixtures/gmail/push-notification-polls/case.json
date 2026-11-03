@@ -1,0 +1,55 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A Pub/Sub push carrying a Google-signed token for the account's audience is accepted and only enqueues a poll of the named mailbox's grant; the poll ingests the new mail. A replayed push is acknowledged with no second row; Google's keys are cached for their max-age.",
+  "second_run_requests": [],
+  "seed": {
+    "grants": [
+      {
+        "owner": "staff:rep",
+        "subject": "rep@example.org",
+        "sync_state": {
+          "cursor": {
+            "history_id": "1000"
+          },
+          "initial_sync_done": true
+        }
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      },
+      {
+        "email": "grace@example.net",
+        "family": "Hopper",
+        "given": "Grace",
+        "key": "grace"
+      }
+    ],
+    "staff": [
+      {
+        "email": "rep@example.org",
+        "key": "rep"
+      },
+      {
+        "email": "boss@example.org",
+        "key": "boss"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "status": 200,
+      "webhook": "inbound/push.json"
+    },
+    {
+      "drain": true
+    },
+    {
+      "drain": true
+    }
+  ]
+}

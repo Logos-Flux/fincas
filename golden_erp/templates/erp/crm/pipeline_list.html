@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load labels %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <div>
+    <h1 class="h5 mb-0">{{ page_title }}</h1>
+    <p class="text-xs text-secondary mb-0">{% label "crm.stage" %} keys never change once saved; imports map by them. Archive a {% label "crm.stage" case="lower" %} rather than delete it.</p>
+  </div>
+  {% if can_create %}<a href="{% url 'erp-crm-pipeline-create' %}" class="btn bg-gradient-primary btn-sm mb-0"><i class="fas fa-plus me-1" aria-hidden="true"></i> New {% label "crm.pipeline" case="lower" %}</a>{% endif %}
+</div>
+
+{% for pipeline in pipelines %}
+<section class="card mb-4" id="pipeline-{{ pipeline.pk }}" aria-labelledby="pipeline-title-{{ pipeline.pk }}">
+  <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h2 class="h6 mb-0" id="pipeline-title-{{ pipeline.pk }}">{{ pipeline.name }} <span class="text-xs text-secondary font-weight-normal">({{ pipeline.key }})</span>
+      {% if pipeline.is_default %}<span class="badge badge-sm bg-gradient-primary ms-1">Default</span>{% endif %}
+      {% if not pipeline.is_active %}<span class="badge badge-sm bg-gradient-secondary ms-1">Inactive</span>{% endif %}
+    </h2>
+    {% if can_manage %}
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'erp-crm-pipeline-edit' pipeline.pk %}" class="btn btn-outline-primary btn-sm mb-0" aria-label="Edit {{ pipeline.name }}">Edit</a>
+      <a href="{% url 'erp-crm-stage-create' pipeline.pk %}" class="btn btn-outline-primary btn-sm mb-0" aria-label="Add a stage to {{ pipeline.name }}"><i class="fas fa-plus me-1" aria-hidden="true"></i> {% label "crm.stage" %}</a>
+    </div>
+    {% endif %}
+  </div>
+  <div class="card-body px-0 pt-2 pb-2">
+    <p class="text-xs text-secondary px-3 mb-2">Stale after {{ pipeline.stale_after_days }} days without activity, unless a {% label "crm.stage" case="lower" %} says otherwise.</p>
+    {# Scrolls in its own box on a phone (never the page): focusable and named for axe. #}
+    <div class="table-responsive p-0" tabindex="0" role="region" aria-label="{% label "crm.stage" plural=True %} of {{ pipeline.name }}">
+      <table class="table align-items-center mb-0">
+        <thead>
+          <tr>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-3">Order</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">{% label "crm.stage" %}</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">Probability</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">Stale after</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">Proposes closing</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">State</th>
+            {% if can_manage %}<th scope="col" class="ps-2"><span class="visually-hidden">Actions</span></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for stage in pipeline.ordered_stages %}
+          <tr id="stage-{{ stage.pk }}">
+            <td class="ps-3">
+              {% if can_manage %}
+              <div class="d-flex gap-1">
+                <form method="post" action="{% url 'erp-crm-stage-reorder' stage.pk %}">{% csrf_token %}<input type="hidden" name="direction" value="up"><button type="submit" class="btn btn-outline-secondary btn-sm mb-0 px-2" aria-label="Move {{ stage.name }} up"{% if forloop.first %} disabled{% endif %}><i class="fas fa-arrow-up" aria-hidden="true"></i></button></form>
+                <form method="post" action="{% url 'erp-crm-stage-reorder' stage.pk %}">{% csrf_token %}<input type="hidden" name="direction" value="down"><button type="submit" class="btn btn-outline-secondary btn-sm mb-0 px-2" aria-label="Move {{ stage.name }} down"{% if forloop.last %} disabled{% endif %}><i class="fas fa-arrow-down" aria-hidden="true"></i></button></form>
+              </div>
+              {% else %}<span class="text-sm">{{ forloop.counter }}</span>{% endif %}
+            </td>
+            <td><span class="text-sm font-weight-bold">{{ stage.name }}</span> <span class="text-xs text-secondary">{{ stage.key }}</span></td>
+            <td><span class="text-sm">{% if stage.default_probability is not None %}{{ stage.default_probability }}%{% else %}—{% endif %}</span></td>
+            <td><span class="text-sm">{{ stage.effective_stale }} d{% if stage.stale_after_days is None %} <span class="text-xs text-secondary">(pipeline)</span>{% endif %}</span></td>
+            <td><span class="text-sm">{% if stage.outcome_hint %}{{ stage.get_outcome_hint_display }}{% else %}—{% endif %}</span></td>
+            <td>{% if stage.is_active %}<span class="badge badge-sm bg-gradient-success">Active</span>{% else %}<span class="badge badge-sm bg-gradient-secondary">Archived</span>{% endif %}</td>
+            {% if can_manage %}<td><a href="{% url 'erp-crm-stage-edit' stage.pk %}" class="btn btn-link btn-sm text-primary mb-0 p-1" aria-label="Edit {{ stage.name }}">Edit</a></td>{% endif %}
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center py-3 text-sm text-secondary">No {% label "crm.stage" plural=True case="lower" %}.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% empty %}
+<div class="card"><div class="card-body text-sm text-secondary">No {% label "crm.pipeline" plural=True case="lower" %}.</div></div>
+{% endfor %}
+{% endblock %}

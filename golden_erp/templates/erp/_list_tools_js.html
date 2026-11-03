@@ -1,0 +1,47 @@
+{% comment %}
+  Column chooser and saved-filter enhancements (phase4-fields.md 5.3, 5.7),
+  a JS fragment included inside a list template's <script>:
+  - a pointer tick in the chooser saves at once (keyboard users use Save);
+  - Escape closes an open <details> panel and returns focus to its summary;
+  - the pre-server localStorage choice ("erp-cols-<list>", hidden ids) is
+    read once: with no server preference its boxes start unticked, so the
+    next Save migrates it; after any save the key is removed.
+{% endcomment %}
+  (function() {
+    var chooser = document.getElementById("column-chooser");
+    var form = document.getElementById("column-chooser-form");
+    if (form) {
+      var key = "erp-cols-{{ list_view_id }}";
+      var legacy = null;
+      try { legacy = JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { legacy = null; }
+      if (Array.isArray(legacy) && !{{ chooser.has_preference|yesno:"true,false" }}) {
+        form.querySelectorAll("[data-col-id]").forEach(function(cb) {
+          if (legacy.indexOf(cb.getAttribute("data-col-id")) !== -1) cb.checked = false;
+        });
+      }
+      form.addEventListener("submit", function() {
+        try { localStorage.removeItem(key); } catch (e) { /* storage blocked */ }
+      });
+      form.querySelectorAll("[data-col-id]").forEach(function(cb) {
+        var byPointer = false;
+        cb.addEventListener("pointerdown", function() { byPointer = true; });
+        cb.addEventListener("keydown", function() { byPointer = false; });
+        cb.addEventListener("change", function() {
+          if (byPointer) {
+            byPointer = false;
+            form.requestSubmit ? form.requestSubmit() : form.submit();
+          }
+        });
+      });
+    }
+    document.addEventListener("keydown", function(e) {
+      if (e.key !== "Escape") return;
+      document.querySelectorAll("details.erp-chooser[open], details.erp-save-filter[open]").forEach(function(d) {
+        if (d.contains(document.activeElement)) {
+          d.open = false;
+          var summary = d.querySelector("summary");
+          if (summary) summary.focus();
+        }
+      });
+    });
+  })();

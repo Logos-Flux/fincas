@@ -1,0 +1,5 @@
+{
+  "description": "A recording written by a newer recorder (schema_version 99): require_known_version refuses it.",
+  "base": "crawl-small",
+  "refuses": "newer than this adapter reads"
+}

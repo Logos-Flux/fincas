@@ -1,0 +1,27 @@
+{% comment %}
+  Responsive list rules (docs/crm/phase4-fields.md 5.6), shared by the CRM
+  lists. Filters sit in <details class="erp-filters" open>: open as rendered
+  (so it works without JS), its summary hidden from md up; below md the
+  script closes it into a "Filters (n active)" disclosure. The bulk-select
+  column hides below md and returns behind the "Select rows" toggle (a
+  checkbox, so it works without JS too).
+{% endcomment %}
+<style>
+  @media (min-width: 768px) { .erp-filters > summary { display: none; } }
+  .erp-filters > summary { list-style: none; cursor: pointer; }
+  .erp-select-col, .erp-bulk-panel { display: none; }
+  @media (min-width: 768px) {
+    .erp-select-col { display: table-cell; }
+    .erp-bulk-panel { display: block; }
+    .erp-select-toggle-wrap { display: none; }
+  }
+  body:has(.erp-select-toggle:checked) .erp-bulk-panel { display: block; }
+  body:has(.erp-select-toggle:checked) .erp-select-col { display: table-cell; }
+</style>
+<script>
+(function() {
+  if (window.matchMedia && !window.matchMedia("(min-width: 768px)").matches) {
+    document.querySelectorAll("details.erp-filters[open]").forEach(function(d) { d.open = false; });
+  }
+})();
+</script>

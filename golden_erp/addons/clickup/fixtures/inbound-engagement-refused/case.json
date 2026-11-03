@@ -1,0 +1,56 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "ClickUp changing golden's engagement link is refused and reported: the task keeps its engagement and party; ClickUp's own fields still apply.",
+  "seed": {
+    "engagements": [
+      {
+        "key": "deal",
+        "number": "EN-00042",
+        "party": "ada"
+      },
+      {
+        "key": "other",
+        "number": "EN-00099",
+        "party": "bob"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      },
+      {
+        "email": "bob@example.net",
+        "family": "Builder",
+        "given": "Bob",
+        "key": "bob"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.com",
+        "key": "sam"
+      }
+    ],
+    "tasks": [
+      {
+        "assignee": "sam",
+        "assignee_clickup": "81000001",
+        "clickup_id": "86a0fx01",
+        "date_updated": "1772460000000",
+        "due": "2026-03-05",
+        "engagement": "deal",
+        "key": "t1",
+        "list": "901",
+        "title": "Call Ada back"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001.json"
+    }
+  ]
+}

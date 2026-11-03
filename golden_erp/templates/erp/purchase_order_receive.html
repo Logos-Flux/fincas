@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load static erp_tags %}
+
+{% block title %}Receive {{ po.po_number }}{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "purchase_order_receive", "po_id": "{{ po.id }}", "po_number": "{{ po.po_number|escapejs }}"}'>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <p class="text-xs text-secondary mb-1">Purchase order</p>
+        <h1 class="h5 font-weight-bolder mb-1">Receive {{ po.po_number }}</h1>
+        <p class="text-sm mb-1">
+          {% if po.supplier %}{{ po.supplier }} · {% endif %}{{ po.get_status_display }} · {{ po.get_receiving_status_display }}
+        </p>
+      </div>
+      <div class="d-flex flex-wrap gap-2 justify-content-end">
+        <a href="{% url 'erp-purchaseorder-edit' po.pk %}" class="btn btn-outline-secondary btn-sm mb-0"><i class="fas fa-arrow-left me-1" aria-hidden="true"></i> {{ po.po_number }}</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <section class="card mb-4" aria-labelledby="receive-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="receive-title">Goods received now</h2></div>
+      <div class="card-body text-sm">
+        {% if can_receive %}
+        <form method="post" action="{% url 'erp-purchaseorder-receive' po.pk %}" id="receive-form" novalidate data-submit-once>
+          {% csrf_token %}{% once_field %}
+          <div class="table-responsive" tabindex="0" role="region" aria-label="Lines on the purchase order">
+            <table class="table table-sm align-middle mb-3" id="receive-lines">
+              <thead>
+                <tr>
+                  <th scope="col">SKU</th>
+                  <th scope="col">Item</th>
+                  <th scope="col" class="text-end">Ordered</th>
+                  <th scope="col" class="text-end">Received</th>
+                  <th scope="col" class="text-end">Still to come</th>
+                  <th scope="col" class="text-end">Received now</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in rows %}
+                <tr>
+                  <td>{{ row.line.our_sku|default:row.line.variant.sku }}</td>
+                  <td>{{ row.line.item_name }}</td>
+                  <td class="text-end">{{ row.line.quantity_ordered|floatformat:"-3" }}</td>
+                  <td class="text-end">{{ row.line.quantity_received|floatformat:"-3" }}</td>
+                  <td class="text-end">{{ row.remaining|floatformat:"-3" }}</td>
+                  <td class="text-end" style="width:9rem">
+                    <input type="number" class="form-control form-control-sm text-end" name="{{ row.field }}" id="{{ row.field }}"
+                           value="{{ row.value|floatformat:"-3" }}" min="0" max="{{ row.remaining|floatformat:"-3" }}" step="0.001"
+                           aria-label="Received now: {{ row.line.our_sku|default:row.line.item_name }}"{% if row.remaining == 0 %} disabled{% endif %}>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.warehouse.id_for_label }}" class="form-label">{{ form.warehouse.label }}</label>
+              {{ form.warehouse|add_class:"form-control form-control-sm" }}
+              <div class="form-text">Blank: the purchase order's warehouse, else the company's default.</div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label for="{{ form.carrier.id_for_label }}" class="form-label">{{ form.carrier.label }}</label>
+              {{ form.carrier|add_class:"form-control form-control-sm" }}
+            </div>
+            <div class="col-md-3 mb-3">
+              <label for="{{ form.tracking_number.id_for_label }}" class="form-label">{{ form.tracking_number.label }}</label>
+              {{ form.tracking_number|add_class:"form-control form-control-sm" }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+            {{ form.notes|add_class:"form-control form-control-sm" }}
+          </div>
+          <div class="form-check mb-3">
+            {{ form.close_when_complete|add_class:"form-check-input" }}
+            <label class="form-check-label" for="{{ form.close_when_complete.id_for_label }}">{{ form.close_when_complete.label }}</label>
+          </div>
+          <button type="submit" class="btn bg-gradient-success btn-sm mb-0"><i class="fas fa-dolly me-1" aria-hidden="true"></i> Receive</button>
+        </form>
+        {% elif rows %}
+        <p class="text-secondary mb-0">{{ po.po_number }} is {{ po.get_status_display|lower }}; nothing can be received against it.</p>
+        {% else %}
+        <p class="text-secondary mb-0">{{ po.po_number }} has no lines to receive.</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="col-lg-4">
+    <section class="card mb-4" aria-labelledby="receipts-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="receipts-title">Receipts</h2></div>
+      <div class="card-body text-sm">
+        {% if receipts %}
+        <ul class="list-unstyled mb-0" id="po-receipts">
+          {% for receipt in receipts %}
+          <li class="mb-2">
+            <strong>{{ receipt.receipt_number }}</strong> · {{ receipt.received_at|date:"Y-m-d" }} · {{ receipt.get_status_display }}
+            {% if receipt.warehouse %}· {{ receipt.warehouse.name }}{% endif %}
+            <ul class="mb-0">
+              {% for line in receipt.lines.all %}
+              <li>{{ line.po_line_item.our_sku|default:line.po_line_item.item_name }}: {{ line.quantity_received|floatformat:"-3" }}</li>
+              {% endfor %}
+            </ul>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-secondary mb-0">Nothing received yet.</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

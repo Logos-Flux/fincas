@@ -1,0 +1,9 @@
+Example Supply LLC
+Chart of Accounts
+"January 1 - December 31, 2025"
+""
+Account Number,Account,Full Name,Type,Detail Type,Description,Balance,Currency,ID,Active,Parent,Unknown Column,Extra Notes
+1000,Checking,Checking,Bank,Checking,Main checking,"12,345.67",USD,1,Active,,ignore-me,
+,,,,,,,,,,,,
+4000,Sales,Sales,Income,Sales of Product Income,Product sales,0.00,USD,2,Yes,,ignore-me-2,note2
+1500,Accounts Receivable (A/R),Accounts Receivable (A/R),Accounts Receivable (A/R),Accounts Receivable,,"5,000.00",USD,3,Yes,,,

@@ -1,0 +1,15 @@
+{% extends "erp/list.html" %}
+{% comment %}
+  /erp/imports/crm/ — the registry-driven job list (core.views.list_view).
+  Empty state (phase5-importer.md 4.7): no upload button, on purpose —
+  exports hold personal data and are staged from the server by an operator.
+{% endcomment %}
+{% block list_empty %}
+{% if list_filtered %}
+No CRM imports match these filters. <a class="text-decoration-underline" href="{% url 'erp-crm-import-job-list' %}">Clear filters</a>
+{% else %}
+<span class="d-block text-body fw-bold mb-1">No CRM imports yet.</span>
+<span class="d-block mb-1">An operator stages an export on the server — exports hold personal data and are larger than an upload, so there is no upload button.</span>
+<span class="d-block">Runbook: <code>docs/crm/phase5-importer.md</code> section 5.5 and <code>docs/crm/importing.md</code>. Commands: <code>manage.py crm_export_adapt</code>, <code>manage.py crm_import stage --company &lt;id&gt; --dir &lt;canonical&gt;</code>, then <code>crm_import run --job &lt;id&gt; --dry-run</code>.</span>
+{% endif %}
+{% endblock %}

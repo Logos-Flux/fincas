@@ -1,0 +1,79 @@
+{% extends "documents/base_document.html" %}
+{% load humanize %}
+
+{% block doc_title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+
+{% block doc_type %}SALES INVOICE{% endblock %}
+
+{% block doc_number %}{{ invoice.invoice_number }}{% endblock %}
+
+{% block doc_dates %}
+<div><strong>Date:</strong> {{ invoice.invoice_date|date:"F j, Y" }}</div>
+{% if invoice.due_date %}<div><strong>Due:</strong> {{ invoice.due_date|date:"F j, Y" }}</div>
+{% else %}<div><strong>Due:</strong> {{ invoice.get_payment_terms_display }}</div>{% endif %}
+{% endblock %}
+
+{% block order_details %}
+<span class="detail-label">Sales Order #:</span> {{ invoice.order.order_number }}<br>
+{% if invoice.order.customer_po_number %}<span class="detail-label">Customer PO #:</span> {{ invoice.order.customer_po_number }}<br>{% endif %}
+<span class="detail-label">Terms:</span> {{ invoice.get_payment_terms_display }}<br>
+{% if shipping_method %}<span class="detail-label">Ship Via:</span> {{ shipping_method }}{% endif %}
+{% endblock %}
+
+{% block totals_extra %}
+<div class="totals-row">
+  <span class="label">Amount Paid</span>
+  <span class="amount-paid">${{ totals.amount_paid|floatformat:2|intcomma }}</span>
+</div>
+<div class="totals-row balance-due">
+  <span class="label">Balance Due</span>
+  <span style="color: {% if invoice.balance_due == 0 %}{{ brand.colors.green }}{% else %}{{ brand.colors.forest }}{% endif %};">
+    ${{ totals.balance_due|floatformat:2|intcomma }}
+  </span>
+</div>
+{% endblock %}
+
+{% block status_banner %}
+{% if invoice.status == 'paid' %}
+<div class="doc-status-banner status-paid">
+  PAID IN FULL
+  {% if invoice.paid_date %}<span class="status-detail">— {{ invoice.paid_date|date:"F j, Y" }}{% if payment_method %} via {{ payment_method }}{% endif %}</span>{% endif %}
+</div>
+{% elif invoice.status == 'partial' %}
+<div class="doc-status-banner status-partial">
+  PARTIALLY PAID — ${{ totals.balance_due|floatformat:2|intcomma }} REMAINING
+</div>
+{% elif invoice.status == 'overdue' %}
+<div class="doc-status-banner status-overdue">
+  PAST DUE — ${{ totals.balance_due|floatformat:2|intcomma }} OUTSTANDING
+</div>
+{% elif invoice.status == 'sent' or invoice.status == 'viewed' %}
+<div class="doc-status-banner status-open">
+  OPEN — ${{ totals.balance_due|floatformat:2|intcomma }} DUE
+</div>
+{% elif invoice.status == 'void' %}
+<div class="doc-status-banner status-void">VOID</div>
+{% elif invoice.status == 'cancelled' %}
+<div class="doc-status-banner status-cancelled">CANCELED</div>
+{% elif invoice.status == 'draft' %}
+<div class="doc-status-banner status-draft">DRAFT</div>
+{% endif %}
+{% endblock %}
+
+{% block payment_section %}
+{% if pay_url and invoice.balance_due > 0 %}
+<div style="margin: 0 36px 16px; padding: 16px; background: #eafbee; border: 2px solid {{ brand.colors.green }}; border-radius: 6px;">
+  <div style="font-weight: 700; font-size: 13px; color: {{ brand.colors.forest }}; margin-bottom: 6px;">Pay Online</div>
+  <div style="font-size: 12px; color: #333; line-height: 1.6;">
+    Choose ACH or credit card (3% convenience fee) at:<br>
+    <a href="{{ pay_url }}" style="color: {{ brand.colors.blue }}; font-weight: 600; word-break: break-all;">{{ pay_url }}</a>
+  </div>
+</div>
+{% endif %}
+{% if invoice.payment_instructions and invoice.balance_due > 0 %}
+<div style="margin: 0 36px 24px; padding: 16px; background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px;">
+  <div style="font-weight: 700; font-size: 13px; color: {{ brand.colors.forest }}; margin-bottom: 8px;">Payment Instructions</div>
+  <div style="font-size: 12px; color: #555; line-height: 1.6; white-space: pre-line;">{{ invoice.payment_instructions }}</div>
+</div>
+{% endif %}
+{% endblock %}

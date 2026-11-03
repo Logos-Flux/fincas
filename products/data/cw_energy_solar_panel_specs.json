@@ -1,0 +1,548 @@
+{
+  "__doc__": "OP WP #312 CW Energy TOPCon structured_specs template. Values are NULL by design: fill from the manufacturer datasheet before running. Keys are validated against forge/spec_schemas solar_panels. Remove keys you have no value for; null-valued keys are skipped by the storefront frontend.",
+  "__usage__": "python manage.py set_structured_specs --file products/data/cw_energy_solar_panel_specs.json [--match-by slug|part_number] [--dry-run]",
+  "__match_by_note__": "Each panel key below must match an existing product slug (default), or run with --match-by part_number and use MPNs. The cw-energy-... keys are PLACEHOLDERS \u2014 replace with the real slugs/MPNs.",
+  "cw-energy-cwt450-bf": {
+    "pmax_stc": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (THE headline watt number)"
+    },
+    "pmax_ptc": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (PTC rating, ~88-92% of STC)"
+    },
+    "voc_stc": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (Open circuit voltage at STC)"
+    },
+    "isc_stc": {
+      "value": null,
+      "unit": "A",
+      "notes": "TODO from datasheet (Short circuit current at STC)"
+    },
+    "vmp_stc": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (Voltage at max power (STC))"
+    },
+    "imp_stc": {
+      "value": null,
+      "unit": "A",
+      "notes": "TODO from datasheet (Current at max power (STC))"
+    },
+    "voc_noct": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (Voc at NOCT conditions)"
+    },
+    "isc_noct": {
+      "value": null,
+      "unit": "A",
+      "notes": "TODO from datasheet"
+    },
+    "pmax_noct": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (Power at NOCT)"
+    },
+    "efficiency_stc": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (Module efficiency)"
+    },
+    "cell_type": {
+      "value": null,
+      "notes": "TODO from datasheet (Mono PERC, TOPCon, HJT, IBC, poly)"
+    },
+    "cell_count": {
+      "value": null,
+      "notes": "TODO from datasheet (e.g. 144 half-cut)"
+    },
+    "bifacial": {
+      "value": null,
+      "notes": "TODO from datasheet"
+    },
+    "bifaciality_factor": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (Extra 5-30% rear-side gain)"
+    },
+    "temp_coefficient_pmax": {
+      "value": null,
+      "unit": "%/\u00b0C",
+      "notes": "TODO from datasheet (Negative value, e.g. -0.34%/\u00b0C)"
+    },
+    "temp_coefficient_voc": {
+      "value": null,
+      "unit": "%/\u00b0C",
+      "notes": "TODO from datasheet (Important for cold-weather string sizing)"
+    },
+    "temp_coefficient_isc": {
+      "value": null,
+      "unit": "%/\u00b0C",
+      "notes": "TODO from datasheet"
+    },
+    "degradation_year1": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (First year power loss)"
+    },
+    "degradation_annual": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (Annual degradation after year 1)"
+    },
+    "max_system_voltage": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (600V or 1000V or 1500V)"
+    },
+    "dimensions_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (L x W x H)"
+    },
+    "weight_kg": {
+      "value": null,
+      "unit": "kg",
+      "notes": "TODO from datasheet"
+    },
+    "connector_type": {
+      "value": null,
+      "notes": "TODO from datasheet (MC4, MC4-EVO2, proprietary)"
+    },
+    "fire_rating": {
+      "value": null,
+      "notes": "TODO from datasheet (Type 1, Type 2, etc.)"
+    },
+    "warranty_product_years": {
+      "value": null,
+      "unit": "years",
+      "notes": "TODO from datasheet"
+    },
+    "warranty_power_years": {
+      "value": null,
+      "unit": "years",
+      "notes": "TODO from datasheet (Performance guarantee duration)"
+    },
+    "power_tolerance": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (e.g. '0/+5 W' or '+3%/-0%' \u2014 positive-only is common for TOPCon)"
+    },
+    "cell_dimensions_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (e.g. '182 x 91' (half-cut) or '210 x 105')"
+    },
+    "frame_material": {
+      "value": null,
+      "notes": "TODO from datasheet (Anuminum alloy (most), frameless (double-glass/BF))"
+    },
+    "glass_thickness_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (Front glass, usually 3.2mm (mono) or dual 2.0mm ( bifacial))"
+    },
+    "junction_box_ip": {
+      "value": null,
+      "notes": "TODO from datasheet (e.g. IP67 / IP68)"
+    },
+    "cable_length_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (PV-positive + negative lead length)"
+    },
+    "wind_load_pa": {
+      "value": null,
+      "unit": "Pa",
+      "notes": "TODO from datasheet (Mechanical load, front. Often 2400 Pa / -2400 Pa.)"
+    },
+    "snow_load_pa": {
+      "value": null,
+      "unit": "Pa",
+      "notes": "TODO from datasheet (Mechanical load, rear. Often 5400 Pa.)"
+    },
+    "certifications": {
+      "value": null,
+      "notes": "TODO from datasheet (IEC 61215, IEC 61730, UL 61730, ISO 9001, etc.)"
+    },
+    "pieces_per_pallet": {
+      "value": null,
+      "unit": "pcs",
+      "notes": "TODO from datasheet (Modules per pallet)"
+    },
+    "pieces_per_container": {
+      "value": null,
+      "unit": "pcs",
+      "notes": "TODO from datasheet (Modules per 40HC (or note container size in notes))"
+    },
+    "__product__": "CWT450-BF (TOPCon, bifacial inferred from -BF suffix)",
+    "__pmax_hint__": "pmax_stc likely 450 (CWT450) / 595 (CWT595) from the model number CONFIRM from datasheet"
+  },
+  "cw-energy-cwt450-bb": {
+    "pmax_stc": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (THE headline watt number)"
+    },
+    "pmax_ptc": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (PTC rating, ~88-92% of STC)"
+    },
+    "voc_stc": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (Open circuit voltage at STC)"
+    },
+    "isc_stc": {
+      "value": null,
+      "unit": "A",
+      "notes": "TODO from datasheet (Short circuit current at STC)"
+    },
+    "vmp_stc": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (Voltage at max power (STC))"
+    },
+    "imp_stc": {
+      "value": null,
+      "unit": "A",
+      "notes": "TODO from datasheet (Current at max power (STC))"
+    },
+    "voc_noct": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (Voc at NOCT conditions)"
+    },
+    "isc_noct": {
+      "value": null,
+      "unit": "A",
+      "notes": "TODO from datasheet"
+    },
+    "pmax_noct": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (Power at NOCT)"
+    },
+    "efficiency_stc": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (Module efficiency)"
+    },
+    "cell_type": {
+      "value": null,
+      "notes": "TODO from datasheet (Mono PERC, TOPCon, HJT, IBC, poly)"
+    },
+    "cell_count": {
+      "value": null,
+      "notes": "TODO from datasheet (e.g. 144 half-cut)"
+    },
+    "bifacial": {
+      "value": null,
+      "notes": "TODO from datasheet"
+    },
+    "bifaciality_factor": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (Extra 5-30% rear-side gain)"
+    },
+    "temp_coefficient_pmax": {
+      "value": null,
+      "unit": "%/\u00b0C",
+      "notes": "TODO from datasheet (Negative value, e.g. -0.34%/\u00b0C)"
+    },
+    "temp_coefficient_voc": {
+      "value": null,
+      "unit": "%/\u00b0C",
+      "notes": "TODO from datasheet (Important for cold-weather string sizing)"
+    },
+    "temp_coefficient_isc": {
+      "value": null,
+      "unit": "%/\u00b0C",
+      "notes": "TODO from datasheet"
+    },
+    "degradation_year1": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (First year power loss)"
+    },
+    "degradation_annual": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (Annual degradation after year 1)"
+    },
+    "max_system_voltage": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (600V or 1000V or 1500V)"
+    },
+    "dimensions_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (L x W x H)"
+    },
+    "weight_kg": {
+      "value": null,
+      "unit": "kg",
+      "notes": "TODO from datasheet"
+    },
+    "connector_type": {
+      "value": null,
+      "notes": "TODO from datasheet (MC4, MC4-EVO2, proprietary)"
+    },
+    "fire_rating": {
+      "value": null,
+      "notes": "TODO from datasheet (Type 1, Type 2, etc.)"
+    },
+    "warranty_product_years": {
+      "value": null,
+      "unit": "years",
+      "notes": "TODO from datasheet"
+    },
+    "warranty_power_years": {
+      "value": null,
+      "unit": "years",
+      "notes": "TODO from datasheet (Performance guarantee duration)"
+    },
+    "power_tolerance": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (e.g. '0/+5 W' or '+3%/-0%' \u2014 positive-only is common for TOPCon)"
+    },
+    "cell_dimensions_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (e.g. '182 x 91' (half-cut) or '210 x 105')"
+    },
+    "frame_material": {
+      "value": null,
+      "notes": "TODO from datasheet (Anuminum alloy (most), frameless (double-glass/BF))"
+    },
+    "glass_thickness_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (Front glass, usually 3.2mm (mono) or dual 2.0mm ( bifacial))"
+    },
+    "junction_box_ip": {
+      "value": null,
+      "notes": "TODO from datasheet (e.g. IP67 / IP68)"
+    },
+    "cable_length_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (PV-positive + negative lead length)"
+    },
+    "wind_load_pa": {
+      "value": null,
+      "unit": "Pa",
+      "notes": "TODO from datasheet (Mechanical load, front. Often 2400 Pa / -2400 Pa.)"
+    },
+    "snow_load_pa": {
+      "value": null,
+      "unit": "Pa",
+      "notes": "TODO from datasheet (Mechanical load, rear. Often 5400 Pa.)"
+    },
+    "certifications": {
+      "value": null,
+      "notes": "TODO from datasheet (IEC 61215, IEC 61730, UL 61730, ISO 9001, etc.)"
+    },
+    "pieces_per_pallet": {
+      "value": null,
+      "unit": "pcs",
+      "notes": "TODO from datasheet (Modules per pallet)"
+    },
+    "pieces_per_container": {
+      "value": null,
+      "unit": "pcs",
+      "notes": "TODO from datasheet (Modules per 40HC (or note container size in notes))"
+    },
+    "__product__": "CWT450-BB (TOPCon; confirm -BB meaning)",
+    "__pmax_hint__": "pmax_stc likely 450 (CWT450) / 595 (CWT595) from the model number CONFIRM from datasheet"
+  },
+  "cw-energy-cwt595-g2g": {
+    "pmax_stc": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (THE headline watt number)"
+    },
+    "pmax_ptc": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (PTC rating, ~88-92% of STC)"
+    },
+    "voc_stc": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (Open circuit voltage at STC)"
+    },
+    "isc_stc": {
+      "value": null,
+      "unit": "A",
+      "notes": "TODO from datasheet (Short circuit current at STC)"
+    },
+    "vmp_stc": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (Voltage at max power (STC))"
+    },
+    "imp_stc": {
+      "value": null,
+      "unit": "A",
+      "notes": "TODO from datasheet (Current at max power (STC))"
+    },
+    "voc_noct": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (Voc at NOCT conditions)"
+    },
+    "isc_noct": {
+      "value": null,
+      "unit": "A",
+      "notes": "TODO from datasheet"
+    },
+    "pmax_noct": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (Power at NOCT)"
+    },
+    "efficiency_stc": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (Module efficiency)"
+    },
+    "cell_type": {
+      "value": null,
+      "notes": "TODO from datasheet (Mono PERC, TOPCon, HJT, IBC, poly)"
+    },
+    "cell_count": {
+      "value": null,
+      "notes": "TODO from datasheet (e.g. 144 half-cut)"
+    },
+    "bifacial": {
+      "value": null,
+      "notes": "TODO from datasheet"
+    },
+    "bifaciality_factor": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (Extra 5-30% rear-side gain)"
+    },
+    "temp_coefficient_pmax": {
+      "value": null,
+      "unit": "%/\u00b0C",
+      "notes": "TODO from datasheet (Negative value, e.g. -0.34%/\u00b0C)"
+    },
+    "temp_coefficient_voc": {
+      "value": null,
+      "unit": "%/\u00b0C",
+      "notes": "TODO from datasheet (Important for cold-weather string sizing)"
+    },
+    "temp_coefficient_isc": {
+      "value": null,
+      "unit": "%/\u00b0C",
+      "notes": "TODO from datasheet"
+    },
+    "degradation_year1": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (First year power loss)"
+    },
+    "degradation_annual": {
+      "value": null,
+      "unit": "%",
+      "notes": "TODO from datasheet (Annual degradation after year 1)"
+    },
+    "max_system_voltage": {
+      "value": null,
+      "unit": "V",
+      "notes": "TODO from datasheet (600V or 1000V or 1500V)"
+    },
+    "dimensions_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (L x W x H)"
+    },
+    "weight_kg": {
+      "value": null,
+      "unit": "kg",
+      "notes": "TODO from datasheet"
+    },
+    "connector_type": {
+      "value": null,
+      "notes": "TODO from datasheet (MC4, MC4-EVO2, proprietary)"
+    },
+    "fire_rating": {
+      "value": null,
+      "notes": "TODO from datasheet (Type 1, Type 2, etc.)"
+    },
+    "warranty_product_years": {
+      "value": null,
+      "unit": "years",
+      "notes": "TODO from datasheet"
+    },
+    "warranty_power_years": {
+      "value": null,
+      "unit": "years",
+      "notes": "TODO from datasheet (Performance guarantee duration)"
+    },
+    "power_tolerance": {
+      "value": null,
+      "unit": "W",
+      "notes": "TODO from datasheet (e.g. '0/+5 W' or '+3%/-0%' \u2014 positive-only is common for TOPCon)"
+    },
+    "cell_dimensions_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (e.g. '182 x 91' (half-cut) or '210 x 105')"
+    },
+    "frame_material": {
+      "value": null,
+      "notes": "TODO from datasheet (Anuminum alloy (most), frameless (double-glass/BF))"
+    },
+    "glass_thickness_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (Front glass, usually 3.2mm (mono) or dual 2.0mm ( bifacial))"
+    },
+    "junction_box_ip": {
+      "value": null,
+      "notes": "TODO from datasheet (e.g. IP67 / IP68)"
+    },
+    "cable_length_mm": {
+      "value": null,
+      "unit": "mm",
+      "notes": "TODO from datasheet (PV-positive + negative lead length)"
+    },
+    "wind_load_pa": {
+      "value": null,
+      "unit": "Pa",
+      "notes": "TODO from datasheet (Mechanical load, front. Often 2400 Pa / -2400 Pa.)"
+    },
+    "snow_load_pa": {
+      "value": null,
+      "unit": "Pa",
+      "notes": "TODO from datasheet (Mechanical load, rear. Often 5400 Pa.)"
+    },
+    "certifications": {
+      "value": null,
+      "notes": "TODO from datasheet (IEC 61215, IEC 61730, UL 61730, ISO 9001, etc.)"
+    },
+    "pieces_per_pallet": {
+      "value": null,
+      "unit": "pcs",
+      "notes": "TODO from datasheet (Modules per pallet)"
+    },
+    "pieces_per_container": {
+      "value": null,
+      "unit": "pcs",
+      "notes": "TODO from datasheet (Modules per 40HC (or note container size in notes))"
+    },
+    "__product__": "CWT595-G2G (TOPCon, glass/glass inferred from G2G suffix)",
+    "__pmax_hint__": "pmax_stc likely 450 (CWT450) / 595 (CWT595) from the model number CONFIRM from datasheet"
+  }
+}

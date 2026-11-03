@@ -1,0 +1,1 @@
+{% load labels %}{% if h.label_key %}{{ h.before }}{% label h.label_key plural=h.plural case=h.case %}{{ h.after }}{% else %}{{ h.text }}{% endif %}

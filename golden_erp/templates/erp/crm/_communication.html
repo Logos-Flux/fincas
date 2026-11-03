@@ -1,0 +1,23 @@
+{# One communication on the timeline. Raw payloads never render here. #}
+<div class="text-sm">
+  <i class="{{ c.icon }} text-secondary me-1" aria-hidden="true"></i>
+  {% if c.direction_icon %}<i class="{{ c.direction_icon }} text-secondary me-1" aria-hidden="true"></i>{% endif %}
+  <span class="visually-hidden">{{ c.direction_word }} {{ c.kind_label }}:</span>
+  <span class="font-weight-bold">{{ c.subject|default:c.kind_label }}</span>
+  {% if c.status != "completed" %}<span class="badge badge-sm bg-gradient-secondary ms-1">{{ c.get_status_display }}</span>{% endif %}
+  <span class="text-xs text-secondary">{{ c.at|time:"H:i" }}{% if c.by %} · {{ c.by }}{% endif %}</span>
+  {% if c.participants %}
+  <div class="text-xs text-secondary">
+    {% for p in c.participants %}{% if p.party_id %}<a href="{% url 'erp-party-detail' p.party_id %}" class="text-primary text-decoration-underline">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+  </div>
+  {% endif %}
+  {% if c.summary or c.body %}
+  <details class="mt-1">
+    <summary class="text-xs text-secondary crm-clamp">{{ c.summary|default:c.body|truncatechars:160 }}</summary>
+    <div class="text-sm mt-1" style="white-space: pre-line;">{% if c.summary %}{{ c.summary }}{% if c.body %}
+
+{% endif %}{% endif %}{{ c.body }}</div>
+  </details>
+  {% endif %}
+  {% if c.has_raw %}<a href="/api/v1/communications/communications/{{ c.id }}/raw/" class="text-xs text-primary text-decoration-underline">View source</a>{% endif %}
+</div>

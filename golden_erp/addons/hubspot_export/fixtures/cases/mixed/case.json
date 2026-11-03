@@ -1,0 +1,15 @@
+{
+  "description": "A crawl without tasks plus a CSV export of tasks: the crawl wins per object, the export fills the rest.",
+  "base": "crawl-small",
+  "remove": [
+    "crawl/tasks"
+  ],
+  "kwargs": {
+    "time_zone": "America/New_York"
+  },
+  "added": {
+    "task": [
+      "archived_not_enumerated"
+    ]
+  }
+}

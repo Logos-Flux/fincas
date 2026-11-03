@@ -1,0 +1,10 @@
+[
+  {
+    "form": null,
+    "headers": {},
+    "json": null,
+    "method": "GET",
+    "path": "/oauth2/v3/certs",
+    "query": {}
+  }
+]

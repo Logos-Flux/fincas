@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load labels tz %}
+
+{% block title %}My day{% endblock %}
+
+{% block content %}
+{% if not profile or not profile.company_id %}
+<div class="card mb-4"><div class="card-body text-sm">My day lists your own {% label "crm.task" plural=True case="lower" %} and {% label "crm.engagement" plural=True case="lower" %}. Your account has no staff profile in a company, so there is nothing to show.</div></div>
+{% else %}
+{% timezone viewer_tz %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <h1 class="h5 mb-0">My day <span class="text-sm text-secondary font-weight-normal">· {{ today|date:"l, F j" }} ({{ viewer_tz }})</span></h1>
+  <a href="{% url 'erp-crm-task-list' %}" class="btn btn-outline-secondary btn-sm mb-0">All my {% label "crm.task" plural=True case="lower" %}</a>
+</div>
+
+{% if all_clear %}
+<div class="card mb-4"><div class="card-body"><p class="mb-0">All clear: nothing is due and every one of your open {% label "crm.engagement" plural=True case="lower" %} has a next action.</p></div></div>
+{% else %}
+{% if not overdue and not due_today %}
+<div class="card mb-4"><div class="card-body"><p class="mb-0">Nothing due. {{ idle|length }} {% if idle|length == 1 %}{% label "crm.engagement" case="lower" %} needs{% else %}{% label "crm.engagement" plural=True case="lower" %} need{% endif %} a next action: <a href="#needs-next-action" class="text-primary text-decoration-underline">see below</a>.</p></div></div>
+{% endif %}
+
+{% with next=request.get_full_path %}
+<section class="card mb-4" id="overdue" aria-labelledby="overdue-title">
+  <div class="card-header pb-0"><h2 class="h6 mb-0" id="overdue-title">Overdue <span class="badge {% if overdue %}bg-gradient-danger{% else %}bg-gradient-secondary{% endif %} ms-1">{{ overdue|length }}</span></h2></div>
+  <div class="card-body">
+    <ul class="list-group list-group-flush">
+      {% for task in overdue %}
+      <li class="list-group-item px-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="text-sm">
+          <span class="font-weight-bold">{{ task.title }}</span> <span class="text-secondary">· {{ task.kind_label }}</span>
+          <div class="text-xs text-danger font-weight-bold">Due {% if task.all_day %}{{ task.due_at|date:"D M j" }}{% else %}{{ task.due_at|date:"D M j, H:i" }}{% endif %}{% if task.set_in %} <span class="text-secondary font-weight-normal">(set in {{ task.set_in }})</span>{% endif %}</div>
+          {% if task.engagement %}<div class="text-xs"><a href="{% url 'erp-crm-engagement-detail' task.engagement_id %}" class="text-primary text-decoration-underline">{{ task.engagement.number }}</a> {{ task.engagement.party.display_name|default:"" }}</div>{% endif %}
+        </div>
+        {% include "erp/crm/_task_row_actions.html" %}
+      </li>
+      {% empty %}
+      <li class="list-group-item px-0 text-sm text-secondary">Nothing overdue.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="card mb-4" id="today" aria-labelledby="today-title">
+  <div class="card-header pb-0"><h2 class="h6 mb-0" id="today-title">Today <span class="badge bg-gradient-info ms-1">{{ due_today|length }}</span></h2></div>
+  <div class="card-body">
+    <ul class="list-group list-group-flush">
+      {% for task in due_today %}
+      <li class="list-group-item px-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="text-sm">
+          <span class="font-weight-bold">{{ task.title }}</span> <span class="text-secondary">· {{ task.kind_label }}</span>
+          <div class="text-xs text-secondary">{% if task.all_day %}By the end of the day{% else %}At {{ task.due_at|date:"H:i" }}{% endif %}{% if task.set_in %} (set in {{ task.set_in }}){% endif %}</div>
+          {% if task.engagement %}<div class="text-xs"><a href="{% url 'erp-crm-engagement-detail' task.engagement_id %}" class="text-primary text-decoration-underline">{{ task.engagement.number }}</a> {{ task.engagement.party.display_name|default:"" }}</div>{% endif %}
+        </div>
+        {% include "erp/crm/_task_row_actions.html" %}
+      </li>
+      {% empty %}
+      <li class="list-group-item px-0 text-sm text-secondary">Nothing else due today.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endwith %}
+
+<section class="card mb-4" id="needs-next-action" aria-labelledby="idle-title">
+  <div class="card-header pb-0"><h2 class="h6 mb-0" id="idle-title">Needs a next action <span class="badge {% if idle %}bg-gradient-warning{% else %}bg-gradient-secondary{% endif %} ms-1">{{ idle|length }}</span></h2></div>
+  <div class="card-body">
+    <ul class="list-group list-group-flush">
+      {% for eng in idle %}
+      <li class="list-group-item px-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="text-sm">
+          <a href="{% url 'erp-crm-engagement-detail' eng.pk %}" class="font-weight-bold text-primary text-decoration-underline">{{ eng.number }}</a> {{ eng.title }}
+          <div class="text-xs text-secondary">{{ eng.stage.name }} · created {{ eng.created_at|date:"M j" }}</div>
+        </div>
+        <a href="{% url 'erp-crm-engagement-detail' eng.pk %}#next-action" class="btn btn-outline-primary btn-sm mb-0" aria-label="Set the next action on {{ eng.number }}">Set next action</a>
+      </li>
+      {% empty %}
+      <li class="list-group-item px-0 text-sm text-secondary">Every open {% label "crm.engagement" case="lower" %} you own has a next action.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+{% endtimezone %}
+{% endif %}
+{% endblock %}

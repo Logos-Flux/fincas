@@ -1,0 +1,3 @@
+{
+  "description": "a source field put in `data` instead of `properties`, and an unknown envelope key"
+}

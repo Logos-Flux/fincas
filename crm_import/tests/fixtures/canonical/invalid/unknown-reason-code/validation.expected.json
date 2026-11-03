@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "unknown_reason_code",
+      "file": "manifest.json",
+      "line": null,
+      "field": "objects.contact.reasons[0].code"
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,17 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [],
+  "outbox": [
+    {
+      "consumer": "aircall.inbound",
+      "event": "webhook",
+      "idempotency_key": "account:contact.created:3001",
+      "object": null,
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

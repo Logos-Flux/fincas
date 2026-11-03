@@ -1,0 +1,49 @@
+{
+  "payload": {
+    "data": {
+      "answered_at": 1772461212,
+      "archived": false,
+      "asset": null,
+      "comments": [
+        {
+          "content": "Wants a quote for 40 panels.",
+          "id": 9001,
+          "posted_at": 1772461700,
+          "posted_by": {
+            "email": "sam@example.org",
+            "id": 7201,
+            "name": "Sam Seller"
+          }
+        }
+      ],
+      "direct_link": "https://api.aircall.io/v1/calls/1005",
+      "direction": "inbound",
+      "duration": 400,
+      "ended_at": 1772461600,
+      "id": 1005,
+      "missed_call_reason": null,
+      "number": {
+        "digits": "+1 202-555-0100",
+        "id": 5101,
+        "name": "Sales line"
+      },
+      "raw_digits": "+1 202-555-0143",
+      "recording": null,
+      "started_at": 1772461200,
+      "status": "done",
+      "tags": [],
+      "user": {
+        "email": "sam@example.org",
+        "id": 7201,
+        "name": "Sam Seller"
+      },
+      "voicemail": null
+    },
+    "event": "call.commented",
+    "resource": "call",
+    "timestamp": 1772461710,
+    "token": "fixture-webhook-secret-1"
+  },
+  "provider": "aircall",
+  "schema_version": 1
+}

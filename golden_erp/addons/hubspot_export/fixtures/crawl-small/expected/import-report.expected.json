@@ -1,0 +1,717 @@
+{
+  "adapter_version": "0.1.0",
+  "consent": {
+    "contacts": 7,
+    "contacts_no_consent_for_marketing": 7,
+    "grants": 0,
+    "grants_not_recorded": 2,
+    "suppressions": 2,
+    "suppressions_by_reason": {
+      "hard_bounce": 1,
+      "opt_out": 1
+    },
+    "withdrawals": 2
+  },
+  "consequence": {
+    "contacts": 7,
+    "contacts_no_consent_for_marketing": 7,
+    "text": "A contact imported without an explicit subscription grant cannot be sent marketing email from golden (can_contact says no_consent), even if the source CRM counted them as a marketing contact. That is the correct default. If the business relies on a lawful basis other than recorded consent, record it as a deliberate, documented bulk action after the import; the importer never grants consent by default."
+  },
+  "coverage": "complete",
+  "deals": {
+    "amount_unknown": 3,
+    "closed_without_history": 1,
+    "known_amounts_at_least": {
+      "EUR": "250",
+      "USD": "17300.50"
+    },
+    "rows": 7,
+    "source_status": {
+      "lost": 2,
+      "open": 3,
+      "unknown": 1,
+      "won": 1
+    },
+    "without_party": 2
+  },
+  "dry_run": false,
+  "generated_at": "<time>",
+  "job": "<job>",
+  "provider": "hubspot",
+  "run": {
+    "steps": [
+      {
+        "applied": 0,
+        "blockers": {},
+        "failed": 0,
+        "object_type": "owner",
+        "skipped": 0,
+        "state": "complete",
+        "step": 1
+      },
+      {
+        "applied": 0,
+        "blockers": {},
+        "failed": 0,
+        "object_type": "pipeline",
+        "skipped": 0,
+        "state": "complete",
+        "step": 2
+      },
+      {
+        "applied": 0,
+        "blockers": {},
+        "failed": 0,
+        "object_type": "company",
+        "skipped": 0,
+        "state": "complete",
+        "step": 3
+      },
+      {
+        "applied": 0,
+        "blockers": {},
+        "failed": 0,
+        "object_type": "contact",
+        "skipped": 0,
+        "state": "complete",
+        "step": 4
+      },
+      {
+        "applied": 0,
+        "blockers": {},
+        "failed": 0,
+        "object_type": "deal",
+        "skipped": 0,
+        "state": "complete",
+        "step": 5
+      },
+      {
+        "applied": 0,
+        "blockers": {},
+        "failed": 0,
+        "object_type": "association",
+        "skipped": 0,
+        "state": "complete",
+        "step": 6
+      },
+      {
+        "applied": 0,
+        "blockers": {},
+        "failed": 0,
+        "object_type": "relationship",
+        "skipped": 0,
+        "state": "complete",
+        "step": 7
+      },
+      {
+        "applied": 0,
+        "blockers": {},
+        "failed": 0,
+        "object_type": "task",
+        "skipped": 0,
+        "state": "complete",
+        "step": 8
+      },
+      {
+        "applied": 0,
+        "blockers": {},
+        "failed": 0,
+        "object_type": "communication",
+        "skipped": 0,
+        "state": "complete",
+        "step": 9
+      },
+      {
+        "applied": 0,
+        "blockers": {},
+        "failed": 0,
+        "object_type": "consent",
+        "skipped": 0,
+        "state": "complete",
+        "step": 10
+      }
+    ]
+  },
+  "schema_version": 1,
+  "source": "hubspot:1234567",
+  "status": "applied",
+  "totals": {
+    "applied": 62,
+    "approved_pending": 0,
+    "dependency_pending": 0,
+    "exact": true,
+    "failed": 0,
+    "need_review": 0,
+    "rows": 65,
+    "skipped": 3,
+    "unchanged": 0
+  },
+  "types": {
+    "association": {
+      "applied": {
+        "created": 19,
+        "linked": 0,
+        "other": 0,
+        "total": 19,
+        "updated": 0
+      },
+      "approved_pending": 0,
+      "blocked_by": [],
+      "coverage": {
+        "coverage": "complete",
+        "declared_total": null,
+        "exact": true,
+        "reasons": [],
+        "rows_in_export": 19
+      },
+      "dependency_pending": 0,
+      "failed": {
+        "by_code": {},
+        "total": 0
+      },
+      "fields": {
+        "conflict": {},
+        "update": {}
+      },
+      "flags": {},
+      "need_review": {
+        "by_decision": {},
+        "total": 0
+      },
+      "properties": {
+        "dropped": [],
+        "unmapped_kept": [
+          "labels",
+          "type_ids"
+        ]
+      },
+      "rows": 19,
+      "skipped": {},
+      "state": "applied",
+      "step": 6,
+      "unchanged": 0,
+      "undo": {
+        "applied_rows": 19,
+        "available": true,
+        "undo_first": []
+      }
+    },
+    "communication": {
+      "applied": {
+        "created": 8,
+        "linked": 0,
+        "other": 0,
+        "total": 8,
+        "updated": 0
+      },
+      "approved_pending": 0,
+      "blocked_by": [],
+      "coverage": {
+        "coverage": "complete",
+        "declared_total": null,
+        "exact": true,
+        "reasons": [],
+        "rows_in_export": 8
+      },
+      "dependency_pending": 0,
+      "failed": {
+        "by_code": {},
+        "total": 0
+      },
+      "fields": {
+        "conflict": {},
+        "update": {}
+      },
+      "flags": {},
+      "need_review": {
+        "by_decision": {},
+        "total": 0
+      },
+      "properties": {
+        "dropped": [],
+        "unmapped_kept": [
+          "hs_attendee_owner_ids",
+          "hs_call_body",
+          "hs_call_direction",
+          "hs_call_from_number",
+          "hs_call_recording_url",
+          "hs_call_status",
+          "hs_call_to_number",
+          "hs_email_direction",
+          "hs_email_headers",
+          "hs_email_html",
+          "hs_email_status",
+          "hs_email_text",
+          "hs_meeting_body",
+          "hs_meeting_outcome",
+          "hs_note_body"
+        ]
+      },
+      "rows": 8,
+      "skipped": {},
+      "state": "applied",
+      "step": 9,
+      "unchanged": 0,
+      "undo": {
+        "applied_rows": 8,
+        "available": true,
+        "undo_first": []
+      }
+    },
+    "company": {
+      "applied": {
+        "created": 4,
+        "linked": 0,
+        "other": 0,
+        "total": 4,
+        "updated": 0
+      },
+      "approved_pending": 0,
+      "blocked_by": [],
+      "coverage": {
+        "coverage": "complete",
+        "declared_total": 4,
+        "exact": true,
+        "reasons": [],
+        "rows_in_export": 5
+      },
+      "dependency_pending": 0,
+      "failed": {
+        "by_code": {},
+        "total": 0
+      },
+      "fields": {
+        "conflict": {},
+        "update": {}
+      },
+      "flags": {},
+      "need_review": {
+        "by_decision": {},
+        "total": 0
+      },
+      "properties": {
+        "dropped": [],
+        "unmapped_kept": [
+          "industry",
+          "numberofemployees"
+        ]
+      },
+      "rows": 5,
+      "skipped": {
+        "archived_in_source": 1
+      },
+      "state": "applied",
+      "step": 3,
+      "unchanged": 0,
+      "undo": {
+        "applied_rows": 4,
+        "available": false,
+        "undo_first": [
+          "association",
+          "communication",
+          "consent",
+          "contact",
+          "deal",
+          "relationship",
+          "task"
+        ]
+      }
+    },
+    "consent": {
+      "applied": {
+        "created": 5,
+        "linked": 0,
+        "other": 0,
+        "total": 5,
+        "updated": 0
+      },
+      "approved_pending": 0,
+      "blocked_by": [],
+      "coverage": {
+        "coverage": "complete",
+        "declared_total": null,
+        "exact": true,
+        "reasons": [],
+        "rows_in_export": 5
+      },
+      "dependency_pending": 0,
+      "failed": {
+        "by_code": {},
+        "total": 0
+      },
+      "fields": {
+        "conflict": {},
+        "update": {}
+      },
+      "flags": {},
+      "need_review": {
+        "by_decision": {},
+        "total": 0
+      },
+      "properties": {
+        "dropped": [],
+        "unmapped_kept": [
+          "description",
+          "id",
+          "legalBasis",
+          "legalBasisExplanation",
+          "name",
+          "preferenceGroupName",
+          "sourceOfStatus",
+          "status"
+        ]
+      },
+      "rows": 5,
+      "skipped": {},
+      "state": "applied",
+      "step": 10,
+      "unchanged": 0,
+      "undo": {
+        "applied_rows": 5,
+        "available": true,
+        "undo_first": []
+      }
+    },
+    "contact": {
+      "applied": {
+        "created": 7,
+        "linked": 0,
+        "other": 0,
+        "total": 7,
+        "updated": 0
+      },
+      "approved_pending": 0,
+      "blocked_by": [],
+      "coverage": {
+        "coverage": "complete",
+        "declared_total": null,
+        "exact": true,
+        "reasons": [],
+        "rows_in_export": 8
+      },
+      "dependency_pending": 0,
+      "failed": {
+        "by_code": {},
+        "total": 0
+      },
+      "fields": {
+        "conflict": {},
+        "update": {}
+      },
+      "flags": {},
+      "need_review": {
+        "by_decision": {},
+        "total": 0
+      },
+      "properties": {
+        "dropped": [
+          "internal_scratch"
+        ],
+        "unmapped_kept": [
+          "associatedcompanyid",
+          "hs_email_hard_bounce_reason_enum",
+          "hs_email_optout",
+          "hs_marketable_status",
+          "lifecyclestage"
+        ]
+      },
+      "rows": 8,
+      "skipped": {
+        "archived_in_source": 1
+      },
+      "state": "applied",
+      "step": 4,
+      "unchanged": 0,
+      "undo": {
+        "applied_rows": 7,
+        "available": false,
+        "undo_first": [
+          "association",
+          "communication",
+          "consent",
+          "deal",
+          "relationship",
+          "task"
+        ]
+      }
+    },
+    "deal": {
+      "applied": {
+        "created": 6,
+        "linked": 0,
+        "other": 0,
+        "total": 6,
+        "updated": 0
+      },
+      "approved_pending": 0,
+      "blocked_by": [],
+      "coverage": {
+        "coverage": "complete",
+        "declared_total": null,
+        "exact": true,
+        "reasons": [],
+        "rows_in_export": 7
+      },
+      "dependency_pending": 0,
+      "failed": {
+        "by_code": {},
+        "total": 0
+      },
+      "fields": {
+        "conflict": {},
+        "update": {}
+      },
+      "flags": {
+        "outcome_conflict": 1,
+        "party_ambiguous": 1
+      },
+      "need_review": {
+        "by_decision": {},
+        "total": 0
+      },
+      "properties": {
+        "dropped": [],
+        "unmapped_kept": [
+          "closedate",
+          "hs_is_closed",
+          "hs_is_closed_won",
+          "hs_next_step",
+          "notes_next_activity_date"
+        ]
+      },
+      "rows": 7,
+      "skipped": {
+        "archived_in_source": 1
+      },
+      "state": "applied",
+      "step": 5,
+      "unchanged": 0,
+      "undo": {
+        "applied_rows": 6,
+        "available": false,
+        "undo_first": [
+          "association",
+          "communication",
+          "task"
+        ]
+      }
+    },
+    "owner": {
+      "applied": {
+        "created": 4,
+        "linked": 0,
+        "other": 0,
+        "total": 4,
+        "updated": 0
+      },
+      "approved_pending": 0,
+      "blocked_by": [],
+      "coverage": {
+        "coverage": "complete",
+        "declared_total": null,
+        "exact": true,
+        "reasons": [],
+        "rows_in_export": 4
+      },
+      "dependency_pending": 0,
+      "failed": {
+        "by_code": {},
+        "total": 0
+      },
+      "fields": {
+        "conflict": {},
+        "update": {}
+      },
+      "flags": {
+        "archived_owner": 1
+      },
+      "need_review": {
+        "by_decision": {},
+        "total": 0
+      },
+      "properties": {
+        "dropped": [],
+        "unmapped_kept": [
+          "userId"
+        ]
+      },
+      "rows": 4,
+      "skipped": {},
+      "state": "applied",
+      "step": 1,
+      "unchanged": 0,
+      "undo": {
+        "applied_rows": 4,
+        "available": false,
+        "undo_first": [
+          "association",
+          "communication",
+          "company",
+          "consent",
+          "contact",
+          "deal",
+          "relationship",
+          "task"
+        ]
+      }
+    },
+    "pipeline": {
+      "applied": {
+        "created": 3,
+        "linked": 0,
+        "other": 0,
+        "total": 3,
+        "updated": 0
+      },
+      "approved_pending": 0,
+      "blocked_by": [],
+      "coverage": {
+        "coverage": "complete",
+        "declared_total": null,
+        "exact": true,
+        "reasons": [],
+        "rows_in_export": 3
+      },
+      "dependency_pending": 0,
+      "failed": {
+        "by_code": {},
+        "total": 0
+      },
+      "fields": {
+        "conflict": {},
+        "update": {}
+      },
+      "flags": {
+        "stage_outcome_closed": 2
+      },
+      "need_review": {
+        "by_decision": {},
+        "total": 0
+      },
+      "properties": {
+        "dropped": [],
+        "unmapped_kept": [
+          "stage_metadata"
+        ]
+      },
+      "rows": 3,
+      "skipped": {},
+      "state": "applied",
+      "step": 2,
+      "unchanged": 0,
+      "undo": {
+        "applied_rows": 3,
+        "available": false,
+        "undo_first": [
+          "association",
+          "communication",
+          "deal",
+          "task"
+        ]
+      }
+    },
+    "relationship": {
+      "applied": {
+        "created": 2,
+        "linked": 0,
+        "other": 0,
+        "total": 2,
+        "updated": 0
+      },
+      "approved_pending": 0,
+      "blocked_by": [],
+      "coverage": {
+        "coverage": "complete",
+        "declared_total": null,
+        "exact": true,
+        "reasons": [],
+        "rows_in_export": 2
+      },
+      "dependency_pending": 0,
+      "failed": {
+        "by_code": {},
+        "total": 0
+      },
+      "fields": {
+        "conflict": {},
+        "update": {}
+      },
+      "flags": {},
+      "need_review": {
+        "by_decision": {},
+        "total": 0
+      },
+      "properties": {
+        "dropped": [],
+        "unmapped_kept": [
+          "content",
+          "hs_ticket_priority"
+        ]
+      },
+      "rows": 2,
+      "skipped": {},
+      "state": "applied",
+      "step": 7,
+      "unchanged": 0,
+      "undo": {
+        "applied_rows": 2,
+        "available": true,
+        "undo_first": []
+      }
+    },
+    "task": {
+      "applied": {
+        "created": 4,
+        "linked": 0,
+        "other": 0,
+        "total": 4,
+        "updated": 0
+      },
+      "approved_pending": 0,
+      "blocked_by": [],
+      "coverage": {
+        "coverage": "complete",
+        "declared_total": null,
+        "exact": true,
+        "reasons": [],
+        "rows_in_export": 4
+      },
+      "dependency_pending": 0,
+      "failed": {
+        "by_code": {},
+        "total": 0
+      },
+      "fields": {
+        "conflict": {},
+        "update": {}
+      },
+      "flags": {},
+      "need_review": {
+        "by_decision": {},
+        "total": 0
+      },
+      "properties": {
+        "dropped": [],
+        "unmapped_kept": [
+          "hs_task_body",
+          "hs_task_priority",
+          "hs_task_status",
+          "hs_task_type"
+        ]
+      },
+      "rows": 4,
+      "skipped": {},
+      "state": "applied",
+      "step": 8,
+      "unchanged": 0,
+      "undo": {
+        "applied_rows": 4,
+        "available": true,
+        "undo_first": []
+      }
+    }
+  },
+  "undo": {
+    "job_available": true
+  }
+}

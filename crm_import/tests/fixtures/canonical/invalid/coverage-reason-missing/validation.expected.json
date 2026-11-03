@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "coverage_reason_missing",
+      "file": "manifest.json",
+      "line": null,
+      "field": "objects.contact.reasons"
+    }
+  ],
+  "warnings": []
+}

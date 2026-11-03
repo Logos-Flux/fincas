@@ -1,0 +1,9 @@
+{
+  "description": "The companies count probe says 5 live records; 4 were enumerated (2.13 row 7).",
+  "base": "crawl-small",
+  "added": {
+    "company": [
+      "count_mismatch"
+    ]
+  }
+}

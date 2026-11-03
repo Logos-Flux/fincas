@@ -1,0 +1,23 @@
+{
+  "payload": {
+    "body": "Hello, could you send a quote for 40 panels?",
+    "from": "ada@example.com",
+    "id": "fx_msg_0007",
+    "occurred_at": "2026-03-02T14:30:00Z",
+    "subject": "Wire the money",
+    "thread": "fx_thr_0001",
+    "to": [
+      "sales@example.org"
+    ],
+    "type": "message.received"
+  },
+  "provider": "fixture",
+  "request": {
+    "headers": {
+      "x-fixture-delivery": "fx_dlv_0007",
+      "x-fixture-signature": "9eead2e05dd433ccffc08535b1719587f1d8dbdf8bebcfdacd84925d7286178d",
+      "x-fixture-timestamp": "1772463590"
+    }
+  },
+  "schema_version": 1
+}

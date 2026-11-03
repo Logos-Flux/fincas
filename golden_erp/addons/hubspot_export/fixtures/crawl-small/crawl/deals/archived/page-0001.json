@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/deals",
+    "query": {
+      "limit": "100",
+      "archived": "true"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "407",
+        "properties": {
+          "hs_object_id": "407",
+          "createdate": "2020-06-01T09:00:00.000Z",
+          "hs_lastmodifieddate": "2021-01-02T09:00:00.000Z",
+          "dealname": "Archived deal",
+          "pipeline": "default",
+          "dealstage": "closedlost",
+          "hs_is_closed": "true",
+          "closedate": "2021-01-01T09:00:00.000Z"
+        },
+        "createdAt": "2020-06-01T09:00:00.000Z",
+        "updatedAt": "2021-01-02T09:00:00.000Z",
+        "archived": true,
+        "archivedAt": "2021-01-02T09:00:00.000Z"
+      }
+    ]
+  }
+}

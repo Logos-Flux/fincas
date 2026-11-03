@@ -1,0 +1,73 @@
+[
+  {
+    "form": null,
+    "headers": {
+      "accept": "application/vnd.api+json",
+      "authorization": "Klaviyo-API-Key <redacted:api_key>",
+      "content-type": "application/vnd.api+json",
+      "revision": "2024-10-15"
+    },
+    "json": {
+      "data": {
+        "attributes": {
+          "email": "ada@example.com",
+          "external_id": "party:ada",
+          "first_name": "Ada",
+          "last_name": "Lovelace"
+        },
+        "type": "profile"
+      }
+    },
+    "method": "POST",
+    "path": "/api/profile-import/",
+    "query": {}
+  },
+  {
+    "form": null,
+    "headers": {
+      "accept": "application/vnd.api+json",
+      "authorization": "Klaviyo-API-Key <redacted:api_key>",
+      "content-type": "application/vnd.api+json",
+      "revision": "2024-10-15"
+    },
+    "json": {
+      "data": {
+        "attributes": {
+          "custom_source": "golden",
+          "historical_import": true,
+          "profiles": {
+            "data": [
+              {
+                "attributes": {
+                  "email": "ada@example.com",
+                  "subscriptions": {
+                    "email": {
+                      "marketing": {
+                        "consent": "SUBSCRIBED",
+                        "consented_at": "2026-02-01T10:00:00Z"
+                      }
+                    }
+                  }
+                },
+                "id": "01FIXTUREPROFILEADA0000000",
+                "type": "profile"
+              }
+            ]
+          }
+        },
+        "relationships": {
+          "list": {
+            "data": {
+              "id": "XFIX01",
+              "type": "list"
+            }
+          }
+        },
+        "type": "profile-subscription-bulk-create-job"
+      }
+    },
+    "method": "POST",
+    "path": "/api/profile-subscription-bulk-create-jobs/",
+    "query": {}
+  }
+]

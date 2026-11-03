@@ -1,0 +1,57 @@
+{
+  "communications": [
+    {
+      "direction": "inbound",
+      "engagement": null,
+      "kind": "call",
+      "occurred_at": "2026-03-02T14:20:00Z",
+      "participants": [
+        {
+          "address": "+12025550100",
+          "party": null,
+          "role": "callee"
+        },
+        {
+          "address": "+12025550143",
+          "party": "party:ada",
+          "role": "caller"
+        }
+      ],
+      "party": "party:ada",
+      "provider": "aircall",
+      "status": "completed",
+      "subject": "",
+      "thread_key": ""
+    }
+  ],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {},
+      "object_type": "call",
+      "source": "aircall",
+      "source_id": "1005",
+      "source_url": "https://dashboard.aircall.io/conversations/1005",
+      "target": "communications.communication:<new>"
+    }
+  ],
+  "outbox": [
+    {
+      "consumer": "aircall.inbound",
+      "event": "webhook",
+      "idempotency_key": "account:call.commented:1005:9001",
+      "object": null,
+      "state": "done"
+    },
+    {
+      "consumer": "aircall.inbound",
+      "event": "webhook",
+      "idempotency_key": "account:call.ended:1005",
+      "object": null,
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

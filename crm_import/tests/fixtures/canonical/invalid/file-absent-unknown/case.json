@@ -1,0 +1,39 @@
+{
+  "description": "VALID: no tickets file, declared as unknown/file_absent; refs to tickets are warnings",
+  "remove": [
+    "relationships.jsonl"
+  ],
+  "manifest": [
+    {
+      "op": "set",
+      "path": [
+        "objects",
+        "relationship",
+        "coverage"
+      ],
+      "value": "unknown"
+    },
+    {
+      "op": "delete",
+      "path": [
+        "objects",
+        "relationship",
+        "declared_total"
+      ]
+    },
+    {
+      "op": "set",
+      "path": [
+        "objects",
+        "relationship",
+        "reasons"
+      ],
+      "value": [
+        {
+          "code": "file_absent",
+          "detail": "tickets were not exported"
+        }
+      ]
+    }
+  ]
+}

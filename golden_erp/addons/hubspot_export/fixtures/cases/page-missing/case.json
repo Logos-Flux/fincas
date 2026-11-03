@@ -1,0 +1,12 @@
+{
+  "description": "Deals page 1 has paging.next but page 2 was not recorded (2.13 row 6).",
+  "base": "crawl-small",
+  "remove": [
+    "crawl/deals/page-0002.json"
+  ],
+  "added": {
+    "deal": [
+      "page_missing"
+    ]
+  }
+}

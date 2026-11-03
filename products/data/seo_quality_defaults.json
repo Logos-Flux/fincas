@@ -1,0 +1,25 @@
+{
+  "_comment": [
+    "golden's built-in SEO copy-quality rules (products/seo_quality.py).",
+    "Tenant-neutral on purpose: no store name, no product vocabulary. A deployment",
+    "adds its own template patterns and cut-point words in its own files, named by",
+    "the GOLDEN_SEO_PATTERN_FILES setting (same shape as this file); they are merged",
+    "onto these defaults, never edited into them.",
+    "Every pattern must compile identically in Python `re` and JavaScript RegExp",
+    "(no lookbehind, no named groups, no inline flags; `flags` is '' or 'i'), so a",
+    "storefront or a form script can mirror the same list."
+  ],
+  "version": 1,
+  "patterns": [],
+  "truncation": {
+    "_comment": "CUT OFF (strict, is_cut_off): a title ending in one of `title_bad_endings` or on a `strict_dangling_words` word; a meta whose last word before its closing punctuation is a `strict_dangling_words` word, or that matches a `meta_patterns` entry. POSSIBLY TRUNCATED (soft, is_truncated): cut off, OR a meta with no closing punctuation, OR a last word in `soft_dangling_words`. Words compare case-insensitively.",
+    "title_bad_endings": [",", ";", ":", "|", "-", "—", "–", "&", "/"],
+    "meta_terminal_chars": ".!?)\"”'",
+    "meta_patterns": ["[,;:]\\s*\\.$"],
+    "strict_dangling_words": [
+      "and", "or", "with", "for", "the", "an", "of", "to",
+      "your", "our", "its", "their", "&", "—", "-", "–"
+    ],
+    "soft_dangling_words": []
+  }
+}

@@ -1,0 +1,37 @@
+{# People on a quote or order (orders/people.py). Rendered inside #doc-people and re-rendered by DocumentPeopleView for fetch requests. Controls submit the sibling #doc-people-form when JS is off. #}
+<div class="card-header pb-0">
+  <h6 class="mb-0">People</h6>
+</div>
+<div class="card-body pt-2">
+  {% if people_error %}<div class="alert alert-danger text-sm py-2" role="alert">{{ people_error }}</div>{% endif %}
+  {% if doc_people %}
+  <ul class="list-unstyled mb-3">
+    {% for p in doc_people %}
+    <li class="d-flex align-items-center justify-content-between gap-2 border-bottom py-2">
+      <span class="text-sm">
+        <span class="font-weight-bold">{{ p.name }}</span>{% if p.title %} · <span class="text-secondary">{{ p.title }}</span>{% endif %}
+        {% if p.email %}<br class="d-md-none"><span class="d-none d-md-inline"> · </span><a href="mailto:{{ p.email }}" class="text-primary">{{ p.email }}</a>{% endif %}
+        {% if p.phone %}<span class="text-secondary"> · {{ p.phone }}</span>{% endif %}
+      </span>
+      <button type="submit" form="doc-people-form" name="remove" value="{{ p.contact_id }}" data-people-remove="{{ p.contact_id }}"
+              class="btn btn-link text-danger btn-sm mb-0 px-2 flex-shrink-0" aria-label="Remove {{ p.name }}" title="Remove">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="text-sm text-secondary mb-3">No people on this document yet.</p>
+  {% endif %}
+  {% if people_candidates %}
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <select name="party" form="doc-people-form" id="doc-people-pick" class="form-select form-select-sm w-auto mw-100" aria-label="Person to add">
+      {% for c in people_candidates %}<option value="{{ c.party_id }}">{{ c.name }}{% if c.title %} — {{ c.title }}{% endif %}</option>{% endfor %}
+    </select>
+    <button type="submit" form="doc-people-form" name="add" value="1" data-people-add class="btn btn-outline-primary btn-sm mb-0">
+      <i class="fas fa-plus me-1" aria-hidden="true"></i>Add person
+    </button>
+  </div>
+  {% endif %}
+  <p class="text-xs text-secondary mt-2 mb-0">The customer's people, with their titles. Someone new: add them with the + next to Contact, then pick them here.</p>
+</div>

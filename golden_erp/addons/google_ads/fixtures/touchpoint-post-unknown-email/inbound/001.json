@@ -1,0 +1,21 @@
+{
+  "payload": {
+    "visits": [
+      {
+        "email": "stranger@example.com",
+        "landing_url": "https://shop.example.com/?utm_source=google&utm_medium=cpc&utm_campaign=spring&gclid=Cj0KFIXTUREgclid09",
+        "occurred_at": "2026-02-20T10:00:00Z",
+        "visitor_id": "vis-0001"
+      },
+      {
+        "channel": "email",
+        "email": "ada@example.com",
+        "event_id": "gtm-0002",
+        "occurred_at": "2026-02-21T10:00:00Z",
+        "visitor_id": "vis-0001"
+      }
+    ]
+  },
+  "provider": "google_ads",
+  "schema_version": 1
+}

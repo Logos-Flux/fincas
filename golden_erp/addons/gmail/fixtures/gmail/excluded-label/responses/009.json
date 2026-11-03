@@ -1,0 +1,47 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000024",
+    "internalDate": "1772460000000",
+    "labelIds": [
+      "DRAFT"
+    ],
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "To",
+          "value": "ada@example.com"
+        },
+        {
+          "name": "Subject",
+          "value": "Unsent draft"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<x-0024@example.org>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        }
+      ],
+      "mimeType": "multipart/mixed"
+    },
+    "sizeEstimate": 4200,
+    "snippet": "draft",
+    "threadId": "19b0000000000024"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000024",
+    "query": {
+      "format": "metadata"
+    }
+  },
+  "schema_version": 1
+}

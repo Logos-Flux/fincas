@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "inconsistent",
+      "file": "manifest.json",
+      "line": null,
+      "field": "objects.company.archived"
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% load static erp_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "list", "entity": "{{ entity_name|default:"" }}"}'>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      {# Card Header: Title + Actions #}
+      {% comment %}
+        w-100 wrapper: Tabler's .card-header is display:flex;align-items:center
+        (Soft UI's was display:block). Without a single full-width child, these
+        block .row grids become flex items and collapse to content width —
+        which crammed New/Export/gear together against the search box.
+      {% endcomment %}
+      <div class="card-header pb-0">
+       <div class="w-100">
+        {# Wraps at 360 px: a long "New ..." label ("New Purchase Order") must drop under the title, never widen the page. #}
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <h6 class="mb-0">{{ page_title }}</h6>
+          <div class="d-flex flex-wrap justify-content-end align-items-center gap-1 ms-auto">
+            {% if create_url_name %}
+            <a href="{% url create_url_name %}" class="btn bg-gradient-primary btn-sm mb-0">
+              <i class="fas fa-plus me-1" aria-hidden="true"></i> New {{ entity_label }}
+            </a>
+            {% endif %}
+            {% include "erp/_list_export.html" %}
+            {% include "erp/_column_chooser.html" %}
+          </div>
+        </div>
+        {% comment %}
+        Filters & Search: one form, so search, filters and sort travel together.
+        Selects auto-submit for pointer users only; keyboard users (arrow keys
+        fire "change" in some browsers) use Apply (phase4-fields.md 5.7).
+        {% endcomment %}
+        {% include "erp/_saved_filters.html" %}
+        <form method="get" class="row g-2 mt-3 align-items-start" id="erp-list-filters">
+          <div class="col-md-4">
+            <div class="input-group mb-2">
+              <span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span>
+              <input type="search" name="q" aria-label="Search {{ entity_label_plural|lower }}" class="form-control form-control-sm" placeholder="Search {{ entity_label_plural|lower }}..." value="{{ search_query }}">
+            </div>
+          </div>
+          {% for filter in list_filters %}
+          <div class="col-md-2 col-6">
+            <select name="{{ filter.field }}" aria-label="Filter by {{ filter.label|lower }}" class="form-control form-control-sm mb-2" data-auto-submit>
+              <option value="">All {{ filter.label }}</option>
+              {% for choice_val, choice_label in filter.choices %}
+              <option value="{{ choice_val }}" {% for ak, av in active_filters.items %}{% if ak == filter.field and av == choice_val %}selected{% endif %}{% endfor %}>{{ choice_label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endfor %}
+          {% include "erp/_list_sort_inputs.html" %}
+          <div class="col-md-auto col-12">
+            <button type="submit" class="btn btn-outline-primary btn-sm mb-2">Apply</button>
+          </div>
+        </form>
+       </div>{# /.w-100 #}
+      </div>
+
+      {# Data Table #}
+      <div class="card-body px-0 pt-0 pb-2">
+        {% include "erp/_list_live_region.html" %}
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0" id="erp-list-table">
+            {% include "erp/_list_caption.html" %}
+            <thead>
+              <tr>
+                {% if bulk_actions %}
+                <th class="ps-3" style="width:40px">
+                  <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" id="bulk-select-all" aria-label="Select all rows">
+                  </div>
+                </th>
+                {% endif %}
+                {% for col in header_columns %}
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 {% if col.align == 'end' %}text-end pe-4{% elif forloop.first %}ps-3{% else %}ps-2{% endif %} {{ col.priority_class }}"
+                    data-field="{{ col.field }}" data-col-id="{{ col.id }}"{% if col.aria_sort %} aria-sort="{{ col.aria_sort }}"{% endif %}>
+                  {% if col.sortable %}
+                  <a href="?{{ col.sort_query }}" class="text-reset erp-sort-link">{{ col.label }}{% if col.aria_sort == "ascending" %}<i class="fas fa-sort-up text-primary ms-1" aria-hidden="true"></i>{% elif col.aria_sort == "descending" %}<i class="fas fa-sort-down text-primary ms-1" aria-hidden="true"></i>{% else %}<i class="fas fa-sort text-secondary ms-1" style="opacity:0.3" aria-hidden="true"></i>{% endif %}</a>
+                  {% elif col.source == "definition" %}
+                  <span title="Not sortable">{{ col.label }}</span>
+                  {% else %}
+                  {{ col.label }}
+                  {% endif %}
+                </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for obj in object_list %}
+              <tr class="erp-clickable-row"
+                  {% for col in visible_columns %}{% if col.link and col.link_url_name and not col.link_pk %}data-href="{% url col.link_url_name obj.pk %}"{% if col.new_tab %} data-new-tab="1"{% endif %}{% endif %}{% endfor %}
+                  style="cursor:pointer">
+                {% if bulk_actions %}
+                <td class="ps-3">
+                  <div class="form-check mb-0">
+                    <input class="form-check-input bulk-check" type="checkbox" value="{{ obj.pk }}" aria-label="Select {{ obj }}">
+                  </div>
+                </td>
+                {% endif %}
+                {% for col in visible_columns %}
+                <td class="{% if col.align == 'end' %}text-end pe-4{% endif %} {{ col.priority_class }}">
+                  {% with field_val=obj|get_field:col.field %}
+                  {% if col.source != "field" %}
+                    {% list_cell obj col %}
+                  {% elif col.badge %}
+                    {% with raw_val=obj|get_raw_field:col.field %}
+                    <span class="badge badge-sm bg-gradient-{{ raw_val|status_color:status_colors }}">{{ field_val }}</span>
+                    {% endwith %}
+                  {% elif col.bool_badge %}
+                    {% with bv=obj|get_raw_field:col.field|bool_badge %}
+                    {% if bv == "yes" %}<span class="badge badge-sm bg-gradient-success">Yes</span>
+                    {% elif bv == "no" %}<span class="badge badge-sm bg-gradient-secondary">No</span>
+                    {% else %}<span class="text-sm">{{ field_val|default:"—" }}</span>{% endif %}
+                    {% endwith %}
+                  {% elif col.date_only %}
+                    <span class="text-sm">{{ field_val|date:"M j, Y"|default:"—" }}</span>
+                  {% elif col.money %}
+                    <span class="text-sm font-weight-bold">{{ field_val|money }}</span>
+                  {% elif col.link and col.link_url_name and col.link_pk %}
+                    {% with target_pk=obj|get_raw_field:col.link_pk %}
+                    {% if target_pk %}<a href="{% url col.link_url_name target_pk %}" class="text-sm text-primary">{{ field_val }}</a>{% else %}<span class="text-sm">—</span>{% endif %}
+                    {% endwith %}
+                  {% elif col.link and col.link_url_name %}
+                    <a href="{% url col.link_url_name obj.pk %}"{% if col.new_tab %} target="_blank" rel="noopener"{% endif %} class="text-sm font-weight-bold text-primary">{{ field_val }}</a>
+                  {% else %}
+                    <span class="text-sm">{{ field_val|default:"—" }}</span>
+                  {% endif %}
+                  {% endwith %}
+                </td>
+                {% endfor %}
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="{% if bulk_actions %}{{ visible_columns|length|add:1 }}{% else %}{{ visible_columns|length }}{% endif %}" class="text-center py-4 text-sm text-secondary">
+                  {% block list_empty %}No {{ entity_label_plural|lower }} found.{% endblock %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {# Pagination #}
+      {% if is_paginated %}
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <p class="text-sm text-secondary mb-0">
+          Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }}
+        </p>
+        <nav aria-label="Pages">
+          <ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?{% if list_query %}{{ list_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous page">
+                <i class="fas fa-angle-left" aria-hidden="true"></i>
+              </a>
+            </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+              {% if num == page_obj.number %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+              <li class="page-item">
+                <a class="page-link" href="?{% if list_query %}{{ list_query }}&amp;{% endif %}page={{ num }}">{{ num }}</a>
+              </li>
+              {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?{% if list_query %}{{ list_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next page">
+                <i class="fas fa-angle-right" aria-hidden="true"></i>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if bulk_actions %}
+{# Hidden CSRF token for bulk action form submissions #}
+{% csrf_token %}
+{# Floating Bulk Action Bar #}
+<div id="bulk-action-bar" class="card position-fixed shadow-lg border d-none" style="bottom:24px; left:50%; transform:translateX(-50%); z-index:1050; min-width:340px;">
+  <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
+    <span class="text-sm font-weight-bold" id="bulk-count">0 selected</span>
+    {% for action in bulk_actions %}
+    <button type="button" class="btn bg-gradient-{{ action.color|default:'primary' }} btn-sm mb-0 bulk-action-btn" data-url="{{ action.url }}" data-method="{{ action.method|default:'POST' }}">
+      <i class="{{ action.icon }} me-1"></i> {{ action.label }}
+    </button>
+    {% endfor %}
+    <button type="button" class="btn btn-outline-secondary btn-sm mb-0" id="bulk-clear">Clear</button>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function() {
+  // Sorting: the header links are plain hrefs (keyboard and no-JS safe).
+{% include "erp/_list_a11y_js.html" %}
+
+  // Clickable rows
+  document.querySelectorAll(".erp-clickable-row").forEach(function(row) {
+    row.addEventListener("click", function(e) {
+      if (e.target.tagName === "A" || e.target.closest("a")) return;
+      var href = this.getAttribute("data-href");
+      if (!href) return;
+      if (this.hasAttribute("data-new-tab")) window.open(href, "_blank", "noopener");
+      else window.location.href = href;
+    });
+  });
+
+{% include "erp/_list_tools_js.html" %}
+})();
+
+{% if bulk_actions %}
+// Bulk selection
+(function() {
+  var bar = document.getElementById("bulk-action-bar");
+  var countEl = document.getElementById("bulk-count");
+  var selectAll = document.getElementById("bulk-select-all");
+  var checks = document.querySelectorAll(".bulk-check");
+
+  function getSelected() {
+    return Array.from(document.querySelectorAll(".bulk-check:checked")).map(function(cb) { return cb.value; });
+  }
+
+  function updateBar() {
+    var ids = getSelected();
+    if (ids.length > 0) {
+      bar.classList.remove("d-none");
+      countEl.textContent = ids.length + " selected";
+    } else {
+      bar.classList.add("d-none");
+    }
+    selectAll.checked = checks.length > 0 && ids.length === checks.length;
+    selectAll.indeterminate = ids.length > 0 && ids.length < checks.length;
+  }
+
+  selectAll.addEventListener("change", function() {
+    checks.forEach(function(cb) { cb.checked = selectAll.checked; });
+    updateBar();
+  });
+
+  checks.forEach(function(cb) {
+    cb.addEventListener("change", updateBar);
+  });
+
+  // Prevent checkbox clicks from triggering row navigation
+  document.querySelectorAll(".bulk-check, #bulk-select-all").forEach(function(cb) {
+    cb.addEventListener("click", function(e) { e.stopPropagation(); });
+  });
+
+  document.getElementById("bulk-clear").addEventListener("click", function() {
+    checks.forEach(function(cb) { cb.checked = false; });
+    selectAll.checked = false;
+    updateBar();
+  });
+
+  // Action buttons — POST selected IDs
+  document.querySelectorAll(".bulk-action-btn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var ids = getSelected();
+      if (ids.length === 0) return;
+      var url = this.getAttribute("data-url");
+
+      // For PDF download, use a form POST that triggers file download
+      var form = document.createElement("form");
+      form.method = "POST";
+      form.action = url;
+      form.style.display = "none";
+
+      var csrf = document.querySelector("[name=csrfmiddlewaretoken]");
+      if (csrf) {
+        var csrfInput = document.createElement("input");
+        csrfInput.type = "hidden";
+        csrfInput.name = "csrfmiddlewaretoken";
+        csrfInput.value = csrf.value;
+        form.appendChild(csrfInput);
+      } else {
+        // Grab from cookie
+        var cookie = document.cookie.split(";").find(function(c) { return c.trim().startsWith("csrftoken="); });
+        if (cookie) {
+          var csrfInput = document.createElement("input");
+          csrfInput.type = "hidden";
+          csrfInput.name = "csrfmiddlewaretoken";
+          csrfInput.value = cookie.split("=")[1];
+          form.appendChild(csrfInput);
+        }
+      }
+
+      ids.forEach(function(id) {
+        var input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "ids";
+        input.value = id;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+    });
+  });
+})();
+{% endif %}
+</script>
+{% endblock %}

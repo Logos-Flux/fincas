@@ -1,0 +1,32 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [],
+  "outbox": [
+    {
+      "consumer": "aircall.inbound",
+      "event": "webhook",
+      "idempotency_key": "account:call.ended:1008",
+      "object": null,
+      "state": "done"
+    }
+  ],
+  "suppressions": [
+    {
+      "channel": "phone",
+      "hint": "",
+      "lifted": false,
+      "reason": "erasure",
+      "source": "erp"
+    },
+    {
+      "channel": "sms",
+      "hint": "",
+      "lifted": false,
+      "reason": "erasure",
+      "source": "erp"
+    }
+  ],
+  "tasks": [],
+  "touchpoints": []
+}

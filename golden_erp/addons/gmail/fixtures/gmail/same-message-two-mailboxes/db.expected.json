@@ -1,0 +1,47 @@
+{
+  "communications": [
+    {
+      "direction": "outbound",
+      "engagement": null,
+      "kind": "email",
+      "occurred_at": "2026-03-02T14:00:00Z",
+      "participants": [
+        {
+          "address": "boss@example.org",
+          "party": null,
+          "role": "bcc"
+        },
+        {
+          "address": "rep@example.org",
+          "party": null,
+          "role": "from"
+        },
+        {
+          "address": "ada@example.com",
+          "party": "party:ada",
+          "role": "to"
+        }
+      ],
+      "party": "party:ada",
+      "provider": "gmail",
+      "status": "completed",
+      "subject": "Your order",
+      "thread_key": "mid:43ea9bf8c265ec32ce863db4ee2517ab42d65571"
+    }
+  ],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {},
+      "object_type": "message",
+      "source": "gmail",
+      "source_id": "mid:43ea9bf8c265ec32ce863db4ee2517ab42d655713b3173b76dc00cf54db15f37",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    }
+  ],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

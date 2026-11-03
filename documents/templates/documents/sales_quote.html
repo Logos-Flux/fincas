@@ -1,0 +1,82 @@
+{% extends "documents/base_document.html" %}
+{% load humanize %}
+
+{# Quote counterpart to sales_invoice.html. Overrides the same blocks. #}
+
+{% block extra_styles %}
+    /* base_document.html ships banners for the invoice statuses. Quotes add
+       expired/accepted/lost, which have no invoice equivalent. */
+    .doc-status-banner.status-expired { background: #6b7280; color: #fff; }
+    .doc-status-banner.status-accepted { background: {{ brand.colors.green }}; color: #fff; }
+    .doc-status-banner.status-lost { background: #991b1b; color: #fff; }
+    .validity-note {
+      margin-top: 18px; padding: 10px 14px;
+      border-left: 3px solid {{ brand.colors.bronze }};
+      background: #faf7f2; font-size: 11px;
+    }
+    /* Keep a conditions/notes block whole rather than splitting a
+       paragraph across a page break. */
+    .validity-note, .terms-box { page-break-inside: avoid; }
+    .terms-box { margin-top: 18px; font-size: 11px; }
+    .terms-box h4 {
+      margin: 0 0 4px; font-size: 11px; text-transform: uppercase;
+      letter-spacing: .05em; color: {{ brand.colors.forest }};
+    }
+{% endblock %}
+
+{% block doc_type %}QUOTE{% endblock %}
+
+{% block doc_number %}
+  {{ quote.quote_number }}{% if quote.revision_number > 1 %} rev {{ quote.revision_number }}{% endif %}
+{% endblock %}
+
+{% block doc_dates %}
+  <div>Date: {{ quote.created_at|date:"M j, Y" }}</div>
+  {% if quote.quote_expiration_date %}
+    <div>Valid until: {{ quote.quote_expiration_date|date:"M j, Y" }}</div>
+  {% endif %}
+{% endblock %}
+
+{% block order_details %}
+  <div>Quote #: {{ quote.quote_number }}</div>
+  {% if quote.customer_po_number %}<div>Customer PO #: {{ quote.customer_po_number }}</div>{% endif %}
+  {% if payment_terms %}<div>Terms: {{ payment_terms }}</div>{% endif %}
+  {% if shipping_terms %}<div>Shipping: {{ shipping_terms }}</div>{% endif %}
+{% endblock %}
+
+{% block status_banner %}
+  {% if is_expired %}
+    <div class="doc-status-banner status-expired">THIS QUOTE HAS EXPIRED</div>
+  {% elif quote.status == 'accepted' %}
+    <div class="doc-status-banner status-accepted">ACCEPTED</div>
+  {% elif quote.status == 'lost' %}
+    <div class="doc-status-banner status-lost">CLOSED</div>
+  {% elif quote.status == 'draft' %}
+    <div class="doc-status-banner status-draft">DRAFT — NOT YET ISSUED</div>
+  {% elif quote.status == 'cancelled' %}
+    <div class="doc-status-banner status-cancelled">CANCELED</div>
+  {% endif %}
+{% endblock %}
+
+{% block payment_section %}
+  {% if quote.quote_expiration_date and not is_expired %}
+    <div class="validity-note">
+      Pricing held until <strong>{{ quote.quote_expiration_date|date:"F j, Y" }}</strong>.
+      Quantities and lead times are subject to availability at time of order.
+    </div>
+  {% endif %}
+
+  {% if quote.special_conditions %}
+    <div class="terms-box">
+      <h4>Special Conditions</h4>
+      {{ quote.special_conditions|linebreaks }}
+    </div>
+  {% endif %}
+
+  {% if quote.customer_notes %}
+    <div class="terms-box">
+      <h4>Notes</h4>
+      {{ quote.customer_notes|linebreaks }}
+    </div>
+  {% endif %}
+{% endblock %}

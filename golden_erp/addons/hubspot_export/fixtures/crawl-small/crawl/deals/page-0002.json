@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/deals",
+    "query": {
+      "limit": "100",
+      "associations": "companies",
+      "after": "404"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "404",
+        "properties": {
+          "hs_object_id": "404",
+          "createdate": "2023-02-01T09:00:00.000Z",
+          "hs_lastmodifieddate": "2023-06-01T09:00:00.000Z",
+          "dealname": "Referral: Riley",
+          "pipeline": "12345678",
+          "dealstage": "12345680",
+          "amount": "800"
+        },
+        "createdAt": "2023-02-01T09:00:00.000Z",
+        "updatedAt": "2023-06-01T09:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "companies": {
+            "results": [
+              {
+                "id": "204",
+                "type": "deal_to_company"
+              },
+              {
+                "id": "204",
+                "type": "deal_to_company_unlabeled"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "405",
+        "properties": {
+          "hs_object_id": "405",
+          "createdate": "2026-08-01T09:00:00.000Z",
+          "hs_lastmodifieddate": "2026-09-30T08:00:00.000Z",
+          "dealname": "No contact deal",
+          "pipeline": "default",
+          "dealstage": "appointmentscheduled",
+          "amount": "250",
+          "deal_currency_code": "EUR",
+          "hs_is_closed": "false",
+          "sales_followup_date": "2026-10-20",
+          "hubspot_owner_id": "103"
+        },
+        "createdAt": "2026-08-01T09:00:00.000Z",
+        "updatedAt": "2026-09-30T08:00:00.000Z",
+        "archived": false
+      },
+      {
+        "id": "406",
+        "properties": {
+          "hs_object_id": "406",
+          "createdate": "2026-08-01T09:00:00.000Z",
+          "hs_lastmodifieddate": "2026-09-30T08:00:00.000Z",
+          "dealname": "Multi-contact deal",
+          "pipeline": "default",
+          "dealstage": "qualifiedtobuy",
+          "hs_is_closed": "false"
+        },
+        "createdAt": "2026-08-01T09:00:00.000Z",
+        "updatedAt": "2026-09-30T08:00:00.000Z",
+        "archived": false
+      }
+    ]
+  }
+}

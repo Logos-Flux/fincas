@@ -1,0 +1,38 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {
+        "date_updated": "1772463600000"
+      },
+      "object_type": "task",
+      "source": "clickup",
+      "source_id": "86a0fx02",
+      "source_url": "https://app.clickup.com/t/86a0fx02",
+      "target": "crm.task:<new>"
+    }
+  ],
+  "outbox": [
+    {
+      "consumer": "clickup.inbound",
+      "event": "webhook",
+      "idempotency_key": "account:sha256:4c7df73c11befc204f67573dd7e10ee5c1fe9be3d32a97468fc2b482e4a4c973",
+      "object": null,
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [
+    {
+      "all_day": false,
+      "assignee": "staff:sam",
+      "due_at": "2026-03-04T10:00:00Z",
+      "party": "party:ada",
+      "source": "clickup",
+      "status": "in_progress",
+      "title": "Measure the roof"
+    }
+  ],
+  "touchpoints": []
+}

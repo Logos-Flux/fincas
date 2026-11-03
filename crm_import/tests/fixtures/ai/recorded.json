@@ -1,0 +1,26 @@
+{
+ "2d9f540e8c74aa6e9a3dad446db572596bfcf2a0479b684cad6ed47fe710b96a": {
+  "request": "{\"candidates\":[{\"features\":{\"country_same\":null,\"email_domain_same\":false,\"email_local_similarity\":\"low\",\"email_same\":false,\"family_name_same\":true,\"given_name\":\"same\",\"name_similarity\":\"exact\",\"needs_individual_review\":false,\"phone_last4_same\":true,\"phone_same\":true,\"postcode_same\":null,\"role_address\":null},\"handle\":\"c1\",\"rule\":\"R2\",\"rule_confidence\":0.85}],\"flags\":[\"phone_only\",\"shared_target\"],\"kind\":\"person\",\"rule_decision\":\"link\",\"rule_pick\":\"c1\"}",
+  "response": "{\"suggested\": \"c1\", \"confidence\": 0.9, \"reason\": \"same name and the rule's evidence\"}"
+ },
+ "35f62d5f102a96212e39096cc810b3b232f4b43be13b48ded30bb071df040d15": {
+  "request": "{\"candidates\":[{\"features\":{\"domain_same\":true,\"org_name_same\":true,\"org_name_similarity\":\"exact\"},\"handle\":\"c1\",\"rule\":\"R5\",\"rule_confidence\":0.7}],\"flags\":[],\"kind\":\"organisation\",\"rule_decision\":\"link\",\"rule_pick\":\"c1\"}",
+  "response": "{\"suggested\": \"c1\", \"confidence\": 0.9, \"reason\": \"same name and the rule's evidence\"}"
+ },
+ "4bf18a80c25fbf61fb94d6c0a3720a77e3d017d77fb5758317ca2b37a3eb2780": {
+  "request": "{\"candidates\":[{\"features\":{\"country_same\":null,\"email_domain_same\":true,\"email_local_similarity\":\"exact\",\"email_same\":true,\"family_name_same\":false,\"given_name\":\"different\",\"name_similarity\":\"low\",\"needs_individual_review\":false,\"phone_last4_same\":null,\"phone_same\":null,\"postcode_same\":null,\"role_address\":false},\"handle\":\"c1\",\"rule\":\"R1\",\"rule_confidence\":0.95},{\"features\":{\"country_same\":null,\"email_domain_same\":true,\"email_local_similarity\":\"exact\",\"email_same\":true,\"family_name_same\":true,\"given_name\":\"same\",\"name_similarity\":\"exact\",\"needs_individual_review\":false,\"phone_last4_same\":null,\"phone_same\":null,\"postcode_same\":null,\"role_address\":false},\"handle\":\"c2\",\"rule\":\"R1\",\"rule_confidence\":0.95}],\"flags\":[\"ambiguous_match\"],\"kind\":\"person\",\"rule_decision\":\"none\",\"rule_pick\":null}",
+  "response": "{\"suggested\": \"c2\", \"confidence\": 0.9, \"reason\": \"same name and the rule's evidence\"}"
+ },
+ "746461aa08b7088e51f70753398ed9e6833d10e37a23d4150f6d9a122eb328d1": {
+  "request": "{\"candidates\":[{\"features\":{\"country_same\":null,\"email_domain_same\":null,\"email_local_similarity\":null,\"email_same\":null,\"family_name_same\":true,\"given_name\":\"different\",\"name_similarity\":\"mid\",\"needs_individual_review\":false,\"phone_last4_same\":true,\"phone_same\":true,\"postcode_same\":null,\"role_address\":null},\"handle\":\"c1\",\"rule\":\"R2\",\"rule_confidence\":0.85}],\"flags\":[\"name_mismatch\",\"phone_only\",\"shared_target\"],\"kind\":\"person\",\"rule_decision\":\"link\",\"rule_pick\":\"c1\"}",
+  "response": "{\"suggested\": \"create\", \"confidence\": 0.8, \"reason\": \"names differ\"}"
+ },
+ "74a77f00b5f422232d9dcff89b032cb0f048aa1511ac35d552ff9bc90b23bc05": {
+  "request": "{\"candidates\":[{\"features\":{\"country_same\":true,\"email_domain_same\":null,\"email_local_similarity\":null,\"email_same\":null,\"family_name_same\":true,\"given_name\":\"same\",\"name_similarity\":\"exact\",\"needs_individual_review\":false,\"phone_last4_same\":null,\"phone_same\":null,\"postcode_same\":true,\"role_address\":null},\"handle\":\"c1\",\"rule\":\"R4\",\"rule_confidence\":0.5}],\"flags\":[],\"kind\":\"person\",\"rule_decision\":\"link\",\"rule_pick\":\"c1\"}",
+  "response": "{\"suggested\": \"c1\", \"confidence\": 0.9, \"reason\": \"same name and the rule's evidence\"}"
+ },
+ "da637b8823980928cbd8016fb8f9584d2f2c08ad1d5acacf8cc9d47befe41531": {
+  "request": "{\"pairs\":[{\"features\":{\"country_same\":true,\"email_domain_same\":null,\"email_local_similarity\":null,\"email_same\":null,\"family_name_same\":true,\"given_name\":\"same\",\"name_similarity\":\"exact\",\"needs_individual_review\":false,\"phone_last4_same\":null,\"phone_same\":null,\"postcode_same\":true,\"role_address\":null},\"handle\":\"p1\",\"kind\":\"person\"},{\"features\":{\"country_same\":null,\"email_domain_same\":null,\"email_local_similarity\":null,\"email_same\":null,\"family_name_same\":true,\"given_name\":\"different\",\"name_similarity\":\"mid\",\"needs_individual_review\":false,\"phone_last4_same\":true,\"phone_same\":true,\"postcode_same\":null,\"role_address\":null},\"handle\":\"p2\",\"kind\":\"person\"}]}",
+  "response": "{\"pairs\": [{\"pair\": \"p1\", \"same\": true, \"confidence\": 0.85, \"reason\": \"name and place agree\"}, {\"pair\": \"p2\", \"same\": false, \"confidence\": 0.85, \"reason\": \"names differ\"}]}"
+ }
+}

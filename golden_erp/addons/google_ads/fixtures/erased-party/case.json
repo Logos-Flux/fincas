@@ -1,0 +1,38 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "Erasing the person deletes the pending upload and scrubs the click id: nothing is uploaded.",
+  "seed": {
+    "deals": [
+      {
+        "actions": [
+          "win",
+          "erase"
+        ],
+        "currency": "USD",
+        "key": "deal1",
+        "party": "party:ada",
+        "touches": [
+          {
+            "click_id": "Cj0KFIXTUREgclid01",
+            "click_id_kind": "gclid",
+            "days": 10
+          }
+        ],
+        "value": "1200.00"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "drain": true
+    }
+  ]
+}

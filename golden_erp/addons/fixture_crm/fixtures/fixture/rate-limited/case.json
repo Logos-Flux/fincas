@@ -1,0 +1,29 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A 429 pauses the account for Retry-After and leaves the row pending; nothing is sent while paused.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "enqueue": {
+        "consumer": "fixture.contact",
+        "key": "contact:ada:4",
+        "object": "party:ada"
+      }
+    },
+    {
+      "drain": true
+    },
+    {
+      "drain": true
+    }
+  ]
+}

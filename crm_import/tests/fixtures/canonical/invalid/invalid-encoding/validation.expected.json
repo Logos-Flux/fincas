@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "invalid_encoding",
+      "file": "owners.jsonl",
+      "line": 2,
+      "field": ""
+    }
+  ],
+  "warnings": []
+}

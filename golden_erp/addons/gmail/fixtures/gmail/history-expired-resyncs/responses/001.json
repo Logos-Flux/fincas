@@ -1,0 +1,21 @@
+{
+  "payload": {
+    "error": {
+      "code": 404
+    }
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/history",
+    "query": {
+      "historyTypes": "messageAdded",
+      "maxResults": "50",
+      "startHistoryId": "1000"
+    }
+  },
+  "response": {
+    "status": 404
+  },
+  "schema_version": 1
+}

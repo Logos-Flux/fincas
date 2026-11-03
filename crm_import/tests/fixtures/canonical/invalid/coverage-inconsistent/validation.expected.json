@@ -1,0 +1,18 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "inconsistent",
+      "file": "manifest.json",
+      "line": null,
+      "field": "objects.task.reasons"
+    },
+    {
+      "code": "inconsistent",
+      "file": "manifest.json",
+      "line": null,
+      "field": "objects.deal.declared_total"
+    }
+  ],
+  "warnings": []
+}

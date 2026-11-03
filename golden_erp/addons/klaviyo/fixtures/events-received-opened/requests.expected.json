@@ -1,0 +1,19 @@
+[
+  {
+    "form": null,
+    "headers": {
+      "accept": "application/vnd.api+json",
+      "authorization": "Klaviyo-API-Key <redacted:api_key>",
+      "revision": "2024-10-15"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/api/events/",
+    "query": {
+      "filter": "greater-or-equal(datetime,2026-02-02T14:00:00Z)",
+      "include": "metric,profile",
+      "page[size]": "100",
+      "sort": "datetime"
+    }
+  }
+]

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load humanize erp_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-10">
+    <div class="card mb-4">
+      <div class="card-header pb-0 d-flex justify-content-between align-items-start">
+        <div>
+          <h6 class="mb-0">{{ entry.entry_number|default:entry.source_reference|default:"Journal Entry" }}</h6>
+          <p class="text-xs text-secondary mb-0">
+            {{ entry.entry_date|date:"F j, Y" }} · {{ entry.get_entry_source_display }} · {{ entry.get_status_display }}
+            {% if entry.entity_name %}· {{ entry.entity_name }}{% endif %}
+          </p>
+        </div>
+        <a href="{% url 'erp-accounting-entries' %}{% if q_company %}?{{ q_company }}{% endif %}" class="btn btn-outline-secondary btn-sm mb-0">Back</a>
+      </div>
+      <div class="card-body pt-3">
+        {% if not is_balanced %}
+        <div class="alert alert-danger text-sm">
+          This entry does not balance — debits {{ total_debit|money }} vs credits {{ total_credit|money }}.
+        </div>
+        {% endif %}
+        {% if entry.memo %}<p class="text-sm mb-3">{{ entry.memo }}</p>{% endif %}
+
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Account</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Name</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Description</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Debit</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Credit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for line in lines %}
+              <tr>
+                <td class="text-sm"><a href="{% url 'erp-accounting-account-register' line.account.pk %}{% if q_company %}?{{ q_company }}{% endif %}">{{ line.account.full_name|default:line.account.name }}</a></td>
+                <td class="text-xs text-secondary">{{ line.entity_name|default:"—" }}</td>
+                <td class="text-xs text-secondary">{{ line.description|default:"—" }}</td>
+                <td class="text-sm text-end">{% if line.debit_amount %}{{ line.debit_amount|money }}{% else %}—{% endif %}</td>
+                <td class="text-sm text-end">{% if line.credit_amount %}{{ line.credit_amount|money }}{% else %}—{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr class="border-top">
+                <td colspan="3" class="text-sm font-weight-bold">Total</td>
+                <td class="text-sm text-end font-weight-bold">{{ total_debit|money }}</td>
+                <td class="text-sm text-end font-weight-bold">{{ total_credit|money }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {% if entry.qbo_id or entry.qbo_txn_type or entry.import_hash %}
+        <p class="text-xxs text-secondary mt-3 mb-0">
+          Provenance:
+          {% if entry.qbo_txn_type %}{{ entry.qbo_txn_type }}{% endif %}
+          {% if entry.qbo_id %}· QBO id {{ entry.qbo_id }}{% endif %}
+          {% if entry.import_hash %}· hash {{ entry.import_hash|slice:":12" }}…{% endif %}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

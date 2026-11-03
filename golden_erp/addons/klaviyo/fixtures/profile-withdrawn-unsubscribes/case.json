@@ -1,0 +1,52 @@
+{
+  "klaviyo": {
+    "consents": [
+      {
+        "occurred_at": "2026-02-01T10:00:00Z",
+        "party": "ada",
+        "state": "granted"
+      },
+      {
+        "occurred_at": "2026-02-20T09:00:00Z",
+        "party": "ada",
+        "state": "withdrawn"
+      }
+    ],
+    "marketable": [
+      "ada"
+    ],
+    "profiles": [
+      {
+        "address": "ada@example.com",
+        "list": "XFIX01",
+        "party": "ada",
+        "source_id": "01FIXTUREPROFILEADA0000000",
+        "state": "subscribed"
+      }
+    ]
+  },
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A party whose latest consent is a withdrawal and who has a Klaviyo profile is unsubscribed from email marketing, once.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "enqueue": {
+        "consumer": "klaviyo.profile",
+        "key": "sync:ada:1",
+        "object": "party:ada"
+      }
+    },
+    {
+      "drain": true
+    }
+  ]
+}

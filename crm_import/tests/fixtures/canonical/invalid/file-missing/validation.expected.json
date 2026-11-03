@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "file_missing",
+      "file": "tasks.jsonl",
+      "line": null,
+      "field": ""
+    }
+  ],
+  "warnings": []
+}

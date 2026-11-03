@@ -1,0 +1,14 @@
+{% load humanize %}
+{% comment %}The queue's progress header (phase5-importer.md 4.9). Re-rendered after every decision POST.{% endcomment %}
+<p class="text-sm mb-1"><strong>{{ header.decided|intcomma }} of {{ header.total|intcomma }} decided ({{ header.percent }}%)</strong> · {{ header.remaining|intcomma }} to go · {{ header.conflicts|intcomma }} conflict{{ header.conflicts|pluralize }} left</p>
+<div class="progress mb-1" role="img" aria-label="{% for key, label, n, pct in header.bar %}{{ label }} {{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+  {% for key, label, n, pct in header.bar %}{% if n and key != "remaining" %}<div class="progress-bar {% if key == 'approved' %}bg-gradient-success{% elif key == 'failed' %}bg-gradient-danger{% else %}bg-gradient-secondary{% endif %}" style="width: {{ pct }}%"></div>{% endif %}{% endfor %}
+</div>
+<ul class="list-inline text-xs mb-1">
+  {% for key, label, n, pct in header.bar %}<li class="list-inline-item">{{ label }} {{ n|intcomma }}</li>{% endfor %}
+</ul>
+<p class="text-xs text-secondary mb-0">
+  Your progress: {% if header.you_session is not None %}{{ header.you_session|intcomma }} this session · {% endif %}{{ header.you_today|intcomma }} today
+  · everyone today {{ header.everyone_today|intcomma }}{% if header.by_actor %} ({% for actor, n in header.by_actor %}{{ actor }} {{ n|intcomma }}{% if not forloop.last %}, {% endif %}{% endfor %}){% endif %}
+  · {{ header.mine|intcomma }} claimed by you{% if header.held_by_others %} · {{ header.held_by_others|intcomma }} claimed by others{% endif %}
+</p>

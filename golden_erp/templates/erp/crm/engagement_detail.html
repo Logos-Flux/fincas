@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+{% load crm_tags static erp_tags labels tz %}
+
+{% block title %}{{ engagement.number }} — {% label "crm.engagement" %}{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "engagement_detail", "engagement_id": "{{ engagement.id }}", "engagement_number": "{{ engagement.number|escapejs }}"}'>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+  /* 6.2: next action, then the deal, then what happened. The side column
+     sits beside them on lg+; below lg it stacks after the next action, so a
+     phone reads next action, contacts, deal facts, timeline. */
+  .crm-thread { display: grid; gap: 0 1.5rem; grid-template-columns: minmax(0, 1fr);
+                grid-template-areas: "next" "side" "facts" "timeline"; }
+  @media (min-width: 992px) {
+    .crm-thread { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+                  grid-template-areas: "next side" "facts side" "timeline side";
+                  grid-template-rows: auto auto 1fr; }
+  }
+  .crm-next { grid-area: next; }
+  .crm-facts { grid-area: facts; }
+  .crm-timeline { grid-area: timeline; }
+  .crm-side { grid-area: side; }
+  .crm-kv dt { font-weight: 600; }
+  .crm-needs-action { border: 2px solid var(--tblr-warning); }
+  .crm-stepper { display: flex; flex-wrap: wrap; gap: .25rem; list-style: none; padding: 0; margin: 0; }
+  .crm-stepper form { margin: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% timezone viewer_tz %}
+{% if open_quotes_banner %}
+<div class="alert alert-info text-sm" role="status">
+  This {% label "crm.engagement" case="lower" %} is won, but {{ open_quotes|length }} of its {% label "orders.quote" plural=True case="lower" %} {% if open_quotes|length == 1 %}is{% else %}are{% endif %} still open:
+  {% for q in open_quotes %}<a href="{% url 'erp-quote-detail' q.pk %}" class="alert-link">{{ q.quote_number }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}. Nothing was canceled for you.
+</div>
+{% endif %}
+
+{# Header #}
+<div class="card mb-4">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <p class="text-xs text-secondary mb-1">{% label "crm.engagement" %} {{ engagement.number }}</p>
+        <h1 class="h5 font-weight-bolder mb-1">{{ engagement.title }}</h1>
+        <p class="text-sm mb-2">
+          {% if engagement.party %}<a href="{% url 'erp-party-detail' engagement.party_id %}" class="text-primary text-decoration-underline">{{ engagement.party.display_name }}</a>
+          {% else %}<span class="badge bg-gradient-warning">No counterparty</span>{% endif %}
+          · Owner: {{ engagement.owner|profile_name }}{% if engagement.owner_team %} · {{ engagement.owner_team.name }}{% if not engagement.owner_team.is_active %} (archived team){% endif %}{% endif %}
+        </p>
+        <span class="badge {% if engagement.status == 'won' %}bg-gradient-success{% elif engagement.status == 'lost' %}bg-gradient-secondary{% else %}bg-gradient-info{% endif %}">
+          {% if engagement.status == "lost" %}Lost: {{ loss_label }}{% else %}{{ engagement.get_status_display }}{% endif %}
+        </span>
+        {% if stale_days is not None %}<span class="badge bg-gradient-secondary ms-1">Stale · {{ stale_days }} d</span>{% endif %}
+      </div>
+      <div class="d-flex flex-wrap gap-2 justify-content-end">
+        {% if engagement.status == "open" %}
+        <a href="#deal-facts" class="btn btn-outline-primary btn-sm mb-0">Move {% label "crm.stage" case="lower" %}</a>
+        <form method="post" action="{% url 'erp-crm-engagement-win' engagement.pk %}">{% csrf_token %}
+          <button type="submit" class="btn bg-gradient-success btn-sm mb-0">Win</button>
+        </form>
+        <a href="?confirm=lost#close" class="btn btn-outline-secondary btn-sm mb-0">Lose</a>
+        {% elif can_reopen %}
+        <form method="post" action="{% url 'erp-crm-engagement-reopen' engagement.pk %}" class="d-flex gap-1 align-items-center">{% csrf_token %}
+          <label for="reopen-stage" class="visually-hidden">Reopen at</label>
+          <select id="reopen-stage" name="stage" class="form-control form-control-sm">
+            <option value="">Where it was</option>
+            {% for stage in stepper %}<option value="{{ stage.pk }}">{{ stage.name }}</option>{% endfor %}
+          </select>
+          <button type="submit" class="btn btn-outline-primary btn-sm mb-0">Reopen</button>
+        </form>
+        {% endif %}
+        {% if engagement.status != "lost" %}
+        <a href="{% url 'erp-quote-create' %}?engagement={{ engagement.pk }}" class="btn btn-outline-primary btn-sm mb-0"><i class="fas fa-file-invoice me-1" aria-hidden="true"></i> New {% label "orders.quote" case="lower" %}</a>
+        {% endif %}
+        <a href="{% url 'erp-crm-engagement-edit' engagement.pk %}" class="btn bg-gradient-dark btn-sm mb-0"><i class="fas fa-edit me-1" aria-hidden="true"></i> Edit</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="crm-thread">
+
+  {# 1. Next action #}
+  <section class="crm-next card mb-4{% if engagement.status == 'open' and not next_task %} crm-needs-action{% endif %}" id="next-action" aria-labelledby="next-action-title">
+    <div class="card-header pb-0">
+      <h2 class="h6 mb-0" id="next-action-title">{% if engagement.status == "open" and not next_task %}No next action{% else %}Next action{% endif %}</h2>
+    </div>
+    <div class="card-body">
+      {% if engagement.status == "open" %}
+        {% if next_task %}
+        <div class="d-flex justify-content-between flex-wrap gap-2">
+          <div>
+            <p class="font-weight-bold mb-1">{{ next_task.title }}</p>
+            <p class="text-sm mb-1 {% if next_task.overdue %}text-danger font-weight-bold{% endif %}">
+              {% if next_task.due_at %}
+                {% if next_task.overdue %}Overdue: {% else %}Due {% endif %}
+                {% if next_task.all_day %}{{ next_task.due_at|date:"D M j" }} (end of day){% else %}{{ next_task.due_at|date:"D M j, H:i" }}{% endif %}
+                {% if next_task.set_in %}<span class="text-secondary font-weight-normal">· set in {{ next_task.set_in }}</span>{% endif %}
+              {% else %}No due date{% endif %}
+            </p>
+            <p class="text-sm text-secondary mb-0">
+              {{ next_task.kind_label }} · {{ next_task.get_priority_display }} priority ·
+              {{ next_task.assignee|profile_name }}
+            </p>
+          </div>
+          <div class="d-flex flex-column gap-2">
+            <form method="post" action="{% url 'erp-crm-task-complete' next_task.pk %}">{% csrf_token %}
+              <button type="submit" class="btn bg-gradient-success btn-sm mb-0 w-100">Complete</button>
+            </form>
+            <form method="post" action="{% url 'erp-crm-task-reschedule' next_task.pk %}" class="d-flex gap-1">{% csrf_token %}
+              <label for="reschedule-when" class="visually-hidden">Reschedule to</label>
+              <select id="reschedule-when" name="when" class="form-control form-control-sm">
+                <option value="tomorrow">Tomorrow</option><option value="next_week">Next week</option><option value="date">Pick a date</option>
+              </select>
+              <label for="reschedule-date" class="visually-hidden">Date</label>
+              <input id="reschedule-date" type="date" name="date" class="form-control form-control-sm">
+              <button type="submit" class="btn btn-outline-primary btn-sm mb-0">Reschedule</button>
+            </form>
+            <form method="post" action="{% url 'erp-crm-task-reassign' next_task.pk %}" class="d-flex gap-1">{% csrf_token %}
+              {{ reassign_form.assignee|add_class:"form-control form-control-sm" }}
+              <button type="submit" class="btn btn-outline-primary btn-sm mb-0">Reassign</button>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+        {% if other_open_tasks and engagement.status == "open" %}
+        <h3 class="h6 mt-3 mb-1" id="other-tasks-title">{% if next_task %}Also open{% else %}Open {% label "crm.task" plural=True case="lower" %}{% endif %}</h3>
+        <ul class="list-unstyled text-sm mb-0" aria-labelledby="other-tasks-title">
+          {% for task in other_open_tasks %}
+          <li class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+            <span>{{ task.title }}{% if task.due_at %} <span class="{% if task.overdue %}text-danger{% else %}text-secondary{% endif %}">· {{ task.due_at|date:"M j" }}</span>{% endif %} <span class="text-secondary">· {{ task.assignee|profile_name }}</span></span>
+            <form method="post" action="{% url 'erp-crm-task-complete' task.pk %}">{% csrf_token %}<button type="submit" class="btn btn-link btn-sm text-primary mb-0 p-1" aria-label="Complete {{ task.title }}">Complete</button></form>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if not next_task or whats_next %}
+        {% if whats_next and next_task %}<h3 class="h6 mt-3">What's next?</h3>{% elif not next_task %}<p class="text-sm mb-2">Nothing is planned on this {% label "crm.engagement" case="lower" %}. Set the next action.</p>{% endif %}
+        <form method="post" action="{% url 'erp-crm-engagement-task-create' engagement.pk %}" class="row g-2 align-items-end">{% csrf_token %}
+          <div class="col-md-5">
+            <label for="{{ task_form.title.id_for_label }}" class="form-label text-sm">What</label>
+            {{ task_form.title|add_class:"form-control form-control-sm" }}
+          </div>
+          <div class="col-md-3">
+            <label for="{{ task_form.due_date.id_for_label }}" class="form-label text-sm">Due</label>
+            {{ task_form.due_date|add_class:"form-control form-control-sm" }}
+          </div>
+          <div class="col-md-4">
+            <label for="{{ task_form.assignee.id_for_label }}" class="form-label text-sm">Who</label>
+            {{ task_form.assignee|add_class:"form-control form-control-sm" }}
+          </div>
+          <div class="col-md-3">
+            <label for="{{ task_form.kind.id_for_label }}" class="form-label text-sm">Kind</label>
+            {{ task_form.kind|add_class:"form-control form-control-sm" }}
+          </div>
+          <div class="col-md-3">
+            <label for="{{ task_form.due_time.id_for_label }}" class="form-label text-sm">At (optional)</label>
+            {{ task_form.due_time|add_class:"form-control form-control-sm" }}
+          </div>
+          <div class="col-md-3">
+            <label for="{{ task_form.priority.id_for_label }}" class="form-label text-sm">Priority</label>
+            {{ task_form.priority|add_class:"form-control form-control-sm" }}
+          </div>
+          {% if task_form.definition_sections or task_form.hidden_definitions %}
+          <div class="col-12">{% include "erp/_definition_fieldsets.html" with form=task_form %}</div>
+          {% endif %}
+          <div class="col-md-3">
+            <button type="submit" class="btn bg-gradient-primary btn-sm mb-0 w-100">Set next action</button>
+          </div>
+        </form>
+        {% endif %}
+      {% elif open_tasks %}
+        <p class="text-sm mb-2">This {% label "crm.engagement" case="lower" %} is closed and still has open tasks: complete, cancel or keep them.</p>
+        <ul class="list-unstyled text-sm mb-2">
+          {% for task in open_tasks %}
+          <li class="d-flex justify-content-between align-items-center gap-2 mb-1">
+            <span>{{ task.title }}{% if task.due_at %} <span class="text-secondary">· {{ task.due_at|date:"M j" }}</span>{% endif %}</span>
+            <form method="post" action="{% url 'erp-crm-task-complete' task.pk %}">{% csrf_token %}<button type="submit" class="btn btn-link btn-sm text-primary mb-0 p-1">Complete</button></form>
+          </li>
+          {% endfor %}
+        </ul>
+        <form method="post" action="{% url 'erp-crm-engagement-close-remaining' engagement.pk %}">{% csrf_token %}
+          <button type="submit" class="btn btn-outline-secondary btn-sm mb-0">Close remaining</button>
+        </form>
+      {% else %}
+        <p class="text-sm text-secondary mb-0">Closed{% if engagement.closed_at %} on {{ engagement.closed_at|date:"M j, Y" }}{% endif %}. No open tasks.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  {# 2. Deal facts #}
+  <section class="crm-facts card mb-4" id="deal-facts" aria-labelledby="deal-facts-title">
+    <div class="card-header pb-0"><h2 class="h6 mb-0" id="deal-facts-title">Deal</h2></div>
+    <div class="card-body text-sm">
+      {% if engagement.status == "open" %}
+      <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-1">{% label "crm.pipeline" %}: {{ engagement.pipeline.name }}</p>
+      <ol class="crm-stepper mb-3" aria-label="{% label 'crm.stage' plural=True %}">
+        {% for stage in stepper %}
+        <li>
+          {% if stage.pk == engagement.stage_id %}
+          <span class="btn btn-sm mb-0 bg-gradient-primary" aria-current="step">{{ stage.name }}</span>
+          {% else %}
+          <form method="post" action="{% url 'erp-crm-engagement-move' engagement.pk %}">{% csrf_token %}
+            <input type="hidden" name="stage" value="{{ stage.pk }}">
+            <button type="submit" class="btn btn-sm mb-0 btn-outline-secondary" aria-label="Move to {{ stage.name }}">{{ stage.name }}</button>
+          </form>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+      {% if other_pipeline_stages %}
+      <form method="post" action="{% url 'erp-crm-engagement-move' engagement.pk %}" class="d-flex gap-1 mb-3 align-items-center">{% csrf_token %}
+        <label for="move-other" class="text-xs text-secondary mb-0">Move to another {% label "crm.pipeline" case="lower" %}:</label>
+        <select id="move-other" name="stage" class="form-control form-control-sm w-auto">
+          {% for name, stages in other_pipeline_stages %}<optgroup label="{{ name }}">{% for s in stages %}<option value="{{ s.pk }}">{{ s.name }}</option>{% endfor %}</optgroup>{% endfor %}
+        </select>
+        <button type="submit" class="btn btn-outline-primary btn-sm mb-0">Move</button>
+      </form>
+      {% endif %}
+      {% endif %}
+      <dl class="row crm-kv mb-0">
+        <dt class="col-sm-4">{% label "crm.stage" %}</dt>
+        <dd class="col-sm-8">{{ engagement.stage.name|default:"—" }}{% if engagement.status == "open" and engagement.stage_entered_at %} <span class="text-secondary">· {{ engagement.stage_entered_at|timesince }} in {% label "crm.stage" case="lower" %}</span>{% endif %}</dd>
+        <dt class="col-sm-4">Expected value</dt>
+        <dd class="col-sm-8">{% if engagement.expected_value is not None %}{{ engagement.expected_value|money:engagement.currency }}{% else %}—{% endif %}</dd>
+        <dt class="col-sm-4">Probability</dt>
+        <dd class="col-sm-8">{% if probability is not None %}{{ probability }}%{% if probability_inherited %} <span class="text-secondary">(from {% label "crm.stage" case="lower" %})</span>{% endif %}{% else %}—{% endif %}</dd>
+        <dt class="col-sm-4">Weighted value</dt>
+        <dd class="col-sm-8">{% if weighted_value is not None %}{{ weighted_value|money:engagement.currency }}{% else %}—{% endif %}</dd>
+        <dt class="col-sm-4">Expected close</dt>
+        <dd class="col-sm-8{% if close_date_past %} text-danger font-weight-bold{% endif %}">{{ engagement.expected_close_date|date:"M j, Y"|default:"—" }}{% if close_date_past %} (past){% endif %}</dd>
+        <dt class="col-sm-4">Source</dt>
+        <dd class="col-sm-8">{{ source_label|default:"Unknown" }}</dd>
+        <dt class="col-sm-4">First touch</dt>
+        <dd class="col-sm-8">{% if engagement.first_touch %}{{ engagement.first_touch.channel|default:engagement.first_touch.utm_source|default:"—" }}{% if engagement.first_touch.utm_campaign %} · {{ engagement.first_touch.utm_campaign }}{% endif %} <span class="text-secondary">{{ engagement.first_touch.occurred_at|date:"M j, Y" }}</span>{% else %}—{% endif %}</dd>
+        <dt class="col-sm-4">Last touch</dt>
+        <dd class="col-sm-8">{% if engagement.last_touch %}{{ engagement.last_touch.channel|default:engagement.last_touch.utm_source|default:"—" }}{% if engagement.last_touch.utm_campaign %} · {{ engagement.last_touch.utm_campaign }}{% endif %} <span class="text-secondary">{{ engagement.last_touch.occurred_at|date:"M j, Y" }}</span>{% else %}—{% endif %}</dd>
+        <dt class="col-sm-4">{% label "crm.pipeline" %}</dt>
+        <dd class="col-sm-8">{{ engagement.pipeline.name }}</dd>
+        {% if engagement.status == "lost" and engagement.loss_competitor %}
+        <dt class="col-sm-4">Lost to</dt><dd class="col-sm-8">{{ engagement.loss_competitor }}</dd>
+        {% endif %}
+        {% if engagement.status == "lost" and engagement.loss_notes %}
+        <dt class="col-sm-4">Loss notes</dt><dd class="col-sm-8" style="white-space: pre-line;">{{ engagement.loss_notes }}</dd>
+        {% endif %}
+      </dl>
+      {% include "erp/_definition_groups.html" with groups=definition_groups %}
+
+      {% if engagement.status == "open" %}
+      <details class="mt-3" id="close"{% if confirm_close %} open{% endif %}>
+        <summary class="font-weight-bold">Close this {% label "crm.engagement" case="lower" %}</summary>
+        {% if confirm_close == "won" %}<p class="text-sm mt-2 mb-1">The {% label "crm.stage" case="lower" %} proposes a win. Confirm it, or leave the {% label "crm.engagement" case="lower" %} open.</p>{% endif %}
+        <div class="d-flex flex-wrap gap-4 mt-2">
+          <form method="post" action="{% url 'erp-crm-engagement-win' engagement.pk %}">{% csrf_token %}
+            <button type="submit" class="btn bg-gradient-success btn-sm mb-0">Mark as won</button>
+          </form>
+          <form method="post" action="{% url 'erp-crm-engagement-lose' engagement.pk %}" class="flex-grow-1">{% csrf_token %}
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label for="{{ lose_form.loss_reason.id_for_label }}" class="form-label text-sm">Loss reason</label>
+                {{ lose_form.loss_reason|add_class:"form-control form-control-sm" }}
+              </div>
+              <div class="col-md-4">
+                <label for="{{ lose_form.loss_competitor.id_for_label }}" class="form-label text-sm">Competitor</label>
+                {{ lose_form.loss_competitor|add_class:"form-control form-control-sm" }}
+              </div>
+              <div class="col-md-12">
+                <label for="{{ lose_form.loss_notes.id_for_label }}" class="form-label text-sm">Notes</label>
+                {{ lose_form.loss_notes|add_class:"form-control form-control-sm" }}
+              </div>
+            </div>
+            <button type="submit" class="btn bg-gradient-dark btn-sm mt-2 mb-0">Mark as lost</button>
+          </form>
+        </div>
+        {% if open_tasks %}<p class="text-xs text-secondary mt-2 mb-0">Open tasks stay open when you close: you choose what happens to them.</p>{% endif %}
+      </details>
+      {% endif %}
+    </div>
+  </section>
+
+  {# 3. Timeline #}
+  <section class="crm-timeline card mb-4" id="timeline" aria-labelledby="timeline-title">
+    <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h2 class="h6 mb-0" id="timeline-title">Timeline</h2>
+      <a href="{% url 'erp-crm-engagement-log' engagement.pk %}" class="btn btn-outline-primary btn-sm mb-0"><i class="fas fa-plus me-1" aria-hidden="true"></i> Log a communication</a>
+    </div>
+    <div class="card-body">
+      <details class="mb-3">
+        <summary class="text-sm font-weight-bold">Log a call, meeting, email or note here</summary>
+        <div class="mt-2">{% include "erp/crm/_log_form.html" with form=log_form %}</div>
+      </details>
+      {% include "erp/crm/_timeline.html" %}
+    </div>
+  </section>
+
+  {# Side column #}
+  <div class="crm-side">
+    <section class="card mb-4" id="contacts" aria-labelledby="contacts-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="contacts-title">Contacts</h2></div>
+      <div class="card-body text-sm">
+        <ul class="list-unstyled mb-2">
+          {% for c in contacts %}
+          <li class="mb-2">
+            <a href="{% url 'erp-party-detail' c.party.pk %}" class="font-weight-bold text-primary text-decoration-underline">{{ c.party.display_name }}</a>
+            {% if c.is_primary %}<span class="badge badge-sm bg-gradient-primary ms-1">Primary</span>{% endif %}
+            <span class="badge badge-sm {% if c.consent == 'granted' %}bg-gradient-success{% elif c.consent == 'withdrawn' %}bg-gradient-danger{% else %}bg-gradient-secondary{% endif %} ms-1">Email marketing: {{ c.consent|capfirst }}</span>
+            <div class="text-xs text-secondary">{{ c.role }}
+              {% if c.contact_id %}<form method="post" action="{% url 'erp-crm-contact-remove' c.contact_id %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-link btn-sm text-danger p-0 ms-1 mb-0" aria-label="Remove {{ c.party.display_name }} from the contacts">Remove</button></form>{% endif %}
+            </div>
+            {% if c.party.primary_email_normalized %}
+            <div class="text-xs"><span id="contact-email-{{ forloop.counter }}">{{ c.party.primary_email_normalized }}</span>
+              <button type="button" class="btn btn-link btn-sm p-0 ms-1 mb-0 text-primary crm-copy" data-copy-target="contact-email-{{ forloop.counter }}" aria-label="Copy email address of {{ c.party.display_name }}"><i class="fas fa-copy" aria-hidden="true"></i></button></div>
+            {% endif %}
+            {% if c.party.primary_phone_e164 %}
+            <div class="text-xs"><span id="contact-phone-{{ forloop.counter }}">{{ c.party.primary_phone_e164 }}</span>
+              <button type="button" class="btn btn-link btn-sm p-0 ms-1 mb-0 text-primary crm-copy" data-copy-target="contact-phone-{{ forloop.counter }}" aria-label="Copy phone number of {{ c.party.display_name }}"><i class="fas fa-copy" aria-hidden="true"></i></button></div>
+            {% endif %}
+          </li>
+          {% empty %}
+          <li class="text-secondary">No contacts.</li>
+          {% endfor %}
+        </ul>
+        <details>
+          <summary class="text-sm">Add a contact</summary>
+          <form method="post" action="{% url 'erp-crm-engagement-contact-create' engagement.pk %}" class="mt-2">{% csrf_token %}
+            <label for="{{ contact_form.party.id_for_label }}" class="form-label text-xs">Person (email or name)</label>
+            <div class="d-flex flex-wrap gap-2 align-items-start">
+              <div class="flex-grow-1" style="min-width:10rem">{{ contact_form.party|add_class:"form-control form-control-sm" }}</div>
+              {% include "erp/crm/_new_party_link.html" with party_kind="person" %}
+            </div>
+            <label for="{{ contact_form.role.id_for_label }}" class="form-label text-xs mt-1">Role</label>
+            {{ contact_form.role|add_class:"form-control form-control-sm" }}
+            <div class="form-check mt-1">{{ contact_form.is_primary }} <label for="{{ contact_form.is_primary.id_for_label }}" class="form-check-label text-xs">Primary contact</label></div>
+            <button type="submit" class="btn btn-outline-primary btn-sm mt-2 mb-0">Add</button>
+          </form>
+        </details>
+      </div>
+    </section>
+
+    <section class="card mb-4" id="documents" aria-labelledby="documents-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="documents-title">Documents</h2></div>
+      <div class="card-body text-sm">
+        <ul class="list-unstyled mb-0">
+          {% for chain in quote_chains %}
+          <li class="mb-1"><a href="{% url 'erp-quote-detail' chain.head.pk %}" class="text-primary text-decoration-underline">{{ chain.head.quote_number }}</a>{% if chain.revisions > 1 %} <span class="text-secondary">v{{ chain.head.revision_number }} of {{ chain.revisions }}</span>{% endif %} · {{ chain.head.get_status_display }} · {{ chain.head.grand_total|money:chain.head.currency }}</li>
+          {% endfor %}
+          {% for order in orders %}
+          <li class="mb-1"><a href="{% url 'erp-order-edit' order.pk %}" class="text-primary text-decoration-underline">{{ order.order_number }}</a> · {{ order.get_status_display }} · {{ order.grand_total|money:order.currency }}</li>
+          {% endfor %}
+          {% for invoice in invoices %}
+          <li class="mb-1"><a href="{% url 'erp-invoice-detail' invoice.pk %}" class="text-primary text-decoration-underline">{{ invoice.invoice_number }}</a> · {% if invoice.status == "paid" %}Paid{% else %}{{ invoice.get_status_display }}{% endif %} · {{ invoice.grand_total|money:invoice.order.currency }}</li>
+          {% endfor %}
+          {% if not quote_chains and not orders and not invoices %}<li class="text-secondary">No {% label "orders.quote" plural=True case="lower" %} or {% label "orders.order" plural=True case="lower" %} yet.</li>{% endif %}
+        </ul>
+      </div>
+    </section>
+
+
+    <section class="card mb-4" aria-labelledby="history-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="history-title">{% label "crm.stage" %} history</h2></div>
+      <div class="card-body text-sm">
+        <details>
+          <summary>{{ stage_history|length }} change{{ stage_history|length|pluralize }}</summary>
+          <ul class="list-unstyled mt-2 mb-0">
+            {% for change in stage_history %}
+            <li class="mb-1">{{ change.changed_at|date:"M j, Y H:i" }} · {% if change.from_stage %}{{ change.from_stage.name }}{% else %}{{ change.from_status|default:"new" }}{% endif %} → {% if change.to_stage %}{{ change.to_stage.name }}{% endif %}{% if change.to_status != "open" %} ({{ change.to_status }}){% endif %}{% if change.changed_by %} <span class="text-secondary">by {{ change.changed_by.display_name }}</span>{% endif %}{% if change.is_reconstructed %} <span class="badge badge-sm bg-gradient-secondary" title="Written by a {{ change.get_source_display|lower }}: the time and stage are reconstructed, not observed.">reconstructed · {{ change.get_source_display|lower }}</span>{% endif %}</li>
+            {% endfor %}
+          </ul>
+        </details>
+      </div>
+    </section>
+
+    {% if leads %}
+    <section class="card mb-4" aria-labelledby="leads-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="leads-title">{% label "crm.lead" plural=True %}</h2></div>
+      <div class="card-body text-sm">
+        <ul class="list-unstyled mb-0">
+          {% for lead in leads %}<li class="mb-1">{{ lead.lead_number }} · {{ lead.get_source_display }} <span class="text-secondary">{{ lead.created_at|date:"M j, Y" }}</span></li>{% endfor %}
+        </ul>
+      </div>
+    </section>
+    {% endif %}
+
+    {% include "erp/_other_data.html" with other=other_data %}
+
+    {% if identifiers or engagement.tags %}
+    <section class="card mb-4" aria-labelledby="ids-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="ids-title">Identifiers and tags</h2></div>
+      <div class="card-body text-sm">
+        <ul class="list-unstyled mb-2">{% for ref in identifiers %}<li>{{ ref.source }} · {{ ref.object_type }}: <code>{{ ref.source_id }}</code></li>{% endfor %}</ul>
+        {% for tag in engagement.tags %}<span class="badge badge-sm bg-gradient-secondary me-1">{{ tag }}</span>{% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endtimezone %}
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.querySelectorAll(".crm-copy").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var el = document.getElementById(btn.getAttribute("data-copy-target"));
+    if (!el || !navigator.clipboard) return;
+    navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+      btn.setAttribute("aria-label", "Copied");
+    });
+  });
+});
+</script>
+{% include "erp/_party_search_js.html" %}
+{% endblock %}

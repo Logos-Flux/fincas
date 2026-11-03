@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <div class="row align-items-end">
+          <div class="col-md-6">
+            <h6 class="mb-0">Imports</h6>
+            <p class="text-xs text-secondary mb-0">Messy sources land here first — nothing reaches the catalog unreviewed</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if messages %}
+        <div role="status">
+          {% for message in messages %}
+          <div class="alert alert-warning text-sm mb-2">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% include "erp/_unify_upload_form.html" %}
+
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Source</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Status</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Complete</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">LLM calls</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in batches %}
+              <tr>
+                <td class="text-sm"><a href="{% url 'erp-unify-batch-detail' b.pk %}">{{ b.source_name }}</a></td>
+                <td class="text-center text-sm">{{ b.get_status_display }}</td>
+                <td class="text-center text-sm">{{ b.completeness.percent }}%</td>
+                <td class="text-center text-sm">{{ b.llm_calls_used }}/{{ b.llm_call_budget }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-sm text-secondary py-4">
+                No imports yet. Stage a CSV above to start.
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

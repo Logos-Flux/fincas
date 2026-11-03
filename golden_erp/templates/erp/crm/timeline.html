@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load labels tz %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+{% timezone viewer_tz %}
+<div class="card mb-4" id="timeline">
+  <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <p class="text-xs text-secondary mb-1">{% label "crm.engagement" %} <a href="{% url 'erp-crm-engagement-detail' engagement.pk %}" class="text-primary text-decoration-underline">{{ engagement.number }}</a></p>
+      <h1 class="h6 mb-0">Timeline · {{ engagement.title }}</h1>
+    </div>
+    <a href="{% url 'erp-crm-engagement-detail' engagement.pk %}" class="btn btn-outline-secondary btn-sm mb-0">Back to the {% label "crm.engagement" case="lower" %}</a>
+  </div>
+  <div class="card-body">
+    {% if is_older_page %}<p class="text-sm text-secondary">Older items. <a href="{{ request.path }}{% if active_kinds %}?kinds={{ active_kinds }}{% endif %}" class="text-primary text-decoration-underline">Back to the newest</a></p>{% endif %}
+    {% include "erp/crm/_timeline.html" %}
+  </div>
+</div>
+{% endtimezone %}
+{% endblock %}

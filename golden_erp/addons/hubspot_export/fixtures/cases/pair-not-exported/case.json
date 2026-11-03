@@ -1,0 +1,12 @@
+{
+  "description": "No deal-contact association pages (2.13 row 5).",
+  "base": "crawl-small",
+  "remove": [
+    "crawl/associations/deals-contacts"
+  ],
+  "added": {
+    "association": [
+      "pair_not_exported"
+    ]
+  }
+}

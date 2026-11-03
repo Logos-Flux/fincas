@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/companies",
+    "query": {
+      "limit": "100",
+      "archived": "true"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "205",
+        "properties": {
+          "hs_object_id": "205",
+          "name": "Old Example Co",
+          "domain": "old.example.com",
+          "createdate": "2018-01-01T09:00:00.000Z",
+          "hs_lastmodifieddate": "2020-01-01T09:00:00.000Z"
+        },
+        "createdAt": "2018-01-01T09:00:00.000Z",
+        "updatedAt": "2020-01-01T09:00:00.000Z",
+        "archived": true,
+        "archivedAt": "2020-01-01T09:00:00.000Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <h6 class="mb-0">Stage an import</h6>
+        <p class="text-xs text-secondary mb-0">Upload a CSV; it lands in a reviewable batch, never straight in the catalog. <a href="{% url 'erp-unify-batch-list' %}">All imports</a></p>
+      </div>
+      <div class="card-body">
+        {% if messages %}
+        <div role="status">
+          {% for message in messages %}
+          <div class="alert alert-warning text-sm mb-2">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% include "erp/_unify_upload_form.html" %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

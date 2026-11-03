@@ -1,0 +1,2 @@
+{# Beside a party picker: create the party in a new tab, then search for it here. ``party_kind``: "person" asks the party form for a person. #}
+<a href="{% url 'erp-party-create' %}{% if party_kind %}?kind={{ party_kind }}{% endif %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm mb-0 text-nowrap"><i class="fas fa-plus me-1" aria-hidden="true"></i>{% if party_kind == "person" %}New person{% else %}New counterparty{% endif %}<span class="visually-hidden"> (opens in a new tab)</span></a>

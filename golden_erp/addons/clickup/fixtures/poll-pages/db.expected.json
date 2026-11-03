@@ -1,0 +1,49 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {
+        "date_updated": "1772460600000"
+      },
+      "object_type": "task",
+      "source": "clickup",
+      "source_id": "86a0fx06",
+      "source_url": "https://app.clickup.com/t/86a0fx06",
+      "target": "crm.task:<new>"
+    },
+    {
+      "metadata": {
+        "date_updated": "1772463600000"
+      },
+      "object_type": "task",
+      "source": "clickup",
+      "source_id": "86a0fx02",
+      "source_url": "https://app.clickup.com/t/86a0fx02",
+      "target": "crm.task:<new>"
+    }
+  ],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [
+    {
+      "all_day": true,
+      "assignee": null,
+      "due_at": null,
+      "party": "party:ada",
+      "source": "clickup",
+      "status": "open",
+      "title": "Book the crane"
+    },
+    {
+      "all_day": true,
+      "assignee": null,
+      "due_at": null,
+      "party": "party:ada",
+      "source": "clickup",
+      "status": "open",
+      "title": "Measure the roof"
+    }
+  ],
+  "touchpoints": []
+}

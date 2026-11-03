@@ -1,0 +1,11 @@
+{% comment %}
+  Export links (ERPListView). A canonical CRM export (phase4-fields.md 5.5)
+  offers the visible columns or every exportable field; both follow the
+  current search, filters and sort.
+{% endcomment %}
+<a href="?{{ export_query }}" class="btn btn-outline-secondary btn-sm mb-0 ms-2"{% if csv_canonical %} aria-label="Export visible columns as CSV"{% endif %}>
+  <i class="fas fa-file-csv me-1" aria-hidden="true"></i> Export
+</a>
+{% if csv_canonical %}
+<a href="?{{ export_all_query }}" class="btn btn-outline-secondary btn-sm mb-0 ms-2" aria-label="Export all fields as CSV">All fields</a>
+{% endif %}

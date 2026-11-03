@@ -1,0 +1,14 @@
+{
+  "description": "complete coverage while archived records were not enumerated",
+  "manifest": [
+    {
+      "op": "set",
+      "path": [
+        "objects",
+        "company",
+        "archived"
+      ],
+      "value": "not_enumerated"
+    }
+  ]
+}

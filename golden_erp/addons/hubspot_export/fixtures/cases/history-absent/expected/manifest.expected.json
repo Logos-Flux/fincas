@@ -1,0 +1,101 @@
+{
+  "adapter": {
+    "id": "hubspot_export",
+    "schema_version": 1,
+    "version": "0.1.0"
+  },
+  "exported_at": "2026-10-01T09:00:00Z",
+  "files": {
+    "associations.jsonl": "sha256:85a8f7f9c5f77fee0bbda3990d426fd93396faec07004e8daaad7cd24e53b7a3",
+    "communications.jsonl": "sha256:45aba9a438bce56f8f0bb120244d0ea7d77fbd8b7472c1aa8b72c1b7dd0ce01d",
+    "companies.jsonl": "sha256:89f3498addb7c914946ab85d37b7f454e18e356db9e36faff5d741169f523b3c",
+    "consent.jsonl": "sha256:c608805b00bcc2ccfb2aea6884885a221823f50a956923b553065a7204ac76da",
+    "contacts.jsonl": "sha256:1a30ddad05c8d91027755616bf7f48add521b10c4875e57920d6f9be8acb88c0",
+    "deals.jsonl": "sha256:7faf1ffd9eb874d36f657fab5bcfaac8d7458c3df0b43a8042ee2bee242243a0",
+    "owners.jsonl": "sha256:c07c9247cf9c53682f06abe205085467445da1add79f3de3901bf31a36c9e6d3",
+    "pipelines.jsonl": "sha256:fd6e37fe7ad82919452a3adae159bfdffea2ac68f529fe4e52f69d84ebcd1d20",
+    "property_defs.jsonl": "sha256:4ba52acb84f8e11327338e54b96b7f2303831b61e0776db064fc885526e33187",
+    "relationships.jsonl": "sha256:f17134dbcb968702b8a9570152d0672b47413e399de4a38f8c4edafa36980c7f",
+    "tasks.jsonl": "sha256:ed4f7d692d9fd42ccd2a0cb16e0aa5760efc9fc523f5c2c7946f5a51ca10f0a6"
+  },
+  "input": {
+    "kind": "crawl",
+    "time_zone": null
+  },
+  "objects": {
+    "association": {
+      "archived": "not_applicable",
+      "coverage": "complete",
+      "file": "associations.jsonl",
+      "rows": 19
+    },
+    "communication": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "file": "communications.jsonl",
+      "rows": 8
+    },
+    "company": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "declared_total": 4,
+      "file": "companies.jsonl",
+      "rows": 5
+    },
+    "consent": {
+      "archived": "not_applicable",
+      "coverage": "complete",
+      "file": "consent.jsonl",
+      "rows": 5
+    },
+    "contact": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "file": "contacts.jsonl",
+      "history": [
+        "hs_email_optout",
+        "lifecyclestage"
+      ],
+      "rows": 8
+    },
+    "deal": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "file": "deals.jsonl",
+      "rows": 7
+    },
+    "owner": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "file": "owners.jsonl",
+      "rows": 4
+    },
+    "pipeline": {
+      "archived": "not_applicable",
+      "coverage": "complete",
+      "file": "pipelines.jsonl",
+      "rows": 3
+    },
+    "property_def": {
+      "archived": "not_applicable",
+      "coverage": "complete",
+      "file": "property_defs.jsonl",
+      "rows": 107
+    },
+    "relationship": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "file": "relationships.jsonl",
+      "rows": 2
+    },
+    "task": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "file": "tasks.jsonl",
+      "rows": 4
+    }
+  },
+  "provider": "hubspot",
+  "schema_version": 1,
+  "source": "hubspot:1234567"
+}

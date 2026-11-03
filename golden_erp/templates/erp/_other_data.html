@@ -1,0 +1,26 @@
+{% comment %}
+  "Other data" (docs/crm/phase4-fields.md 5.2): provider and undefined sidecar
+  keys, collapsed, escaped, truncated, read-only. Context: ``other`` from
+  core.sidecar_forms.other_data. Behind parties.export_pii, like personal
+  data: no definition says what these values hold.
+{% endcomment %}
+{% if other.count %}
+<section class="card mb-4" id="other-data" aria-labelledby="other-data-title">
+  <div class="card-header pb-0"><h2 class="h6 mb-0" id="other-data-title">Other data</h2></div>
+  <div class="card-body text-sm">
+    {% if other.hidden %}
+    <p class="text-secondary mb-0">{{ other.count }} imported value{{ other.count|pluralize }}. Viewing them needs the “Can export personal data columns from CRM lists” permission.</p>
+    {% else %}
+    <details>
+      <summary>{{ other.count }} imported or undefined value{{ other.count|pluralize }}</summary>
+      <dl class="erp-other-data mt-2 mb-0">
+        {% for key, text in other.rows %}
+        <dt class="text-xs"><code>{{ key }}</code></dt>
+        <dd class="text-break">{{ text }}</dd>
+        {% endfor %}
+      </dl>
+    </details>
+    {% endif %}
+  </div>
+</section>
+{% endif %}

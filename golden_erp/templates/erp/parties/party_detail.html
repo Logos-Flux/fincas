@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+{% load static erp_tags labels crm_tags %}
+
+{% block title %}{{ party.display_name }} — {% label "parties.party" %}{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "party_detail", "party_id": "{{ party.id }}", "party_name": "{{ party.display_name|escapejs }}"}'>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+  /* 6.2: side column beside the main column on lg+; below lg it stacks after
+     the contact points, so a phone still opens on how to reach the party. */
+  .party-layout { display: grid; gap: 0 1.5rem; grid-template-columns: minmax(0, 1fr);
+                  grid-template-areas: "contact" "side" "rest"; }
+  @media (min-width: 992px) {
+    .party-layout { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+                    grid-template-areas: "contact side" "rest side"; }
+  }
+  .party-contact { grid-area: contact; }
+  .party-side { grid-area: side; }
+  .party-rest { grid-area: rest; }
+  .party-kv dt, .erp-defs dt { font-weight: 600; }
+  /* 5.6: definition lists go single-column below md (Bootstrap's col-md-*). */
+</style>
+{% endblock %}
+
+{% block content %}
+{% if party.merged_into_id %}
+<div class="alert alert-warning text-sm" role="status">
+  Merged into <a href="{% url 'erp-party-detail' party.merged_into_id %}" class="alert-link">{{ party.merged_into.display_name }}</a>{% if party.merged_at %} on {{ party.merged_at|date:"M j, Y" }}{% endif %}.
+</div>
+{% endif %}
+{% if party.erased_at %}
+<div class="alert alert-secondary text-sm" role="status">Erased on {{ party.erased_at|date:"M j, Y" }}.</div>
+{% endif %}
+
+{# Header #}
+<div class="card mb-4">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <h1 class="h5 font-weight-bolder mb-1">
+          <i class="fas {% if party.kind == 'organisation' %}fa-building{% else %}fa-user{% endif %} text-secondary me-1" aria-hidden="true"></i>
+          {{ party.display_name }}
+        </h1>
+        <p class="text-sm text-secondary mb-2">
+          {% if party.kind == "organisation" %}{% label "parties.organisation" %}{% else %}{% label "parties.person" %}{% endif %}
+          {% if party.owner %} · Owner: {{ party.owner|profile_name }}{% if party.owner_team %} · {{ party.owner_team.name }}{% if not party.owner_team.is_active %} (archived team){% endif %}{% endif %}{% endif %}
+        </p>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          {% for role in open_roles %}<span class="badge bg-gradient-info">{{ role.label }}</span>{% endfor %}
+          {% if lifecycle_label %}<span class="badge bg-gradient-primary">Lifecycle: {{ lifecycle_label }}</span>{% endif %}
+          {% if contact_type_label %}<span class="badge bg-gradient-secondary">Contact type: {{ contact_type_label }}</span>{% endif %}
+        </div>
+        <ul class="list-unstyled text-sm mb-0">
+          {% if primary_email %}
+          <li class="mb-1">
+            <i class="fas fa-envelope text-secondary me-1" aria-hidden="true"></i>
+            <span id="party-primary-email">{{ primary_email.email }}</span>
+            <button type="button" class="btn btn-link btn-sm p-0 ms-1 mb-0 text-primary party-copy" data-copy-target="party-primary-email" aria-label="Copy email address">
+              <i class="fas fa-copy" aria-hidden="true"></i>
+            </button>
+          </li>
+          {% endif %}
+          {% if primary_phone %}
+          <li>
+            <i class="fas fa-phone text-secondary me-1" aria-hidden="true"></i>
+            <span id="party-primary-phone">{{ primary_phone.display }}</span>
+            <button type="button" class="btn btn-link btn-sm p-0 ms-1 mb-0 text-primary party-copy" data-copy-target="party-primary-phone" aria-label="Copy phone number">
+              <i class="fas fa-copy" aria-hidden="true"></i>
+            </button>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+      <div class="text-end">
+        <div class="d-flex flex-wrap gap-2 justify-content-end mb-3">
+          <span class="badge {% if email_marketing_state == 'granted' %}bg-gradient-success{% elif email_marketing_state == 'withdrawn' %}bg-gradient-danger{% else %}bg-gradient-secondary{% endif %}">
+            Email marketing: {% if email_marketing_state == "granted" %}Granted{% elif email_marketing_state == "withdrawn" %}Withdrawn{% else %}Unknown{% endif %}
+          </span>
+          {% if suppressions %}<span class="badge bg-gradient-danger">Suppressed</span>{% endif %}
+        </div>
+        {% if editable %}
+        <a href="{% url 'erp-party-edit' party.pk %}" class="btn bg-gradient-dark btn-sm mb-0">
+          <i class="fas fa-edit me-1" aria-hidden="true"></i> Edit
+        </a>
+        {% if can_add_role %}
+        <a href="{% url 'erp-party-role-create' party.pk %}" class="btn btn-outline-primary btn-sm mb-0 ms-1">
+          <i class="fas fa-plus me-1" aria-hidden="true"></i> Add role
+        </a>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="party-layout">
+
+  {# 1. Contact points #}
+  <section class="party-contact card mb-4" id="contact-points" aria-labelledby="contact-points-title">
+    <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h2 class="h6 mb-0" id="contact-points-title">Contact points</h2>
+      {% if editable %}
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'erp-party-email-create' party.pk %}" class="btn btn-outline-primary btn-sm mb-0"><i class="fas fa-plus me-1" aria-hidden="true"></i> Email</a>
+        <a href="{% url 'erp-party-phone-create' party.pk %}" class="btn btn-outline-primary btn-sm mb-0"><i class="fas fa-plus me-1" aria-hidden="true"></i> Phone</a>
+        <a href="{% url 'erp-party-address-create' party.pk %}" class="btn btn-outline-primary btn-sm mb-0"><i class="fas fa-plus me-1" aria-hidden="true"></i> Address</a>
+      </div>
+      {% endif %}
+    </div>
+    <div class="card-body">
+      <h3 class="text-xs text-uppercase text-secondary font-weight-bolder mb-2">Emails</h3>
+      <ul class="list-group list-group-flush mb-3">
+        {% for row in emails %}
+        <li class="list-group-item px-0 d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div class="text-sm">
+            <span class="font-weight-bold">{{ row.email }}</span>
+            {% if row.is_primary %}<span class="badge badge-sm bg-gradient-primary ms-1">Primary</span>{% endif %}
+            <span class="badge badge-sm bg-gradient-secondary ms-1">{{ row.get_purpose_display }}</span>
+            {% if row.verified_at %}<span class="badge badge-sm bg-gradient-success ms-1">Verified</span>{% endif %}
+            {% if row.status == "bounced" %}<span class="badge badge-sm bg-gradient-danger ms-1">Bounced</span>{% elif row.status == "obsolete" %}<span class="badge badge-sm bg-gradient-secondary ms-1">Obsolete</span>{% endif %}
+            {% if row.mirrored %}
+            <div class="text-xs text-secondary mt-1">
+              {% if row.mirror_customer %}From {% label "customers.customer" case="lower" %} account <a href="{% url 'erp-customer-detail' row.mirror_customer.pk %}" class="text-primary text-decoration-underline">{{ row.mirror_customer }}</a>{% else %}Mirrored from {{ row.source }}{% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% if not row.mirrored and editable %}
+          <div class="d-flex gap-1">
+            <a href="{% url 'erp-party-email-edit' row.pk %}" class="btn btn-link btn-sm text-primary mb-0 p-1" aria-label="Edit {{ row.email }}">Edit</a>
+            <form method="post" action="{% url 'erp-party-email-delete' row.pk %}" onsubmit="return confirm('Remove this email address?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link btn-sm text-danger mb-0 p-1" aria-label="Remove {{ row.email }}">Remove</button>
+            </form>
+          </div>
+          {% endif %}
+        </li>
+        {% empty %}
+        <li class="list-group-item px-0 text-sm text-secondary">No email addresses.</li>
+        {% endfor %}
+      </ul>
+
+      <h3 class="text-xs text-uppercase text-secondary font-weight-bolder mb-2">Phones</h3>
+      <ul class="list-group list-group-flush mb-3">
+        {% for row in phones %}
+        <li class="list-group-item px-0 d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div class="text-sm">
+            <span class="font-weight-bold">{{ row.display }}</span>{% if row.extension %} ext. {{ row.extension }}{% endif %}
+            {% if row.is_primary %}<span class="badge badge-sm bg-gradient-primary ms-1">Primary</span>{% endif %}
+            <span class="badge badge-sm bg-gradient-secondary ms-1">{{ row.get_purpose_display }}</span>
+            {% if row.line_type != "unknown" %}<span class="badge badge-sm bg-gradient-secondary ms-1">{{ row.get_line_type_display }}</span>{% endif %}
+            {% if row.verified_at %}<span class="badge badge-sm bg-gradient-success ms-1">Verified</span>{% endif %}
+            {% if not row.number_e164 %}<span class="badge badge-sm bg-gradient-warning ms-1">Not a full number</span>{% endif %}
+            {% if row.mirrored %}
+            <div class="text-xs text-secondary mt-1">
+              {% if row.mirror_customer %}From {% label "customers.customer" case="lower" %} account <a href="{% url 'erp-customer-detail' row.mirror_customer.pk %}" class="text-primary text-decoration-underline">{{ row.mirror_customer }}</a>{% else %}Mirrored from {{ row.source }}{% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% if not row.mirrored and editable %}
+          <div class="d-flex gap-1">
+            <a href="{% url 'erp-party-phone-edit' row.pk %}" class="btn btn-link btn-sm text-primary mb-0 p-1" aria-label="Edit {{ row.display }}">Edit</a>
+            <form method="post" action="{% url 'erp-party-phone-delete' row.pk %}" onsubmit="return confirm('Remove this phone number?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link btn-sm text-danger mb-0 p-1" aria-label="Remove {{ row.display }}">Remove</button>
+            </form>
+          </div>
+          {% endif %}
+        </li>
+        {% empty %}
+        <li class="list-group-item px-0 text-sm text-secondary">No phone numbers.</li>
+        {% endfor %}
+      </ul>
+
+      <h3 class="text-xs text-uppercase text-secondary font-weight-bolder mb-2">Addresses</h3>
+      <ul class="list-group list-group-flush">
+        {% for row in addresses %}
+        <li class="list-group-item px-0 d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div class="text-sm">
+            {% if row.label %}<span class="font-weight-bold">{{ row.label }}</span><br>{% endif %}
+            {{ row.address_line_1 }}{% if row.address_line_2 %}, {{ row.address_line_2 }}{% endif %}<br>
+            {{ row.city }}, {{ row.state_province }} {{ row.postal_code }} · {{ row.country }}
+            <div class="mt-1">
+              {% if row.is_primary %}<span class="badge badge-sm bg-gradient-primary">Primary</span>{% endif %}
+              <span class="badge badge-sm bg-gradient-secondary">{{ row.get_purpose_display }}</span>
+              {% if row.valid_to %}<span class="badge badge-sm bg-gradient-secondary">Moved away {{ row.valid_to|date:"M j, Y" }}</span>{% endif %}
+            </div>
+            {% if row.mirrored %}
+            <div class="text-xs text-secondary mt-1">From {% label "customers.customer" case="lower" %} account <a href="{% url 'erp-customer-detail' row.mirror_customer.pk %}" class="text-primary text-decoration-underline">{{ row.mirror_customer }}</a></div>
+            {% endif %}
+          </div>
+          {% if not row.mirrored and editable %}
+          <div class="d-flex gap-1">
+            <a href="{% url 'erp-party-address-edit' row.pk %}" class="btn btn-link btn-sm text-primary mb-0 p-1" aria-label="Edit address {{ row.address_line_1 }}">Edit</a>
+            <form method="post" action="{% url 'erp-party-address-delete' row.pk %}" onsubmit="return confirm('Remove this address?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link btn-sm text-danger mb-0 p-1" aria-label="Remove address {{ row.address_line_1 }}">Remove</button>
+            </form>
+          </div>
+          {% endif %}
+        </li>
+        {% empty %}
+        <li class="list-group-item px-0 text-sm text-secondary">No addresses.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+  {# Side column #}
+  <aside class="party-side" aria-label="Record details">
+    <section class="card mb-4" id="roles" aria-labelledby="roles-title">
+      <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0" id="roles-title">Roles</h2>
+        {% if can_add_role and editable %}
+        <a href="{% url 'erp-party-role-create' party.pk %}" class="btn btn-link btn-sm text-primary mb-0 p-0">Add</a>
+        {% endif %}
+      </div>
+      <div class="card-body text-sm">
+        <ul class="list-unstyled mb-0">
+          {% for role in open_roles %}
+          <li class="mb-2 d-flex justify-content-between gap-2">
+            <span><span class="font-weight-bold">{{ role.label }}</span> <span class="text-secondary">since {{ role.valid_from|date:"M j, Y" }}</span></span>
+            {% if role.editable and editable %}<a href="{% url 'erp-party-role-edit' role.pk %}" class="text-primary" aria-label="Edit role {{ role.label }}">Edit</a>{% endif %}
+          </li>
+          {% empty %}
+          <li class="text-secondary">No current roles.</li>
+          {% endfor %}
+        </ul>
+        {% if past_roles %}
+        <details class="mt-2">
+          <summary class="text-secondary">Past roles ({{ past_roles|length }})</summary>
+          <ul class="list-unstyled mt-2 mb-0">
+            {% for role in past_roles %}
+            <li class="mb-1">{{ role.label }} <span class="text-secondary">{{ role.valid_from|date:"M j, Y" }} – {{ role.valid_to|date:"M j, Y" }}</span></li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="card mb-4" aria-labelledby="access-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="access-title">Access</h2></div>
+      <div class="card-body text-sm">
+        {% if access %}
+        <dl class="party-kv mb-0">
+          <dt>Login</dt><dd>{{ access.username }}{% if not access.is_active %} <span class="badge badge-sm bg-gradient-secondary">Inactive</span>{% endif %}</dd>
+          <dt>Access roles</dt><dd>{{ access.roles|join:", "|default:"—" }}</dd>
+          <dt>Sign-in providers</dt><dd class="mb-0">{{ access.providers|join:", "|default:"Password only" }}</dd>
+        </dl>
+        {% else %}
+        <p class="text-secondary mb-0">No login.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="card mb-4" aria-labelledby="identifiers-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="identifiers-title">Identifiers</h2></div>
+      <div class="card-body text-sm">
+        <ul class="list-unstyled mb-0">
+          {% for ref in identifiers %}
+          <li class="mb-1">
+            <span class="font-weight-bold">{{ ref.source }}</span> <span class="text-secondary">{{ ref.object_type }}</span>
+            {% if ref.source_url %}<a href="{{ ref.source_url }}" target="_blank" rel="noopener noreferrer" class="text-primary">{{ ref.source_id }}</a>{% else %}{{ ref.source_id }}{% endif %}
+          </li>
+          {% empty %}
+          <li class="text-secondary">No external ids.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+
+    <section class="card mb-4" aria-labelledby="record-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="record-title">Record</h2></div>
+      <div class="card-body text-sm">
+        <dl class="party-kv mb-0">
+          <dt>Origin</dt><dd>{{ party.get_origin_display }}</dd>
+          <dt>Marketing contact</dt><dd>{{ party.marketable|yesno:"Yes,No" }}{% if party.marketable_source %} <span class="text-secondary">({{ party.marketable_source }})</span>{% endif %}</dd>
+          <dt>Created</dt><dd>{{ party.created_at|date:"M j, Y H:i" }}</dd>
+          <dt>Updated</dt><dd>{{ party.updated_at|date:"M j, Y H:i" }}</dd>
+          {% if party.kind == "organisation" %}
+          {% if party.legal_name %}<dt>Legal name</dt><dd>{{ party.legal_name }}</dd>{% endif %}
+          {% if party.primary_domain %}<dt>Domain</dt><dd>{{ party.primary_domain }}</dd>{% endif %}
+          {% if party.registration_number %}<dt>Registration number</dt><dd>{{ party.registration_number }}</dd>{% endif %}
+          {% if party.tax_id %}<dt>Tax id</dt><dd>{{ party.tax_id }}</dd>{% endif %}
+          {% endif %}
+        </dl>
+      </div>
+    </section>
+
+    <section class="card mb-4" id="tags" aria-labelledby="tags-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="tags-title">Tags</h2></div>
+      <div class="card-body text-sm">
+        {% for tag in party.tags %}<span class="badge badge-sm bg-gradient-secondary me-1">{{ tag }}</span>{% empty %}<span class="text-secondary">No tags.</span>{% endfor %}
+      </div>
+    </section>
+
+    {% include "erp/_other_data.html" with other=other_data %}
+
+    {% if can_erase %}
+    {# 6.2 danger zone: erasure (7.4). Needs parties.erase_party; not reversible. #}
+    <section class="card mb-4 border border-danger" id="danger-zone" aria-labelledby="danger-zone-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0 text-danger" id="danger-zone-title">Danger zone</h2></div>
+      <div class="card-body text-sm">
+        <details>
+          <summary class="text-danger font-weight-bold">Erase personal data…</summary>
+          <p class="mt-2 mb-2">Removes this person's names, addresses, phone numbers, consent history and login{% if party.merged_from.exists %}, and those of the parties merged into them{% endif %}. Orders, quotes and invoices stay for accounting, under an erased name. Their addresses are suppressed so they are never marketed to again. <strong>This cannot be undone.</strong></p>
+          <form method="post" action="{% url 'erp-party-erase' party.pk %}">
+            {% csrf_token %}
+            <label class="form-label" for="erase-confirm">Type <strong>{{ party.display_name }}</strong> to confirm</label>
+            <input type="text" class="form-control mb-2" id="erase-confirm" name="confirm" autocomplete="off" required>
+            <label class="form-label" for="erase-reason">Reason (kept in the audit log)</label>
+            <textarea class="form-control mb-3" id="erase-reason" name="reason" rows="2" maxlength="1000" required></textarea>
+            <button type="submit" class="btn bg-gradient-danger btn-sm mb-0">Erase permanently</button>
+          </form>
+        </details>
+      </div>
+    </section>
+    {% endif %}
+  </aside>
+
+  <div class="party-rest">
+    {# 2. Next actions and engagements (phase4-fields.md 5.2) #}
+    <section class="card mb-4" id="next-actions" aria-labelledby="next-actions-title">
+      <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h2 class="h6 mb-0" id="next-actions-title">Next actions</h2>
+        {% if editable %}<a href="{% url 'erp-crm-engagement-create' %}?party={{ party.pk }}" class="btn btn-outline-primary btn-sm mb-0"><i class="fas fa-plus me-1" aria-hidden="true"></i> {% label "crm.engagement" %}</a>{% endif %}
+      </div>
+      <div class="card-body text-sm">
+        <ul class="list-unstyled mb-3">
+          {% for task in next_actions %}
+          <li class="mb-2 d-flex justify-content-between gap-2 flex-wrap">
+            <span>
+              <span class="font-weight-bold">{{ task.title }}</span>
+              <span class="text-secondary">· {{ task.kind_label }} · {{ task.assignee|profile_name }}</span>
+              {% if task.engagement %}<span class="text-secondary">· <a href="{% url 'erp-crm-engagement-detail' task.engagement_id %}#next-action" class="text-primary text-decoration-underline">{{ task.engagement.number }}</a></span>{% endif %}
+            </span>
+            <span class="{% if task.overdue %}text-danger font-weight-bold{% else %}text-secondary{% endif %}">{% if task.due_at %}{% if task.overdue %}Overdue: {% else %}Due {% endif %}{{ task.due_at|date:"M j" }}{% else %}No due date{% endif %}</span>
+          </li>
+          {% empty %}
+          <li class="text-secondary">No open {% label "crm.task" plural=True case="lower" %}.</li>
+          {% endfor %}
+        </ul>
+        <h3 class="text-xs text-uppercase text-secondary font-weight-bolder mb-2" id="engagements">{% label "crm.engagement" plural=True %}</h3>
+        <ul class="list-unstyled mb-0">
+          {% for eng in party_engagements %}
+          <li class="mb-2 d-flex justify-content-between gap-2 flex-wrap">
+            <span>
+              <a href="{% url 'erp-crm-engagement-detail' eng.pk %}" class="text-primary font-weight-bold text-decoration-underline">{{ eng.number }}</a> {{ eng.title }}
+              {% if eng.as_contact %}<span class="text-secondary">· as a contact</span>{% endif %}
+            </span>
+            <span class="text-secondary">{% if eng.status == "open" %}{{ eng.stage.name|default:"Open" }}{% else %}{{ eng.get_status_display }}{% endif %} · {{ eng.owner|profile_name }}</span>
+          </li>
+          {% empty %}
+          <li class="text-secondary">No {% label "crm.engagement" plural=True case="lower" %}.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+
+    {# 3. Profile #}
+    <section class="card mb-4" id="profile" aria-labelledby="profile-title">
+      <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0" id="profile-title">Profile</h2>
+        {% if editable %}<a href="{% url 'erp-party-edit' party.pk %}" class="btn btn-link btn-sm text-primary mb-0 p-0" aria-label="Edit profile">Edit</a>{% endif %}
+      </div>
+      <div class="card-body text-sm">
+        <dl class="row erp-defs mb-0">
+          <dt class="col-md-4">Lifecycle stage</dt>
+          <dd class="col-md-8">{% if lifecycle_label %}{{ lifecycle_label }}{% if party.lifecycle_stage_changed_at %} <span class="text-secondary">since {{ party.lifecycle_stage_changed_at|date:"M j, Y" }}</span>{% endif %}{% else %}<span aria-hidden="true">—</span><span class="visually-hidden">unknown</span>{% endif %}</dd>
+          <dt class="col-md-4">Contact type</dt>
+          <dd class="col-md-8">{% if contact_type_label %}{{ contact_type_label }}{% else %}<span aria-hidden="true">—</span><span class="visually-hidden">not set</span>{% endif %}</dd>
+        </dl>
+        {% include "erp/_definition_groups.html" with groups=definition_groups %}
+      </div>
+    </section>
+
+    {# 4. Relationships #}
+    <section class="card mb-4" id="relationships" aria-labelledby="relationships-title">
+      <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0" id="relationships-title">Relationships</h2>
+        {% if editable %}
+        <a href="{% url 'erp-party-relationship-create' party.pk %}" class="btn btn-outline-primary btn-sm mb-0"><i class="fas fa-plus me-1" aria-hidden="true"></i> Relationship</a>
+        {% endif %}
+      </div>
+      <div class="card-body text-sm">
+        {% for label_text, rels in relationship_groups %}
+        <h3 class="text-xs text-uppercase text-secondary font-weight-bolder mb-2{% if not forloop.first %} mt-3{% endif %}">{{ label_text }}</h3>
+        <ul class="list-unstyled mb-0">
+          {% for rel in rels %}
+          <li class="mb-1 d-flex justify-content-between gap-2 flex-wrap">
+            <span>
+              <a href="{% url 'erp-party-detail' rel.other.pk %}" class="text-primary font-weight-bold">{{ rel.other.display_name }}</a>
+              {% if rel.title %}<span class="text-secondary"> · {{ rel.title }}</span>{% endif %}
+              {% if rel.is_primary %}<span class="badge badge-sm bg-gradient-primary ms-1">Primary</span>{% endif %}
+              {% if rel.valid_from %}<span class="text-secondary"> · since {{ rel.valid_from|date:"M j, Y" }}</span>{% endif %}
+            </span>
+            {% if not rel.system and editable %}<a href="{% url 'erp-party-relationship-edit' rel.pk %}?party={{ party.pk }}" class="text-primary" aria-label="Edit relationship with {{ rel.other.display_name }}">Edit</a>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% empty %}
+        <p class="text-secondary mb-0">No current relationships.</p>
+        {% endfor %}
+        {% if past_relationships %}
+        <details class="mt-3">
+          <summary class="text-secondary">Past relationships ({{ past_relationships|length }})</summary>
+          <ul class="list-unstyled mt-2 mb-0">
+            {% for rel in past_relationships %}
+            <li class="mb-1">{{ rel.side_label }} <a href="{% url 'erp-party-detail' rel.other.pk %}" class="text-primary text-decoration-underline">{{ rel.other.display_name }}</a> <span class="text-secondary">until {{ rel.valid_to|date:"M j, Y" }}</span></li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+      </div>
+    </section>
+
+    {# 5. Commerce #}
+    {% if commerce_accounts %}
+    <section class="card mb-4" id="commerce" aria-labelledby="commerce-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="commerce-title">Commerce</h2></div>
+      <div class="card-body px-0 pt-2">
+        <div class="table-responsive">
+          <table class="table align-items-center mb-0">
+            <caption class="visually-hidden">{% label "customers.customer" %} accounts</caption>
+            <thead>
+              <tr>
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-3">{% label "customers.customer" %} account</th>
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder">Pricing tier</th>
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder">Last order</th>
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder">Open {% label "orders.quote" plural=True case="lower" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for account in commerce_accounts %}
+              <tr>
+                <td class="ps-3"><a href="{% url 'erp-customer-detail' account.pk %}" class="text-sm text-primary font-weight-bold">{{ account }}</a>{% if not account.is_active %} <span class="badge badge-sm bg-gradient-secondary">Inactive</span>{% endif %}</td>
+                <td><span class="text-sm">{{ account.get_pricing_tier_display }}</span></td>
+                <td><span class="text-sm">{{ account.last_order_at|date:"M j, Y"|default:"—" }}</span></td>
+                <td><span class="text-sm">{{ account.open_quotes }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if recent_orders %}
+        <h3 class="text-xs text-uppercase text-secondary font-weight-bolder mt-3 mb-2 px-3">Recent {% label "orders.order" plural=True case="lower" %}</h3>
+        <ul class="list-unstyled text-sm px-3 mb-0">
+          {% for order in recent_orders %}
+          <li class="mb-1"><a href="{% url 'erp-order-edit' order.pk %}" class="text-primary">{{ order.order_number }}</a> <span class="text-secondary">· {{ order.created_at|date:"M j, Y" }} · {{ order.get_status_display }}</span> · {{ order.grand_total|money }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+
+    {# Leads (with commerce: how the party arrived) #}
+    {% if leads %}
+    <section class="card mb-4" id="leads" aria-labelledby="leads-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="leads-title">{% label "crm.lead" plural=True %}</h2></div>
+      <div class="card-body text-sm">
+        <ul class="list-unstyled mb-0">
+          {% for lead in leads %}
+          <li class="mb-1"><span class="font-weight-bold">{{ lead.lead_number }}</span> <span class="badge badge-sm bg-gradient-secondary">{{ lead.get_status_display }}</span> <span class="text-secondary">{{ lead.created_at|date:"M j, Y" }}</span></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+    {% endif %}
+
+    {# 6. Timeline (party scope) #}
+    <section class="card mb-4" id="timeline" aria-labelledby="timeline-title">
+      <div class="card-header pb-0"><h2 class="h6 mb-0" id="timeline-title">Timeline</h2></div>
+      <div class="card-body text-sm">
+        <ol class="list-unstyled mb-0">
+          {% for c in party_timeline %}
+          <li class="mb-2">
+            <span class="text-secondary">{{ c.occurred_at|date:"M j, Y H:i" }}</span> ·
+            <span class="font-weight-bold">{{ c.subject|default:c.kind_label }}</span>
+            <span class="text-secondary">· {{ c.kind_label }} · {{ c.get_direction_display }}{% if c.performed_by %} · {{ c.performed_by|profile_name }}{% endif %}</span>
+            {% if c.engagement %}· <a href="{% url 'erp-crm-engagement-detail' c.engagement_id %}#timeline" class="text-primary text-decoration-underline">{{ c.engagement.number }}</a>{% endif %}
+            {% if c.summary %}<div class="text-xs text-secondary">{{ c.summary|truncatechars:160 }}</div>{% endif %}
+          </li>
+          {% empty %}
+          <li class="text-secondary">No communications yet.</li>
+          {% endfor %}
+        </ol>
+      </div>
+    </section>
+
+    {# 7. Consent #}
+    <section class="card mb-4" id="consent" aria-labelledby="consent-title">
+      <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0" id="consent-title">Consent</h2>
+        {% if editable %}
+        <a href="{% url 'erp-party-consent-create' party.pk %}" class="btn btn-outline-primary btn-sm mb-0"><i class="fas fa-plus me-1" aria-hidden="true"></i> Record consent</a>
+        {% endif %}
+      </div>
+      <div class="card-body text-sm">
+        <ul class="list-unstyled mb-0">
+          {% for record in consent_current %}
+          <li class="mb-1">
+            {{ record.get_channel_display }} · {{ record.get_purpose_display }}:
+            <span class="badge badge-sm {% if record.state == 'granted' %}bg-gradient-success{% else %}bg-gradient-danger{% endif %}">{{ record.get_state_display }}</span>
+            <span class="text-secondary">{{ record.occurred_at|date:"M j, Y" }}{% if record.address_normalized %} · {{ record.address_normalized }}{% endif %}</span>
+          </li>
+          {% empty %}
+          <li class="text-secondary">No consent recorded. Without a record, marketing is not allowed.</li>
+          {% endfor %}
+        </ul>
+        {% if consent_history %}
+        <details class="mt-2">
+          <summary class="text-secondary">History ({{ consent_history|length }})</summary>
+          <ul class="list-unstyled mt-2 mb-0">
+            {% for record in consent_history %}
+            <li class="mb-1">{{ record.occurred_at|date:"M j, Y H:i" }} · {{ record.get_channel_display }} {{ record.get_purpose_display|lower }} {{ record.get_state_display|lower }} <span class="text-secondary">({{ record.get_source_display }}{% if record.source_detail %}: {{ record.source_detail }}{% endif %}{% if record.recorded_by %}, by {{ record.recorded_by.get_username }}{% endif %})</span></li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+        {% if suppressions %}
+        <h3 class="text-xs text-uppercase text-secondary font-weight-bolder mt-3 mb-2">Suppressed addresses</h3>
+        <ul class="list-unstyled mb-0">
+          {% for row in suppressions %}
+          <li class="mb-1">{{ row.masked }} · {{ row.get_channel_display }} <span class="badge badge-sm bg-gradient-danger">{{ row.get_reason_display }}</span> <span class="text-secondary">{{ row.created_at|date:"M j, Y" }}</span></li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.querySelectorAll(".party-copy").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var el = document.getElementById(btn.getAttribute("data-copy-target"));
+    if (!el || !navigator.clipboard) return;
+    navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+      btn.setAttribute("aria-label", "Copied");
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,12 @@
+{
+  "payload": null,
+  "provider": "fixture",
+  "request": {
+    "method": "POST",
+    "path": "/v1/contacts"
+  },
+  "response": {
+    "status": 503
+  },
+  "schema_version": 1
+}

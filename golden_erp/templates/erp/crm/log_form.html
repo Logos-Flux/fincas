@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load labels %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+  <div class="card-header pb-0">
+    <p class="text-xs text-secondary mb-1">{% label "crm.engagement" %} <a href="{% url 'erp-crm-engagement-detail' engagement.pk %}" class="text-primary text-decoration-underline">{{ engagement.number }}</a> · {{ engagement.title }}</p>
+    <h1 class="h6 mb-0">Log a communication</h1>
+  </div>
+  <div class="card-body">
+    {% include "erp/crm/_log_form.html" %}
+  </div>
+</div>
+{% endblock %}

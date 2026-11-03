@@ -1,0 +1,20 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {
+        "erased": true
+      },
+      "object_type": "call",
+      "source": "aircall",
+      "source_id": "1009",
+      "source_url": "",
+      "target": "parties.party:party:ada"
+    }
+  ],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

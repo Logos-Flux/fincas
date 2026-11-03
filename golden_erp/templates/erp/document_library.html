@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load static erp_tags %}
+
+{% block title %}Document Library{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      {% comment %}
+        d-block: Tabler's .card-header is `display:flex; align-items:center`,
+        which lays this header's two stacked .rows (title+toggle, then the
+        filter form) side by side and shrinks them. Soft UI's card-header was
+        block; d-block restores that so the rows stack full-width.
+      {% endcomment %}
+      <div class="card-header pb-0 d-block">
+        <div class="row">
+          <div class="col-lg-6 col-7">
+            <h6>Document Library</h6>
+          </div>
+          <div class="col-lg-6 col-5 my-auto text-end">
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-outline-primary btn-sm {% if view_mode != 'list' %}active{% endif %}" onclick="document.getElementById('view-mode').value='grid'; this.closest('form').submit()" form="filter-form" aria-label="Grid view">
+                <i class="fas fa-th"></i>
+              </button>
+              <button type="button" class="btn btn-outline-primary btn-sm {% if view_mode == 'list' %}active{% endif %}" onclick="document.getElementById('view-mode').value='list'; this.closest('form').submit()" form="filter-form" aria-label="List view">
+                <i class="fas fa-list"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        {# Filters #}
+        <form method="get" id="filter-form" class="row mt-3">
+          <input type="hidden" name="view" id="view-mode" value="{{ view_mode|default:'grid' }}">
+          <div class="col-md-4">
+            <div class="input-group mb-3">
+              <span class="input-group-text"><i class="fas fa-search"></i></span>
+              <input type="text" name="q" class="form-control form-control-sm" placeholder="Search documents..." value="{{ search_query }}">
+            </div>
+          </div>
+          <div class="col-md-2">
+            <select name="document_type" aria-label="Filter by document type" class="form-control form-control-sm mb-3" onchange="this.form.submit()">
+              <option value="">All Types</option>
+              {% for val, label in document_type_choices %}
+              <option value="{{ val }}" {% if active_type == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-body">
+        {% if view_mode == "list" %}
+        {# List View #}
+        <div class="table-responsive">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Title</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Product</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Type</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Verified</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-4">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in object_list %}
+              <tr>
+                <td class="ps-3"><span class="text-sm font-weight-bold">{{ doc.title }}</span></td>
+                <td><span class="text-sm">{{ doc.product.title|truncatechars:40 }}</span></td>
+                <td><span class="badge badge-sm bg-gradient-info">{{ doc.get_document_type_display }}</span></td>
+                <td class="text-center">
+                  {% if doc.is_verified %}<i class="fas fa-check-circle text-success"></i>{% else %}<i class="fas fa-minus-circle text-secondary"></i>{% endif %}
+                </td>
+                <td class="text-end pe-4">
+                  {% if doc.r2_url %}
+                  <a href="{{ doc.r2_url }}" target="_blank" class="btn btn-link text-primary p-0 text-sm">
+                    <i class="fas fa-download"></i>
+                  </a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center py-4 text-sm text-secondary">No documents found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        {# Grid View #}
+        <div class="row">
+          {% for doc in object_list %}
+          <div class="col-xl-3 col-md-4 col-sm-6 mb-4">
+            <div class="card card-plain border h-100">
+              <div class="card-body d-flex flex-column p-3">
+                <div class="text-center mb-3">
+                  {% if doc.document_type == "SPEC_SHEET" %}
+                  <i class="fas fa-file-pdf text-danger" style="font-size:2.5rem"></i>
+                  {% elif doc.document_type == "MANUAL" %}
+                  <i class="fas fa-book text-info" style="font-size:2.5rem"></i>
+                  {% elif doc.document_type == "COMPLIANCE" %}
+                  <i class="fas fa-certificate text-success" style="font-size:2.5rem"></i>
+                  {% else %}
+                  <i class="fas fa-file text-secondary" style="font-size:2.5rem"></i>
+                  {% endif %}
+                </div>
+                <h6 class="text-sm font-weight-bold mb-1">{{ doc.title|truncatechars:50 }}</h6>
+                <p class="text-xs text-secondary mb-2">{{ doc.product.title|truncatechars:30 }}</p>
+                <span class="badge badge-sm bg-gradient-info mb-2 align-self-start">{{ doc.get_document_type_display }}</span>
+                <div class="mt-auto text-end">
+                  {% if doc.r2_url %}
+                  <a href="{{ doc.r2_url }}" target="_blank" class="btn btn-outline-primary btn-sm mb-0">
+                    <i class="fas fa-download me-1"></i> Download
+                  </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="col-12 text-center py-5">
+            <p class="text-secondary">No documents found.</p>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      {# Pagination #}
+      {% if is_paginated %}
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <p class="text-sm text-secondary mb-0">
+          Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }}
+        </p>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}&view={{ view_mode }}{% if search_query %}&q={{ search_query }}{% endif %}{% if active_type %}&document_type={{ active_type }}{% endif %}">
+                <i class="fas fa-angle-left"></i>
+              </a>
+            </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+              {% if num == page_obj.number %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+              <li class="page-item"><a class="page-link" href="?page={{ num }}&view={{ view_mode }}{% if search_query %}&q={{ search_query }}{% endif %}{% if active_type %}&document_type={{ active_type }}{% endif %}">{{ num }}</a></li>
+              {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}&view={{ view_mode }}{% if search_query %}&q={{ search_query }}{% endif %}{% if active_type %}&document_type={{ active_type }}{% endif %}">
+                <i class="fas fa-angle-right"></i>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

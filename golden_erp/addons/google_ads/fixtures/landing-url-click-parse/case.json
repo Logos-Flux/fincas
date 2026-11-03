@@ -1,0 +1,20 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A landing URL's gclid / gbraid / wbraid and UTM tags are parsed into the touchpoint, with the paid channel the click implies; a retried event id is a no-op.",
+  "seed": {
+    "deals": [],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001.json"
+    }
+  ]
+}

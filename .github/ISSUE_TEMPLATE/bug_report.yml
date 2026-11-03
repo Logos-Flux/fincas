@@ -1,0 +1,82 @@
+name: Bug report
+description: Something in Fincas does not work as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. **Security issues do not belong here**:
+        report them privately as described in [SECURITY.md](https://github.com/Logos-Flux/fincas/blob/main/SECURITY.md).
+        Please remove secrets and real customer data from anything you paste.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The smallest sequence of steps, commands or API calls that shows the problem.
+      placeholder: |
+        1. Seed a fresh database with `manage.py seed_demo_data`
+        2. Open /erp/…
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Fincas version
+      description: "`pip show fincas`, or the git commit if you run from source."
+      placeholder: "0.4.1"
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.12.7"
+    validations:
+      required: true
+  - type: dropdown
+    id: database
+    attributes:
+      label: Database
+      options:
+        - PostgreSQL 17
+        - PostgreSQL (other version)
+        - SQLite (development)
+    validations:
+      required: true
+  - type: input
+    id: database-version
+    attributes:
+      label: Database version and hosting
+      description: For example "PostgreSQL 17.2, managed, behind PgBouncer in transaction mode".
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment type
+      options:
+        - Local development (runserver)
+        - Docker Compose
+        - systemd / plain host
+        - Fly.io
+        - Kubernetes or another container platform
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: plugins
+    attributes:
+      label: Plugins and settings
+      description: Your `GOLDEN_PLUGINS` list and any settings you changed that may matter.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and tracebacks
+      description: Paste the full traceback or relevant log lines. This is rendered as code.
+      render: text

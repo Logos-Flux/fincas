@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load crm_tags erp_tags labels tz %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "list", "entity": "Task"}'>
+{% endblock %}
+
+{% block content %}
+{% timezone viewer_tz %}
+<div class="card mb-4">
+  <div class="card-header pb-0">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h1 class="h6 mb-0">{{ page_title }}</h1>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <a href="{% url 'erp-crm-task-create' %}?next={{ request.get_full_path|urlencode }}" class="btn bg-gradient-primary btn-sm mb-0">
+          <i class="fas fa-plus me-1" aria-hidden="true"></i> New {{ entity_label|lower }}
+        </a>
+        <div>{% include "erp/_list_export.html" %}{% include "erp/_column_chooser.html" %}</div>
+      </div>
+    </div>
+    {% include "erp/_saved_filters.html" %}
+    <details class="erp-filters mt-3" open>
+    <summary class="btn btn-outline-secondary btn-sm mb-2">Filters</summary>
+    <form method="get" class="row g-2 align-items-start">
+      <div class="col-md-3">
+        <input type="search" name="q" value="{{ search_query }}" class="form-control form-control-sm mb-2" aria-label="Search by title" placeholder="Title">
+      </div>
+      <div class="col-md-auto col-6">
+        <select name="assignee" class="form-control form-control-sm mb-2" aria-label="Filter by assignee" data-auto-submit>
+          {% for value, text in assignee_options %}<option value="{{ value }}"{% if value == assignee_filter %} selected{% endif %}>{{ text }}</option>{% endfor %}
+          {% for group_label, pairs in assignee_groups %}<optgroup label="{{ group_label }}">{% for value, text in pairs %}<option value="{{ value }}"{% if value == assignee_filter %} selected{% endif %}>{{ text }}</option>{% endfor %}</optgroup>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-auto col-6">
+        <select name="status" class="form-control form-control-sm mb-2" aria-label="Filter by status" data-auto-submit>
+          {% for value, text in status_choices %}<option value="{{ value }}"{% if value == status_filter %} selected{% endif %}>{{ text }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-auto col-6">
+        <select name="due" class="form-control form-control-sm mb-2" aria-label="Filter by due date" data-auto-submit>
+          {% for value, text in due_choices %}<option value="{{ value }}"{% if value == due_filter %} selected{% endif %}>{{ text }}</option>{% endfor %}
+        </select>
+      </div>
+      {% include "erp/_list_sort_inputs.html" %}
+      <div class="col-md-auto col-6"><button type="submit" class="btn btn-outline-primary btn-sm mb-2">Apply</button></div>
+    </form>
+    </details>
+  </div>
+  <div class="card-body px-0 pt-0 pb-2">
+    {% include "erp/_list_live_region.html" %}
+    <div class="table-responsive p-0">
+      <table class="table align-items-center mb-0" id="task-list-table">
+            {% include "erp/_list_caption.html" %}
+        <thead><tr>{% include "erp/crm/_list_header.html" %}<th scope="col" class="ps-2"><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody>
+          {% for task in object_list %}
+          <tr>
+            {% for col in visible_columns %}
+            {% if col.id == "title" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><i class="fas {% if task.kind == 'call' %}fa-phone{% elif task.kind == 'email' %}fa-envelope{% elif task.kind == 'meeting' %}fa-calendar{% else %}fa-check{% endif %} text-secondary me-1" aria-hidden="true"></i><span class="text-sm font-weight-bold">{{ task.title }}</span><div class="text-xs text-secondary">{{ task.kind_label }}</div></td>
+            {% elif col.id == "related" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}">{% if task.engagement %}<a href="{% url 'erp-crm-engagement-detail' task.engagement_id %}" class="text-sm text-primary">{{ task.engagement.number }}</a>{% elif task.party %}<a href="{% url 'erp-party-detail' task.party_id %}" class="text-sm text-primary">{{ task.party.display_name }}</a>{% else %}<span class="text-sm text-secondary">—</span>{% endif %}</td>
+            {% elif col.id == "due_at" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm {% if task.overdue %}text-danger font-weight-bold{% endif %}">{% if task.overdue %}Overdue: {% endif %}{% if task.due_at %}{% if task.all_day %}{{ task.due_at|date:"D M j" }}{% else %}{{ task.due_at|date:"D M j, H:i" }}{% endif %}{% else %}—{% endif %}</span></td>
+            {% elif col.id == "assignee" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{{ task.assignee|profile_name }}</span></td>
+            {% elif col.id == "created_by" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{{ task.created_by|profile_name:"—" }}</span></td>
+            {% elif col.id == "priority" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{{ task.get_priority_display }}</span></td>
+            {% elif col.id == "status" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="badge badge-sm {% if task.status == 'done' %}bg-gradient-success{% elif task.status == 'cancelled' %}bg-gradient-secondary{% elif task.overdue %}bg-gradient-danger{% else %}bg-gradient-info{% endif %}">{% if task.overdue %}Overdue{% else %}{{ task.get_status_display }}{% endif %}</span></td>
+            {% else %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}">{% list_cell task col %}</td>
+            {% endif %}
+            {% endfor %}
+            <td>
+              {% if task.is_open %}
+              <form method="post" action="{% url 'erp-crm-task-complete' task.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="btn btn-link btn-sm text-primary mb-0 p-1" aria-label="Complete {{ task.title }}">Complete</button></form>
+              {% else %}
+              <form method="post" action="{% url 'erp-crm-task-reopen' task.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="btn btn-link btn-sm text-primary mb-0 p-1" aria-label="Reopen {{ task.title }}">Reopen</button></form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="{{ visible_columns|length|add:1 }}" class="text-center py-4 text-sm text-secondary">No {{ entity_label_plural|lower }} match.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% include "erp/crm/_pager.html" %}
+</div>
+{% endtimezone %}
+{% include "erp/_list_responsive.html" %}
+{% endblock %}
+
+{% block javascripts %}
+{% include "erp/_list_a11y_script.html" %}
+<script>
+(function() {
+{% include "erp/_list_tools_js.html" %}
+})();
+</script>
+{% endblock %}

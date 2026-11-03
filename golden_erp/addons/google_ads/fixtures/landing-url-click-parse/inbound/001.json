@@ -1,0 +1,20 @@
+{
+  "payload": {
+    "visits": [
+      {
+        "email": "ada@example.com",
+        "event_id": "gtm-0101",
+        "landing_url": "https://shop.example.com/panels?wbraid=WBRAIDFIXTURE01&gbraid=GBRAIDFIXTURE02&utm_source=google&utm_campaign=ios",
+        "occurred_at": "2026-02-25T09:00:00Z"
+      },
+      {
+        "email": "ada@example.com",
+        "event_id": "gtm-0101",
+        "landing_url": "https://shop.example.com/panels?wbraid=WBRAIDFIXTURE01",
+        "occurred_at": "2026-02-25T09:00:00Z"
+      }
+    ]
+  },
+  "provider": "google_ads",
+  "schema_version": 1
+}

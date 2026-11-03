@@ -1,0 +1,28 @@
+{
+  "description": "complete coverage that carries a reason, and a declared total that disagrees",
+  "manifest": [
+    {
+      "op": "set",
+      "path": [
+        "objects",
+        "deal",
+        "declared_total"
+      ],
+      "value": 3
+    },
+    {
+      "op": "set",
+      "path": [
+        "objects",
+        "task",
+        "reasons"
+      ],
+      "value": [
+        {
+          "code": "page_missing",
+          "detail": "page 2"
+        }
+      ]
+    }
+  ]
+}

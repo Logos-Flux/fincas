@@ -1,0 +1,24 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "inconsistent",
+      "file": "contacts.jsonl",
+      "line": 1,
+      "field": "data.emails"
+    },
+    {
+      "code": "inconsistent",
+      "file": "tasks.jsonl",
+      "line": 2,
+      "field": "data.completed_at"
+    },
+    {
+      "code": "inconsistent",
+      "file": "consent.jsonl",
+      "line": 2,
+      "field": "data.state"
+    }
+  ],
+  "warnings": []
+}

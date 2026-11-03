@@ -1,0 +1,14 @@
+{
+  "payload": {
+    "emailAddress": "rep@example.org",
+    "historyId": "1000",
+    "messagesTotal": 1,
+    "threadsTotal": 1
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/profile"
+  },
+  "schema_version": 1
+}

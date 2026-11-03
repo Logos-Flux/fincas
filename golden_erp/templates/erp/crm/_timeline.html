@@ -1,0 +1,65 @@
+{% load labels %}
+{# The timeline (spec 6.3). Context: engagement, timeline_days, timeline_upcoming, timeline_next, kind_chips, active_kinds. Render inside {% timezone viewer_tz %}. #}
+<nav class="d-flex flex-wrap gap-1 mb-3" aria-label="Timeline filters">
+  {% for text, value in kind_chips %}
+  <a href="{{ request.path }}{% if value %}?kinds={{ value }}{% endif %}#timeline"
+     class="btn btn-sm mb-0 {% if value == active_kinds %}bg-gradient-primary{% else %}btn-outline-secondary{% endif %}"
+     {% if value == active_kinds %}aria-current="true"{% endif %}>{{ text }}</a>
+  {% endfor %}
+</nav>
+
+{% if timeline_upcoming %}
+<section class="mb-3" aria-labelledby="timeline-upcoming-title">
+  <h3 class="text-xs text-uppercase text-secondary font-weight-bolder mb-2" id="timeline-upcoming-title">Upcoming</h3>
+  <ul class="list-unstyled mb-0">
+    {% for row in timeline_upcoming %}
+    <li class="d-flex gap-2 align-items-start text-sm mb-1">
+      <i class="{{ row.icon }} text-secondary mt-1" aria-hidden="true"></i>
+      <span><span class="visually-hidden">{{ row.noun }}: </span>{{ row.title }}
+        <span class="text-secondary">· {% if row.all_day %}{{ row.at|date:"D M j" }}{% else %}{{ row.at|date:"D M j, H:i" }}{% endif %}</span></span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% for day in timeline_days %}
+<section class="mb-3" aria-label="{{ day.label }}">
+  <h3 class="text-xs text-uppercase text-secondary font-weight-bolder mb-2">{{ day.label }}</h3>
+  <ul class="list-group list-group-flush">
+    {% for row in day.rows %}
+    <li class="list-group-item px-0 py-2">
+      {% if row.type == "stage" %}
+      <div class="text-sm"><i class="{{ row.icon }} text-secondary me-1" aria-hidden="true"></i>{{ row.title }}{% if row.by %} <span class="text-secondary">by {{ row.by }}</span>{% endif %} <span class="text-xs text-secondary">{{ row.at|time:"H:i" }}</span>{% if row.detail %}<div class="text-xs text-secondary ms-4">{{ row.detail }}</div>{% endif %}</div>
+      {% elif row.type == "task" %}
+      <div class="text-sm"><i class="{{ row.icon }} text-secondary me-1" aria-hidden="true"></i>{{ row.title }}{% if row.by %} <span class="text-secondary">by {{ row.by }}</span>{% endif %} <span class="text-xs text-secondary">{{ row.at|time:"H:i" }}</span></div>
+      {% elif row.type == "document" %}
+      <div class="text-sm"><i class="{{ row.icon }} text-secondary me-1" aria-hidden="true"></i>{% if row.link %}<a href="{{ row.link }}" class="text-primary text-decoration-underline">{{ row.title }}</a>{% else %}{{ row.title }}{% endif %} <span class="text-secondary">{{ row.detail }}</span> <span class="text-xs text-secondary">{{ row.at|time:"H:i" }}</span></div>
+      {% elif row.type == "muted" %}
+      <details class="text-sm text-secondary">
+        <summary><i class="{{ row.icon }} me-1" aria-hidden="true"></i>{{ row.title }}</summary>
+        <ul class="list-unstyled ms-4 mt-1 mb-0">{% for c in row.items %}<li>{{ c.subject|default:c.kind_label }} <span class="text-xs">{{ c.at|time:"H:i" }}</span></li>{% endfor %}</ul>
+      </details>
+      {% else %}
+        {% if row.title %}
+        <details>
+          <summary class="text-sm"><i class="{{ row.icon }} text-secondary me-1" aria-hidden="true"></i>{{ row.title }}</summary>
+          <ul class="list-unstyled ms-3 mt-2 mb-0">
+            {% for c in row.items %}<li class="mb-2">{% include "erp/crm/_communication.html" with c=c %}</li>{% endfor %}
+          </ul>
+        </details>
+        {% else %}
+          {% for c in row.items %}{% include "erp/crm/_communication.html" with c=c %}{% endfor %}
+        {% endif %}
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% empty %}
+<p class="text-sm text-secondary mb-0">Nothing has happened on this {% label "crm.engagement" case="lower" %} yet{% if active_kinds %} of this kind{% endif %}.</p>
+{% endfor %}
+
+{% if timeline_next %}
+<p class="mb-0"><a href="{% url 'erp-crm-engagement-timeline' engagement.pk %}?before={{ timeline_next|urlencode }}{% if active_kinds %}&amp;kinds={{ active_kinds|urlencode }}{% endif %}" class="btn btn-outline-primary btn-sm mb-0">Load older</a></p>
+{% endif %}

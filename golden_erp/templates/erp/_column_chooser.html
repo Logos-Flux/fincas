@@ -1,0 +1,42 @@
+{% comment %}
+  Column chooser (phase4-fields.md 5.3): a server-rendered form in a native
+  <details> disclosure. Without JS, Save posts and the list redirects back
+  with the same query string; with JS (erp/_list_tools_js.html) a pointer
+  tick saves at once and Escape closes the panel, returning focus to the
+  button. Columns a narrow screen hides stay ticked and say so (5.6).
+{% endcomment %}
+{% if chooser %}
+<details class="d-inline-block position-relative text-start erp-chooser" id="column-chooser">
+  <summary class="btn btn-outline-secondary btn-sm mb-0 ms-2" style="list-style:none" aria-label="Configure columns" title="Configure columns">
+    <i class="fas fa-cog" aria-hidden="true"></i>
+  </summary>
+  <div class="card position-absolute shadow-lg border mt-1" style="right:0; z-index:1050; width:290px;">
+    <form method="post" class="card-body pt-3 px-3 pb-3" id="column-chooser-form">
+      {% csrf_token %}
+      <input type="hidden" name="list_action" value="columns">
+      <input type="hidden" name="query" value="{{ list_query }}">
+      <p class="text-sm font-weight-bold mb-1" id="column-chooser-title">Columns</p>
+      <p class="text-xs text-secondary mb-2">At most {{ chooser.max }}.</p>
+      {% for group, items in chooser.groups %}
+      <fieldset class="mb-2">
+        <legend class="text-xs text-uppercase text-secondary font-weight-bolder mb-1">{{ group }}</legend>
+        {% for item in items %}
+        <div class="form-check mb-1">
+          <input class="form-check-input" type="checkbox" name="columns" value="{{ item.column.id }}" id="col-{{ item.column.annotation }}" data-col-id="{{ item.column.id }}"{% if item.checked %} checked{% endif %}>
+          <label class="form-check-label text-sm" for="col-{{ item.column.annotation }}">{{ item.column.label }}{% if item.column.priority == 2 %}<span class="d-md-none text-xs text-secondary"> (shown on wider screens)</span>{% elif item.column.priority == 3 %}<span class="d-lg-none text-xs text-secondary"> (shown on wider screens)</span>{% endif %}</label>
+        </div>
+        {% endfor %}
+      </fieldset>
+      {% endfor %}
+      <label class="text-xs text-secondary mb-1" for="column-chooser-page-size">Rows per page</label>
+      <select name="page_size" id="column-chooser-page-size" class="form-control form-control-sm mb-2">
+        {% for size in chooser.page_sizes %}<option value="{{ size }}"{% if size == chooser.page_size %} selected{% endif %}>{{ size }}</option>{% endfor %}
+      </select>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary btn-sm mb-0">Save</button>
+        <button type="submit" name="reset" value="1" class="btn btn-link btn-sm mb-0 text-primary">Reset to defaults</button>
+      </div>
+    </form>
+  </div>
+</details>
+{% endif %}

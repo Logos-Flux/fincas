@@ -1,0 +1,69 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A document email golden sent (X-Golden-Email-Log naming an existing EmailLog) that comes back through a staff mailbox is skipped: it is logged already. A header naming no EmailLog of this company, or copied into mail not addressed to the log's recipient, is ignored, so an outside sender cannot hide mail with it.",
+  "second_run_requests": [
+    {
+      "form": null,
+      "headers": {
+        "authorization": "Bearer <redacted:oauth_access>"
+      },
+      "json": null,
+      "method": "GET",
+      "path": "/gmail/v1/users/me/history",
+      "query": {
+        "historyTypes": "messageAdded",
+        "maxResults": "50",
+        "startHistoryId": "1010"
+      }
+    }
+  ],
+  "seed": {
+    "email_logs": [
+      {
+        "id": "6f1c2b7e-3d4a-4c8e-9a51-0f2e7d6c5b40",
+        "recipient": "ada@example.com"
+      }
+    ],
+    "grants": [
+      {
+        "owner": "staff:rep",
+        "subject": "rep@example.org",
+        "sync_state": {
+          "cursor": {
+            "history_id": "1000"
+          },
+          "initial_sync_done": true
+        }
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      },
+      {
+        "email": "grace@example.net",
+        "family": "Hopper",
+        "given": "Grace",
+        "key": "grace"
+      }
+    ],
+    "staff": [
+      {
+        "email": "rep@example.org",
+        "key": "rep"
+      },
+      {
+        "email": "boss@example.org",
+        "key": "boss"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "poll": true
+    }
+  ]
+}

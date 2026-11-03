@@ -1,0 +1,241 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SOFT UI COMPAT LAYER
+   ═══════════════════════════════════════════════════════════════════════════
+   Defines the Soft-UI-era utility classes the ERP templates still use, so the
+   framework swap does not require ~1,800 template edits.
+
+   MUST load AFTER tabler.min.css. Several rules below collide by name with
+   Tabler utilities at equal specificity and equal !important — source order
+   is what makes these win. Move this <link> above Tabler and .opacity-5
+   silently becomes 0.05.
+
+   ── Why this exists rather than a rename ─────────────────────────────────
+   Every value here is COPIED from soft-ui-dashboard.css, not mapped by
+   judgement. The "obvious" renames are mostly not equivalent:
+
+     .text-sm  0.875rem + line-height 1.5   -> .fs-4 has NO line-height
+     .text-xs  0.75rem  + line-height 1.25  -> .fs-5 has NO line-height
+     .text-xxs 0.65rem                      -> .fs-6 is 0.625rem (~4% off)
+     .font-weight-bolder 700                -> .fw-bolder is the RELATIVE
+                                               keyword `bolder`, which
+                                               resolves against the inherited
+                                               weight (700 under a normal
+                                               parent, 900 under a bold one)
+
+   778 uses would have silently lost their line-height; 318 would have gained
+   a context-dependent weight. None of that errors — it just renders wrong.
+
+   Two that ARE exact, kept here only so the whole family lives in one place:
+     .font-weight-bold 600 -> .fw-bold 600  (Tabler overrides Bootstrap's 700)
+     .text-lg 1.125rem     -> no .fs-* match anyway
+
+   ── Status: DEBT, deliberately taken ─────────────────────────────────────
+   This keeps Soft UI vocabulary alive in the templates. The follow-up is a
+   rename PR that deletes this file. Decoupled on purpose: "get off the
+   Creative Tim licence" and "adopt Tabler idiom" fail for different reasons
+   and are far easier to debug apart.
+
+   Golden inherits these class names until that PR lands. Documented in
+   docs/plans/2026-07-16-golden-platform §5.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Font size ──────────────────────────────────────────────────────────────
+   .text-sm  502 uses / 41 files
+   .text-xs  276 uses / 33 files
+   .text-xxs 206 uses / 23 files
+   Soft UI split these across two rules (line-height in one, font-size in
+   another); merged here.
+   ─────────────────────────────────────────────────────────────────────────── */
+.text-xxs {
+  font-size: 0.65rem !important;
+}
+
+.text-xs {
+  font-size: 0.75rem !important;
+  line-height: 1.25;
+}
+
+.text-sm {
+  font-size: 0.875rem !important;
+  line-height: 1.5;
+}
+
+.text-lg {
+  font-size: 1.125rem !important;
+}
+
+/* ── Font weight ────────────────────────────────────────────────────────────
+   .font-weight-bold   439 uses / 37 files  (Bootstrap 4 naming)
+   .font-weight-bolder 318 uses / 33 files
+   Note these are 600/700, NOT the 700/800 a reader might assume.
+   ─────────────────────────────────────────────────────────────────────────── */
+.font-weight-bold {
+  font-weight: 600 !important;
+}
+
+.font-weight-bolder {
+  font-weight: 700 !important;
+}
+
+/* ── Opacity ────────────────────────────────────────────────────────────────
+   THE TRAP THIS FILE EXISTS FOR: Tabler defines .opacity-5 as
+   calc(5 / 100) = 0.05 — a 10x difference from Soft UI's 0.5, same class
+   name, no error. And Tabler has no .opacity-6 at all (it jumps
+   .opacity-5 -> .opacity-50 -> .opacity-55), so 38 elements would have gone
+   fully opaque, silently.
+
+   .opacity-5  2 uses / 2 files
+   .opacity-6 38 uses / 5 files
+
+   Once these 40 uses are renamed to .opacity-50 / .opacity-60, delete this
+   block FIRST — it shadows Tabler's whole opacity scale by source order.
+   ─────────────────────────────────────────────────────────────────────────── */
+/* Full Soft UI opacity scale. Soft UI uses opacity-N = N/10 (so opacity-10 = 1.0);
+   Tabler uses N/100 (opacity-10 = 0.1) and has no 7/8/9. Same-name/different-value
+   trap — .opacity-10 (18 uses, mostly on KPI-tile icons) would render at 0.1 and
+   nearly vanish. Values copied from soft-ui-dashboard.css; loaded after Tabler so
+   these win on source order for the names Tabler also defines (1–5, 10, 25, 50…). */
+.opacity-1  { opacity: 0.1 !important; }
+.opacity-2  { opacity: 0.2 !important; }
+.opacity-3  { opacity: 0.3 !important; }
+.opacity-4  { opacity: 0.4 !important; }
+.opacity-5  { opacity: 0.5 !important; }
+.opacity-6  { opacity: 0.6 !important; }
+.opacity-7  { opacity: 0.7 !important; }
+.opacity-8  { opacity: 0.8 !important; }
+.opacity-9  { opacity: 0.9 !important; }
+.opacity-10 { opacity: 1   !important; }
+
+/* Sidebar section headings (includes/sidebar.html) are the theme's brightest
+   text at 60% opacity. Blended over a light surface that is 4.1–4.5:1 for
+   every light palette (fincas 4.36:1 on white: axe color-contrast, serious,
+   found by the harness on 2026-10-26), while the generator only checks the
+   tokens at full strength. Draw them in the muted token instead, which every
+   palette must keep at AA on every surface (scripts/build_erp_themes.py). */
+#sidenav-main .nav-item > h6.opacity-6 { opacity: 1 !important; color: var(--brand-t-muted); }
+
+/* .text-secondary is already the de-emphasised colour. Fading it again (the
+   Soft UI table-header idiom "text-secondary … opacity-7", 60+ uses) pushed
+   header text below AA contrast in every theme. Icons keep their opacity. */
+.text-secondary.opacity-5,
+.text-secondary.opacity-6,
+.text-secondary.opacity-7,
+.text-secondary.opacity-8 { opacity: 1 !important; }
+
+/* .btn reads its text colour from --tblr-btn-color, which beats a plain
+   `color` on the gradient classes above — feed it the fill's on-colour. */
+.btn.bg-gradient-primary { --tblr-btn-color: var(--brand-t-on-accent);  --tblr-btn-hover-color: var(--brand-t-on-accent); }
+.btn.bg-gradient-success { --tblr-btn-color: var(--brand-t-on-success); --tblr-btn-hover-color: var(--brand-t-on-success); }
+.btn.bg-gradient-info    { --tblr-btn-color: var(--brand-t-on-info);    --tblr-btn-hover-color: var(--brand-t-on-info); }
+.btn.bg-gradient-warning { --tblr-btn-color: var(--brand-t-on-warning); --tblr-btn-hover-color: var(--brand-t-on-warning); }
+.btn.bg-gradient-danger  { --tblr-btn-color: var(--brand-t-on-error);   --tblr-btn-hover-color: var(--brand-t-on-error); }
+
+/* Tabler badges read --tblr-secondary (muted) for text, which is unreadable on
+   a coloured .bg-* fill. Use that fill's generated on-colour. */
+.badge.bg-primary { color: var(--brand-t-on-accent); }
+.badge.bg-success { color: var(--brand-t-on-success); }
+.badge.bg-info    { color: var(--brand-t-on-info); }
+.badge.bg-warning { color: var(--brand-t-on-warning); }
+.badge.bg-danger  { color: var(--brand-t-on-error); }
+
+/* Inactive tabs: Tabler colours them from the neutral ramp; use the theme's
+   muted text so they read in every theme. */
+.nav-tabs .nav-link:not(.active) { color: var(--brand-t-muted); }
+
+/* Tabler hard-codes the "secondary" status dot (#6b7280). */
+.status-secondary { --tblr-status-color: var(--brand-t-muted); --tblr-status-color-rgb: var(--brand-t-muted-rgb); }
+
+/* Soft UI-era markup uses .text-dark to mean "strong text" (breadcrumbs, the
+   ERP_NAV icon colours), which turned invisible on every dark theme. Bind it to
+   the theme's emphasis colour so it reads in both modes. */
+.text-dark { color: var(--brand-t-bright) !important; }
+
+/* Tabler uses --tblr-primary for fills AND text. Fills keep the accent; text
+   uses of it read the AA-safe ink (see tabler-bindings.css, rule 4). */
+.text-primary { color: var(--brand-t-accent-ink) !important; }
+.btn-outline-primary { --tblr-btn-color: var(--brand-t-accent-ink); --tblr-btn-border-color: var(--brand-t-accent-ink); }
+
+/* ── Border radius ──────────────────────────────────────────────────────────
+   19 uses / 8 files. No !important in Soft UI — kept unimportant to match.
+   ─────────────────────────────────────────────────────────────────────────── */
+.border-radius-md {
+  border-radius: 0.5rem;
+}
+
+.border-radius-lg {
+  border-radius: 0.75rem;
+}
+
+.border-radius-xl {
+  border-radius: 1rem;
+}
+
+/* ── Gradients ──────────────────────────────────────────────────────────────
+   bg-gradient-* : 272 uses / ~30 files. Tabler has NO bg-gradient-* — the class
+   is undefined there, so these backgrounds simply vanished (KPI/nav tiles went
+   transparent, solid gradient buttons lost their fill). Serves two roles:
+     .btn.bg-gradient-primary  — solid-ish button fill
+     .icon-shape.bg-gradient-* — the tinted icon tile
+   Gradient *color stops* copied verbatim from soft-ui-dashboard.css so the look
+   is identical to before the swap. (Colour values, re-authored as our own CSS —
+   no Creative Tim code, licence stays clean.) The rename PR replaces these with
+   Tabler's .btn-* / .bg-*-lt and deletes this block.
+   ─────────────────────────────────────────────────────────────────────────── */
+/* Re-pointed at theme tokens (2026-10-02): the Soft UI hex stops ignored every
+   theme. Solid fills, each with its generated on-colour so text stays AA. */
+.bg-gradient-primary   { background-color: var(--brand-t-accent);  color: var(--brand-t-on-accent); }
+.bg-gradient-secondary { background-color: var(--brand-t-hover);   color: var(--brand-t-text); }
+.bg-gradient-success   { background-color: var(--brand-t-success); color: var(--brand-t-on-success); }
+.bg-gradient-info      { background-color: var(--brand-t-info);    color: var(--brand-t-on-info); }
+.bg-gradient-warning   { background-color: var(--brand-t-warning); color: var(--brand-t-on-warning); }
+.bg-gradient-danger    { background-color: var(--brand-t-error);   color: var(--brand-t-on-error); }
+.bg-gradient-dark      { background-color: var(--brand-t-bright);  color: var(--brand-t-deep); }
+
+/* ── Icon tiles ─────────────────────────────────────────────────────────────
+   icon-shape : 41 uses / 7 files — Soft UI's rounded icon tile (48px, or 32px
+   with .icon-sm). MUST override Tabler here: Tabler's .icon is a 1.5rem SVG
+   *glyph sizer* and .icon-sm is 1rem — without these rules the tile would
+   collapse to glyph size. Centering added (Soft UI relied on a separate rule;
+   the KPI markup has no d-flex of its own). Values from soft-ui-dashboard.css. */
+.icon-shape {
+  width: 48px;
+  height: 48px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-position: center;
+}
+.icon-shape.icon-sm {
+  width: 32px;
+  height: 32px;
+}
+
+/* ── Sticky navbar & z-index ──────────────────────────────────────────────
+   Soft UI defined .z-index-sticky { z-index: 1020; } and .top-1 { top: 1%; }.
+   The main ERP top navigation uses position-sticky, top-1, and z-index-sticky.
+   Without an explicit z-index (>= 1020), the navbar's stacking context sits at
+   z-index: auto in the DOM before .page-body. Any positioned element in
+   .page-body (such as .card with position: relative) is painted on top of the
+   navbar, causing dropdown menus (theme picker, user account) to drop behind
+   the content cards below and become unclickable.
+   ─────────────────────────────────────────────────────────────────────────── */
+.z-index-sticky,
+.navbar-main {
+  z-index: 1020 !important;
+}
+
+.top-1 {
+  top: 1% !important;
+}
+
+
+/* Keyboard focus on text fields (phase4-fields.md 5.7). Inside an
+   .input-group the framework's focus box-shadow is clipped and the border
+   change alone is too faint, so a field reached with Tab showed no ring.
+   Theme token only. */
+.form-control:focus-visible,
+.form-select:focus-visible {
+  outline: 2px solid var(--brand-t-accent);
+  outline-offset: 1px;
+}

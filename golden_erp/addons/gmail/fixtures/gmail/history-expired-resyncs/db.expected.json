@@ -1,0 +1,42 @@
+{
+  "communications": [
+    {
+      "direction": "inbound",
+      "engagement": null,
+      "kind": "email",
+      "occurred_at": "2026-03-02T14:00:00Z",
+      "participants": [
+        {
+          "address": "grace@example.net",
+          "party": "party:grace",
+          "role": "from"
+        },
+        {
+          "address": "rep@example.org",
+          "party": null,
+          "role": "to"
+        }
+      ],
+      "party": "party:grace",
+      "provider": "gmail",
+      "status": "completed",
+      "subject": "After a gap",
+      "thread_key": "mid:755390836b80bc4c81741516327448b9fa2e21b8"
+    }
+  ],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {},
+      "object_type": "message",
+      "source": "gmail",
+      "source_id": "mid:755390836b80bc4c81741516327448b9fa2e21b8dec2b73441e1283b7c036725",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    }
+  ],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

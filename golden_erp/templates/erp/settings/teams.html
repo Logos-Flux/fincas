@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <div>
+    <h1 class="h5 mb-0">{{ page_title }}</h1>
+    <p class="text-xs text-secondary mb-0">Teams are org structure, not permissions. A record takes its owner's team when the owner changes, and keeps it when the person later moves team. Keys never change once saved; archive a team rather than delete it.</p>
+  </div>
+  {% if can_create %}<a href="{% url 'erp-settings-team-create' %}" class="btn bg-gradient-primary btn-sm mb-0"><i class="fas fa-plus me-1" aria-hidden="true"></i> New team</a>{% endif %}
+</div>
+
+<div class="card mb-4">
+  <div class="card-body px-0 pt-2 pb-2">
+    <div class="table-responsive p-0">
+      <table class="table align-items-center mb-0">
+        <caption class="visually-hidden">Teams</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-3">Team</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">Key</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">Members</th>
+            <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder ps-2">State</th>
+            {% if can_manage %}<th scope="col" class="ps-2"><span class="visually-hidden">Actions</span></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for team in teams %}
+          <tr id="team-{{ team.pk }}">
+            <th scope="row" class="ps-3"><span class="text-sm font-weight-bold">{{ team.name }}</span></th>
+            <td class="ps-2"><code class="text-xs">{{ team.key }}</code></td>
+            <td class="ps-2 text-sm text-wrap">{{ team.member_names|join:", "|default:"No members" }}</td>
+            <td class="ps-2 text-sm">{% if team.is_active %}Active{% else %}Archived{% endif %}</td>
+            {% if can_manage %}<td class="ps-2"><a href="{% url 'erp-settings-team-edit' team.pk %}" class="btn btn-link btn-sm text-primary mb-0 p-1" aria-label="Edit {{ team.name }}">Edit</a></td>{% endif %}
+          </tr>
+          {% empty %}
+          <tr><td colspan="{% if can_manage %}5{% else %}4{% endif %}" class="ps-3 text-sm text-secondary">No teams yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% if not can_manage %}<p class="text-xs text-secondary">Creating and editing teams needs the “Can create and edit teams” permission.</p>{% endif %}
+{% endblock %}

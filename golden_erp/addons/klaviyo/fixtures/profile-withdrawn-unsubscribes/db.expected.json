@@ -1,0 +1,47 @@
+{
+  "communications": [],
+  "consents": [
+    {
+      "channel": "email",
+      "occurred_at": "2026-02-01T10:00:00Z",
+      "party": "party:ada",
+      "purpose": "marketing",
+      "source": "portal",
+      "state": "granted"
+    },
+    {
+      "channel": "email",
+      "occurred_at": "2026-02-20T09:00:00Z",
+      "party": "party:ada",
+      "purpose": "marketing",
+      "source": "portal",
+      "state": "withdrawn"
+    }
+  ],
+  "external_refs": [
+    {
+      "metadata": {
+        "address": "b5fc85e55755f9e0d030a10ab4429b6b2944855f9a0d60077fe832becbc41d72",
+        "list": "XFIX01",
+        "state": "unsubscribed"
+      },
+      "object_type": "profile",
+      "source": "klaviyo",
+      "source_id": "01FIXTUREPROFILEADA0000000",
+      "source_url": "",
+      "target": "parties.party:party:ada"
+    }
+  ],
+  "outbox": [
+    {
+      "consumer": "klaviyo.profile",
+      "event": "push",
+      "idempotency_key": "sync:ada:1",
+      "object": "party:ada",
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

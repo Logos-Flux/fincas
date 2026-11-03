@@ -1,0 +1,42 @@
+{
+  "communications": [
+    {
+      "direction": "inbound",
+      "engagement": null,
+      "kind": "email",
+      "occurred_at": "2026-03-02T14:00:00Z",
+      "participants": [
+        {
+          "address": "ada@example.com",
+          "party": "party:ada",
+          "role": "from"
+        },
+        {
+          "address": "rep@example.org",
+          "party": null,
+          "role": "to"
+        }
+      ],
+      "party": "party:ada",
+      "provider": "gmail",
+      "status": "completed",
+      "subject": "Refreshed",
+      "thread_key": "mid:d54ce4b1406c979cc6c484e947144dea5e1ecdd2"
+    }
+  ],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {},
+      "object_type": "message",
+      "source": "gmail",
+      "source_id": "mid:d54ce4b1406c979cc6c484e947144dea5e1ecdd23e9c4d71c707045dee9a1446",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    }
+  ],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

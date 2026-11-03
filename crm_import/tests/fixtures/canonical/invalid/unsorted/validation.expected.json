@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "unsorted",
+      "file": "contacts.jsonl",
+      "line": 2,
+      "field": "source_id"
+    }
+  ],
+  "warnings": []
+}

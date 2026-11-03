@@ -1,0 +1,12 @@
+{
+  "description": "A deals CSV whose last line is cut short (2.13 row 8): the short row is dropped, deals are partial.",
+  "base": "export-csv",
+  "kwargs": {
+    "time_zone": "America/New_York"
+  },
+  "added": {
+    "deal": [
+      "truncated_export"
+    ]
+  }
+}

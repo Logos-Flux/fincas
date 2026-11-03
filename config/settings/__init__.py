@@ -1,0 +1,1 @@
+"""Fincas settings package."""

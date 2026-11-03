@@ -1,0 +1,36 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "An answered inbound call from a known number (call.ended webhook) becomes one completed call communication linked to the party, its only open engagement and the agent; the recording link stays in the raw payload and is never requested.",
+  "seed": {
+    "engagements": [
+      {
+        "key": "eng:ada",
+        "party": "party:ada"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada",
+        "phone": "+1 202-555-0143"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.org",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "status": 200,
+      "webhook": "inbound/001.json"
+    },
+    {
+      "drain": true
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {
+        "date_updated": "1772463600000",
+        "pushed": {
+          "all_day": "2026-03-02T15:00:00Z",
+          "due_at": "2026-03-02T15:00:00Z"
+        }
+      },
+      "object_type": "task",
+      "source": "clickup",
+      "source_id": "86a0fx01",
+      "source_url": "https://app.clickup.com/t/86a0fx01",
+      "target": "crm.task:task:t1"
+    }
+  ],
+  "outbox": [
+    {
+      "consumer": "clickup.task",
+      "event": "update",
+      "idempotency_key": "task:t1:2026-03-02T15:00:00+00:00:c14ac5f51de6",
+      "object": "task:t1",
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [
+    {
+      "all_day": false,
+      "assignee": "staff:sam",
+      "due_at": "2026-03-09T16:30:00Z",
+      "party": "party:ada",
+      "source": "erp",
+      "status": "open",
+      "title": "Call Ada back"
+    }
+  ],
+  "touchpoints": []
+}

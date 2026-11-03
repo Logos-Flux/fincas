@@ -1,0 +1,44 @@
+<script>
+  // A table that scrolls sideways must be reachable by keyboard (axe
+  // scrollable-region-focusable): tabindex, a region role and a name from the
+  // nearest heading. Only while it actually scrolls, so a wide screen gets no
+  // extra tab stops. Re-evaluated on resize.
+  (function () {
+    function nameFor(el) {
+      var caption = el.querySelector("caption");
+      if (caption && caption.textContent.trim()) return caption.textContent.trim();
+      var box = el.closest(".card, section, main") || document.body;
+      var heading = box.querySelector("h1, h2, h3, h4, h5, h6, .card-title");
+      return (heading && heading.textContent.trim()) || "Table";
+    }
+    function apply() {
+      document.querySelectorAll(".table-responsive").forEach(function (el) {
+        // Strict, as axe measures it: a 1 px vertical overflow (a border
+        // rounding on a card table) already makes the region scrollable.
+        var scrolls = el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight;
+        if (scrolls && !el.hasAttribute("tabindex")) {
+          el.setAttribute("tabindex", "0");
+          el.setAttribute("role", "region");
+          if (!el.hasAttribute("aria-label")) el.setAttribute("aria-label", nameFor(el));
+          el.setAttribute("data-scroll-region", "1");
+        } else if (!scrolls && el.getAttribute("data-scroll-region") === "1") {
+          el.removeAttribute("tabindex"); el.removeAttribute("role"); el.removeAttribute("aria-label");
+          el.removeAttribute("data-scroll-region");
+        }
+      });
+    }
+    apply();
+    window.addEventListener("load", apply);
+    window.addEventListener("resize", apply);
+    // The theme stylesheet swaps in after the document parsed and can change
+    // a table's borders by a pixel: watch the wrappers themselves.
+    if (window.ResizeObserver) {
+      var observer = new ResizeObserver(apply);
+      document.querySelectorAll(".table-responsive").forEach(function (el) { observer.observe(el); });
+      observer.observe(document.body);
+    } else {
+      setTimeout(apply, 500);
+      setTimeout(apply, 2000);
+    }
+  })();
+</script>

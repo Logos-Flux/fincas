@@ -1,0 +1,33 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A klaviyo.erase row files one data-privacy deletion per profile id and keeps no id afterwards.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "enqueue": {
+        "consumer": "klaviyo.erase",
+        "key": "erase:fixture-erasure-1",
+        "payload": {
+          "refs": [
+            {
+              "object_type": "profile",
+              "source_id": "01FIXTUREPROFILEADA0000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "drain": true
+    }
+  ]
+}

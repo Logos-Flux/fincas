@@ -1,0 +1,50 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "The first poll runs suppressed from initial_since, follows next_page_link, ingests the finished call and leaves the one in progress; the cursor holds at the call in progress so the next poll re-reads it.",
+  "second_run_requests": [
+    {
+      "form": null,
+      "headers": {
+        "authorization": "Basic <redacted:api_key>"
+      },
+      "json": null,
+      "method": "GET",
+      "path": "/v1/calls",
+      "query": {
+        "from": "1772463200",
+        "order": "asc",
+        "page": "1",
+        "per_page": "50"
+      }
+    }
+  ],
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada",
+        "phone": "+1 202-555-0143"
+      },
+      {
+        "email": "grace@example.net",
+        "family": "Hopper",
+        "given": "Grace",
+        "key": "grace",
+        "phone": "+1 202-555-0144"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.org",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "poll": true
+    }
+  ]
+}

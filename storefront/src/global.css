@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme {
+  --color-t-deep: var(--color-t-deep, #08090a);
+  --color-t-surface: var(--color-t-surface, #0f1011);
+  --color-t-card: var(--color-t-card, #191a1b);
+  --color-t-hover: var(--color-t-hover, #28282c);
+  --color-t-text: var(--color-t-text, #d0d6e0);
+  --color-t-bright: var(--color-t-bright, #f7f8f8);
+  --color-t-muted: var(--color-t-muted, #8a8f98);
+  --color-t-accent: var(--color-t-accent, #5e6ad2);
+  --color-t-accent-ink: var(--color-t-accent-ink, #9da3ff);
+  --color-t-accent-alt: var(--color-t-accent-alt, #7170ff);
+  --color-t-accent-glow: var(--color-t-accent-glow, rgba(94, 106, 210, 0.2));
+  --color-t-info: var(--color-t-info, #828fff);
+  --color-t-success: var(--color-t-success, #27a644);
+  --color-t-warning: var(--color-t-warning, #f59e0b);
+  --color-t-error: var(--color-t-error, #ef4444);
+  --color-t-border: var(--color-t-border, rgba(255, 255, 255, 0.08));
+  --color-t-border-active: var(
+    --color-t-border-active,
+    rgba(113, 112, 255, 0.55)
+  );
+  /* Text on an accent fill. Every theme sets it (and --color-t-accent-ink)
+     via scripts/derive-theme-contrast-tokens.py. */
+  --color-t-on-accent: var(--color-t-on-accent, #ffffff);
+  --font-primary: var(--font-primary, system-ui, -apple-system, sans-serif);
+  --font-display: var(--font-display, system-ui, -apple-system, sans-serif);
+  --font-mono: var(--font-mono, ui-monospace, Menlo, monospace);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  background-color: var(--color-t-deep, #08090a);
+  color: var(--color-t-text, #d0d6e0);
+  font-family: var(--font-primary, system-ui, sans-serif);
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-t-deep, #08090a);
+  color: var(--color-t-text, #d0d6e0);
+  font-family: var(--font-primary, system-ui, sans-serif);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-t-deep, #08090a);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-t-hover, #28282c);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-t-muted, #8a8f98);
+}
+
+/* Category body copy (lib/body-copy.ts renders the ERP's markdown). */
+.body-copy h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+}
+.body-copy h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-top: 1rem;
+}
+.body-copy ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.body-copy a {
+  text-decoration: underline;
+  color: var(--color-t-accent-ink, var(--color-t-accent, #5e6ad2));
+}
+.body-copy p + p,
+.body-copy ul + p,
+.body-copy p + ul {
+  margin-top: 0.75rem;
+}

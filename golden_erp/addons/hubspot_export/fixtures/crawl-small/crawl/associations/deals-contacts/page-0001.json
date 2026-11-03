@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "POST",
+    "path": "/crm/v4/associations/deals/contacts/batch/read",
+    "query": {},
+    "body": {
+      "inputs": [
+        {
+          "id": "401"
+        },
+        {
+          "id": "402"
+        },
+        {
+          "id": "403"
+        },
+        {
+          "id": "404"
+        },
+        {
+          "id": "405"
+        },
+        {
+          "id": "406"
+        },
+        {
+          "id": "407"
+        }
+      ]
+    }
+  },
+  "payload": {
+    "results": [
+      {
+        "from": {
+          "id": "401"
+        },
+        "to": [
+          {
+            "toObjectId": 301,
+            "associationTypes": [
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 3,
+                "label": null
+              },
+              {
+                "category": "USER_DEFINED",
+                "typeId": 41,
+                "label": "Decision maker"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "from": {
+          "id": "402"
+        },
+        "to": [
+          {
+            "toObjectId": 303,
+            "associationTypes": [
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 3,
+                "label": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "from": {
+          "id": "403"
+        },
+        "to": [
+          {
+            "toObjectId": 304,
+            "associationTypes": [
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 3,
+                "label": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "from": {
+          "id": "404"
+        },
+        "to": [
+          {
+            "toObjectId": 302,
+            "associationTypes": [
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 3,
+                "label": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "from": {
+          "id": "406"
+        },
+        "to": [
+          {
+            "toObjectId": 305,
+            "associationTypes": [
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 3,
+                "label": null
+              },
+              {
+                "category": "USER_DEFINED",
+                "typeId": 42,
+                "label": "Champion"
+              }
+            ]
+          },
+          {
+            "toObjectId": 306,
+            "associationTypes": [
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 3,
+                "label": null
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

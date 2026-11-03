@@ -1,0 +1,318 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   AUTH PAGES — sign-in and the four password-reset steps
+   ═══════════════════════════════════════════════════════════════════════════
+
+   The auth pages are the one part of the ERP that does NOT load a CSS
+   framework. They render exactly five short forms, and Tabler is ~536 KB, so
+   they hand-roll their handful of controls instead. That is deliberate.
+
+   WHERE THIS CAME FROM. This file is login.html's inline <style> block,
+   extracted verbatim during the Tabler swap. Two things forced it:
+
+     1. The four password_reset_* pages were built on Soft UI markup
+        (.main-content, .page-header.min-vh-75, .card-plain, .oblique,
+        .text-gradient, .mt-8, .me-n8 …) and loaded soft-ui-dashboard.css
+        directly — they never extended base.html, so the framework swap
+        went straight past them. Deleting Soft UI would have left four
+        unstyled pages. Note .page-header exists in BOTH frameworks and means
+        completely different things (Soft UI: full-bleed hero; Tabler: a
+        header bar), so they would have looked plausible-but-wrong rather
+        than obviously broken.
+     2. login.html duplicated all eleven EVA-01 colours inline under their
+        pre-rename names (--bridge-*, --eva-*), so a re-brand would have
+        silently skipped the first page every user sees.
+
+   Both are fixed by one shared stylesheet. The colours are now var()
+   references to themes/eva-01.css, which every auth page loads ahead of this
+   file. All eleven mapped exactly — the values did not change:
+
+     --bridge-deep/surface/card/hover  →  --brand-t-deep/surface/card/hover
+     --bridge-bright/text/muted        →  --brand-t-bright/text/muted
+     --bridge-border, --bridge-error   →  --brand-t-border, --brand-t-error
+     --eva-purple, --eva-green         →  --brand-t-accent, --brand-t-accent-alt
+
+   These pages are dark-only and always have been — there is no light EVA-01.
+   They do not set [data-bs-theme], so they never inherit the theme file's
+   dark-scoped rules; only its :root token block applies. That is why every
+   rule below is unconditional.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  background-color: var(--brand-t-deep);
+  /* Two accent washes over the circuit-board field. The SVG tile is the same
+     one themes/eva-01.css puts on the app body, and it carries the same token
+     leak: #1e2548 is baked into the data: URI twice because a data: URI cannot
+     read a CSS variable. Re-brand --brand-t-border and these traces will NOT
+     follow. Keep in sync with eva-01.css §2 by hand. */
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(123,47,190,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(1,255,112,0.04) 0%, transparent 40%),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30h60M30 0v60' stroke='%231e2548' stroke-width='0.5' fill='none'/%3E%3Ccircle cx='30' cy='30' r='1.5' fill='%231e2548'/%3E%3Ccircle cx='0' cy='30' r='1' fill='%231e2548'/%3E%3Ccircle cx='60' cy='30' r='1' fill='%231e2548'/%3E%3Ccircle cx='30' cy='0' r='1' fill='%231e2548'/%3E%3Ccircle cx='30' cy='60' r='1' fill='%231e2548'/%3E%3C/svg%3E");
+  color: var(--brand-t-text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Shell ────────────────────────────────────────────────────────────── */
+
+.login-container {
+  width: 100%;
+  max-width: 420px;
+  padding: 0 24px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 20px rgba(123,47,190,0.3));
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brand-t-bright);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.login-subtitle {
+  font-size: 0.75rem;
+  color: var(--brand-t-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────── */
+
+.login-card {
+  background: linear-gradient(135deg, rgba(15,21,53,0.95) 0%, rgba(26,31,61,0.8) 100%);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--brand-t-border);
+  border-radius: 12px;
+  padding: 36px 32px;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.3),
+    0 0 40px rgba(123,47,190,0.06);
+  transition: border-color 300ms, box-shadow 300ms;
+}
+
+.login-card:hover {
+  border-color: rgba(123,47,190,0.25);
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.3),
+    0 0 60px rgba(123,47,190,0.1);
+}
+
+/* Heading + lede inside the card. Used by the password-reset steps, which
+   carry their title in the card rather than in .login-header. */
+.login-card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--brand-t-bright);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.login-lede {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--brand-t-text);
+  margin-bottom: 24px;
+}
+
+.login-note {
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--brand-t-muted);
+  margin-bottom: 20px;
+}
+
+/* ── Alerts ───────────────────────────────────────────────────────────── */
+
+.login-error {
+  background: rgba(227,26,26,0.12);
+  border: 1px solid rgba(227,26,26,0.25);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  font-size: 0.8rem;
+  color: #f87171;
+  letter-spacing: 0.02em;
+}
+
+.login-error p { margin: 0; }
+.login-error p + p { margin-top: 4px; }
+
+.login-hint {
+  border: 1px dashed rgba(94,106,210,0.45);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-top: 20px;
+  font-size: 0.8rem;
+  color: #a5b4fc;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+.login-hint code {
+  background: rgba(94,106,210,0.15);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+/* ── Form ─────────────────────────────────────────────────────────────── */
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--brand-t-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--brand-t-card);
+  border: 1px solid var(--brand-t-border);
+  border-radius: 6px;
+  color: var(--brand-t-bright);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  transition: border-color 200ms, box-shadow 200ms;
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: var(--brand-t-muted);
+  opacity: 0.6;
+}
+
+.form-input:focus {
+  border-color: var(--brand-t-accent);
+  box-shadow: 0 0 12px rgba(123,47,190,0.2), 0 0 24px rgba(123,47,190,0.08);
+  background: var(--brand-t-hover);
+}
+
+/* ── Button ───────────────────────────────────────────────────────────── */
+
+.btn-login {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  background: linear-gradient(135deg, var(--brand-t-accent), #5a1f94);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 200ms;
+  box-shadow: 0 0 20px rgba(123,47,190,0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-login:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 30px rgba(123,47,190,0.35), 0 4px 16px rgba(0,0,0,0.3);
+  color: #fff;
+}
+
+.btn-login:active {
+  transform: translateY(0);
+}
+
+/* Scan line sweep on hover */
+.btn-login::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  transition: left 400ms;
+}
+
+.btn-login:hover::after {
+  left: 100%;
+}
+
+/* Single sign-on (OIDC providers, one button each) under the password form */
+.login-sso {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--brand-t-border);
+}
+
+.btn-sso {
+  background: transparent;
+  border: 1px solid var(--brand-t-accent);
+  color: var(--brand-t-text);
+  box-shadow: none;
+}
+
+.btn-sso:hover {
+  color: var(--brand-t-text);
+}
+
+/* ── Links ────────────────────────────────────────────────────────────── */
+
+.login-footer {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.login-footer a {
+  color: var(--brand-t-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: color 200ms;
+}
+
+.login-footer a:hover {
+  color: var(--brand-t-accent);
+}
+
+/* ── Status bar ───────────────────────────────────────────────────────── */
+
+.status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.65rem;
+  color: var(--brand-t-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-top: 1px solid rgba(30,37,72,0.5);
+}

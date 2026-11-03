@@ -1,0 +1,47 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {
+        "address": "b5fc85e55755f9e0d030a10ab4429b6b2944855f9a0d60077fe832becbc41d72",
+        "list": "XFIX01",
+        "lists": [],
+        "state": "unsubscribed",
+        "suppressed": true
+      },
+      "object_type": "profile",
+      "source": "klaviyo",
+      "source_id": "01FIXTUREPROFILEADA0000000",
+      "source_url": "",
+      "target": "parties.party:party:ada"
+    },
+    {
+      "metadata": {},
+      "object_type": "event",
+      "source": "klaviyo",
+      "source_id": "01FIXTUREEVENTBOUNCE00001",
+      "source_url": "",
+      "target": "parties.party:party:ada"
+    }
+  ],
+  "outbox": [],
+  "suppressions": [
+    {
+      "channel": "email",
+      "hint": "",
+      "lifted": true,
+      "reason": "opt_out",
+      "source": "erp"
+    },
+    {
+      "channel": "email",
+      "hint": "a***@example.com",
+      "lifted": false,
+      "reason": "hard_bounce",
+      "source": "api"
+    }
+  ],
+  "tasks": [],
+  "touchpoints": []
+}

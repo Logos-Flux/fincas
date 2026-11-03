@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "invalid_json",
+      "file": "manifest.json",
+      "line": null,
+      "field": ""
+    }
+  ],
+  "warnings": []
+}

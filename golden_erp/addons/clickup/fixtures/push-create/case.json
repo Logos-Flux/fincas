@@ -1,0 +1,43 @@
+{
+  "golden": [
+    {
+      "assignee": "sam",
+      "due": "2026-03-05",
+      "engagement": "deal",
+      "key": "t1",
+      "list": "901",
+      "op": "create",
+      "title": "Call Ada back"
+    }
+  ],
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A golden task sent to a mapped list is created in ClickUp with golden's id in its custom field, then the ref is written with the acknowledged date_updated; a replay sends nothing.",
+  "seed": {
+    "engagements": [
+      {
+        "key": "deal",
+        "number": "EN-00042",
+        "party": "ada"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.com",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "drain": true
+    }
+  ]
+}

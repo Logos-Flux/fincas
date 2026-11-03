@@ -1,0 +1,81 @@
+{% load static %}
+<script src="{% static 'assets/js/tabler.min.js' %}"></script>
+<script>
+  // Tabler's UMD bundle exports under window.tabler (components + a
+  // .bootstrap namespace), NOT window.bootstrap like Soft UI's bundle did.
+  // Several templates (product_profile, customer_detail, document_form)
+  // call bootstrap.Modal/Tab/Toast programmatically — keep that global alive.
+  window.bootstrap = window.bootstrap || (window.tabler && window.tabler.bootstrap);
+</script>
+{% comment %}
+  JS stack swapped 2026-08-17: assets/js/tabler.min.js is the @tabler/core
+  1.4.0 dist bundle (dist/js/tabler.min.js), version-matched to the vendored
+  assets/css/tabler.min.css (also 1.4.0). It bundles Bootstrap 5.3.7 +
+  @popperjs/core 2.11.x in one file, replacing Soft UI's separate
+  core/popper.min.js + core/bootstrap.min.js (Bootstrap 5.1.3) — the CSS/JS
+  version mismatch documented here previously is resolved.
+  Everything the templates use is stock Bootstrap data-bs API
+  (tab/collapse/modal/dropdown toggles, alert/modal/toast dismiss), all
+  present unchanged in 5.3, plus programmatic bootstrap.Modal/Tab/Toast
+  calls served by the window.bootstrap shim above.
+  Also removed at the same time: plugins/perfect-scrollbar.min.js,
+  plugins/smooth-scrollbar.min.js and the Scrollbar.init snippet —
+  #sidenav-scrollbar exists in no template (Soft UI leftover, already a
+  no-op).
+{% endcomment %}
+<script>
+  // Theme picker (golden §5.4): N themes from settings.ERP_THEMES, embedded
+  // as JSON by base.html (json_script blob #erp-themes-data).
+  // localStorage['erp-theme'] stores the registry NAME; the pre-paint
+  // snippet in base.html already applied it, so this only has to (a) wire
+  // the navbar dropdown items ([data-theme-pick] in navigation.html) and
+  // (b) keep the active-item marker in sync.
+  (function() {
+    var dataEl = document.getElementById('erp-themes-data');
+    if (!dataEl) return;
+    var themes;
+    try { themes = JSON.parse(dataEl.textContent); } catch (e) { return; }
+    function find(name) {
+      for (var i = 0; i < themes.length; i++) {
+        if (themes[i].name === name) return themes[i];
+      }
+      return null;
+    }
+    function markActive(name) {
+      var items = document.querySelectorAll('[data-theme-pick]');
+      for (var i = 0; i < items.length; i++) {
+        items[i].classList.toggle('active', items[i].getAttribute('data-theme-pick') === name);
+      }
+    }
+    function applyTheme(name) {
+      var entry = find(name);
+      if (!entry) return;
+      // Tabler keys colour mode off [data-bs-theme] on the ROOT element.
+      document.documentElement.setAttribute('data-bs-theme', entry.mode);
+      // html background doubles as the no-flash guard on next load.
+      document.documentElement.style.backgroundColor = entry.bg || '';
+      var link = document.getElementById('theme-css');
+      if (link) {
+        if (entry.css_url) {
+          if (link.getAttribute('href') !== entry.css_url) link.setAttribute('href', entry.css_url);
+          link.disabled = false;
+        } else {
+          // css=None themes: keep the element, stop applying the sheet.
+          link.disabled = true;
+        }
+      }
+      localStorage.setItem('erp-theme', name);
+      markActive(name);
+    }
+    document.addEventListener('click', function(e) {
+      var el = e.target && e.target.closest ? e.target.closest('[data-theme-pick]') : null;
+      if (!el) return;
+      e.preventDefault();
+      applyTheme(el.getAttribute('data-theme-pick'));
+    });
+    // Initial active marker — mirror the pre-paint resolution in base.html.
+    var stored = localStorage.getItem('erp-theme');
+    stored = { dark: 'eva-01', light: 'golden' }[stored] || stored;  // legacy names
+    markActive(find(stored) ? stored : '{{ erp_default_theme|escapejs }}');
+  })();
+</script>

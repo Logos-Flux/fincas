@@ -1,0 +1,14 @@
+{
+  "payload": {
+    "id": "fx_ct_0001"
+  },
+  "provider": "fixture",
+  "request": {
+    "method": "POST",
+    "path": "/v1/contacts"
+  },
+  "response": {
+    "status": 201
+  },
+  "schema_version": 1
+}

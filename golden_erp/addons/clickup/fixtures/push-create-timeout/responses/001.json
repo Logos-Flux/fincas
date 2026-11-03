@@ -1,0 +1,18 @@
+{
+  "payload": {
+    "members": [
+      {
+        "email": "sam@example.com",
+        "id": 81000001,
+        "username": "sam"
+      }
+    ]
+  },
+  "provider": "clickup",
+  "repeatable": true,
+  "request": {
+    "method": "GET",
+    "path": "/api/v2/list/901/member"
+  },
+  "schema_version": 1
+}

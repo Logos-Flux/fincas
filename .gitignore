@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+# NOTE: bare `lib/` also matched storefront/src/lib (real source), which
+# broke CI typechecks. Scope venv-artifact rules to the repo root.
+/lib/
+/lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtualenv
+.venv/
+venv/
+ENV/
+
+# Database
+*.sqlite3
+*.db
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+test-results/
+playwright-report/
+blob-report/
+
+# Release harness runs (docs/release-testing.md): logs, traces, videos,
+# screenshots and the 0600 logins file. Never committed.
+.runs/
+.runs-*/
+
+# Static collection
+staticfiles/
+
+# Node / Frontend
+node_modules/
+storefront/dist/
+.rollup.cache/
+
+# Logs
+*.log
+
+
+# Harness, perf and journey output (plan section 3)
+.runs/

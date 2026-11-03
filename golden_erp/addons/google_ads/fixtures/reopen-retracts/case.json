@@ -1,0 +1,40 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "engagement_reopened after an upload enqueues one retraction adjustment for that order id; the pending upload of the reopened engagement is cancelled not_won.",
+  "seed": {
+    "deals": [
+      {
+        "actions": [
+          "win",
+          "uploaded",
+          "delivered",
+          "reopen"
+        ],
+        "currency": "USD",
+        "key": "deal1",
+        "party": "party:ada",
+        "touches": [
+          {
+            "click_id": "Cj0KFIXTUREgclid01",
+            "click_id_kind": "gclid",
+            "days": 10
+          }
+        ],
+        "value": "1200.00"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "drain": true
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "communications": [
+    {
+      "direction": "outbound",
+      "engagement": null,
+      "kind": "email",
+      "occurred_at": "2026-03-02T14:00:00Z",
+      "participants": [
+        {
+          "address": "boss@example.org",
+          "party": null,
+          "role": "cc"
+        },
+        {
+          "address": "rep@example.org",
+          "party": null,
+          "role": "from"
+        },
+        {
+          "address": "ada@example.com",
+          "party": "party:ada",
+          "role": "to"
+        }
+      ],
+      "party": "party:ada",
+      "provider": "gmail",
+      "status": "completed",
+      "subject": "Re: Quote for 40 panels",
+      "thread_key": "mid:5ae8d493e5683ff936d646e967f00209065d456a"
+    }
+  ],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {},
+      "object_type": "message",
+      "source": "gmail",
+      "source_id": "mid:7f3d43daa74f22d817edbdc6b42dd077971c4acc6fda17bb37746cc83c1517bc",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    }
+  ],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

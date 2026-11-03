@@ -1,0 +1,19 @@
+{
+  "description": "the manifest says nothing about property definitions, so their file is unlisted",
+  "manifest": [
+    {
+      "op": "delete",
+      "path": [
+        "objects",
+        "property_def"
+      ]
+    },
+    {
+      "op": "delete",
+      "path": [
+        "files",
+        "property_defs.jsonl"
+      ]
+    }
+  ]
+}

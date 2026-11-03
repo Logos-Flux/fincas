@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/properties/deals",
+    "query": {},
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "name": "hs_object_id",
+        "label": "Record ID",
+        "type": "number",
+        "fieldType": "number",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hubspot_owner_id",
+        "label": "Owner",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "dealname",
+        "label": "Deal Name",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "pipeline",
+        "label": "Pipeline",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "Sales Pipeline",
+            "value": "default",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "Partner Referrals",
+            "value": "12345678",
+            "displayOrder": 1,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "dealstage",
+        "label": "Deal Stage",
+        "type": "enumeration",
+        "fieldType": "radio",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "Appointment Scheduled",
+            "value": "appointmentscheduled",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "Qualified To Buy",
+            "value": "qualifiedtobuy",
+            "displayOrder": 1,
+            "hidden": false
+          },
+          {
+            "label": "Contract Sent",
+            "value": "contractsent",
+            "displayOrder": 2,
+            "hidden": false
+          },
+          {
+            "label": "Closed Won",
+            "value": "closedwon",
+            "displayOrder": 3,
+            "hidden": false
+          },
+          {
+            "label": "Closed Lost",
+            "value": "closedlost",
+            "displayOrder": 4,
+            "hidden": false
+          },
+          {
+            "label": "Referred",
+            "value": "12345679",
+            "displayOrder": 5,
+            "hidden": false
+          },
+          {
+            "label": "Closed - referred out",
+            "value": "12345680",
+            "displayOrder": 6,
+            "hidden": false
+          },
+          {
+            "label": "Closed Won",
+            "value": "12345681",
+            "displayOrder": 7,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "amount",
+        "label": "Amount",
+        "type": "number",
+        "fieldType": "number",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "deal_currency_code",
+        "label": "Currency",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "US Dollar",
+            "value": "USD",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "Euro",
+            "value": "EUR",
+            "displayOrder": 1,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "closedate",
+        "label": "Close Date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_is_closed",
+        "label": "Is Deal Closed?",
+        "type": "bool",
+        "fieldType": "booleancheckbox",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "True",
+            "value": "true",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "False",
+            "value": "false",
+            "displayOrder": 1,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "hs_is_closed_won",
+        "label": "Is Closed Won",
+        "type": "bool",
+        "fieldType": "booleancheckbox",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "True",
+            "value": "true",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "False",
+            "value": "false",
+            "displayOrder": 1,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "closed_lost_reason",
+        "label": "Closed Lost Reason",
+        "type": "string",
+        "fieldType": "textarea",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_next_step",
+        "label": "Next step",
+        "type": "string",
+        "fieldType": "textarea",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "notes_next_activity_date",
+        "label": "Next Activity Date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "createdate",
+        "label": "Create Date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_lastmodifieddate",
+        "label": "Last Modified Date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "package",
+        "label": "Package",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "custom",
+        "hubspotDefined": false,
+        "hidden": false,
+        "options": [
+          {
+            "label": "Gold",
+            "value": "gold",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "Silver",
+            "value": "silver",
+            "displayOrder": 1,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "sales_followup_date",
+        "label": "Sales follow-up date",
+        "type": "date",
+        "fieldType": "date",
+        "groupName": "custom",
+        "hubspotDefined": false,
+        "hidden": false,
+        "options": []
+      }
+    ]
+  }
+}

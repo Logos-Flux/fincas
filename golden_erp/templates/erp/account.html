@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}My Account{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header pb-0">
+        <h6>Account Information</h6>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-sm-4">
+            <p class="text-sm font-weight-bold mb-0">Username</p>
+          </div>
+          <div class="col-sm-8">
+            <p class="text-sm mb-0">{{ user.username }}</p>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4">
+            <p class="text-sm font-weight-bold mb-0">Email</p>
+          </div>
+          <div class="col-sm-8">
+            <p class="text-sm mb-0">{{ user.email|default:"—" }}</p>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4">
+            <p class="text-sm font-weight-bold mb-0">Name</p>
+          </div>
+          <div class="col-sm-8">
+            <p class="text-sm mb-0">{{ user.get_full_name|default:"—" }}</p>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4">
+            <p class="text-sm font-weight-bold mb-0">Date Joined</p>
+          </div>
+          <div class="col-sm-8">
+            <p class="text-sm mb-0">{{ user.date_joined|date:"N j, Y" }}</p>
+          </div>
+        </div>
+        <hr class="horizontal dark">
+        <a href="{% url 'erp-account-edit' %}" class="btn bg-gradient-info mb-0">Edit Profile</a>
+        <a href="{% url 'erp-account-change-password' %}" class="btn bg-gradient-dark mb-0">Change Password</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

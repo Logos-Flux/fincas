@@ -1,0 +1,12 @@
+{
+  "payload": null,
+  "provider": "klaviyo",
+  "request": {
+    "method": "POST",
+    "path": "/api/lists/XFIX02/relationships/profiles/"
+  },
+  "response": {
+    "status": 204
+  },
+  "schema_version": 1
+}

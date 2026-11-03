@@ -1,0 +1,23 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A signed webhook is accepted (200, one inbound row) and ingested by the outbox; a replay is acknowledged with no second row.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "status": 200,
+      "webhook": "inbound/001.json"
+    },
+    {
+      "drain": true
+    }
+  ]
+}

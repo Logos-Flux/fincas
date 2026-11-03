@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "unknown_version",
+      "file": "manifest.json",
+      "line": null,
+      "field": "schema_version"
+    }
+  ],
+  "warnings": []
+}

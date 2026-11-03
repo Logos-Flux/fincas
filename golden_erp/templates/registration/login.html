@@ -1,0 +1,71 @@
+{% extends "registration/auth_base.html" %}
+{% load static %}
+
+{% comment %}
+  Markup is unchanged from the standalone version this replaced; only the
+  <head> and the ~250-line inline <style> moved out (to auth_base.html and
+  auth.css respectively). Those styles hardcoded all eleven EVA-01 colours
+  under their pre-rename names (--bridge-*, --eva-*), so a re-brand would
+  have silently skipped the first page every user sees.
+{% endcomment %}
+
+{% block title %}Sign In{% endblock %}
+
+{% block header %}
+  <div class="login-header">
+    <img src="{% static 'assets/img/logo.svg' %}" alt="Fincas" class="login-logo" style="max-height: 48px;">
+    <div class="login-title">Fincas</div>
+    <div class="login-subtitle">Command Bridge</div>
+  </div>
+{% endblock %}
+
+{% block card %}
+  {% if oidc_error %}
+  <div class="login-error" role="alert">{{ oidc_error }}</div>
+  {% endif %}
+
+  {% if cache_down_message %}
+  <div class="login-error" role="alert">{{ cache_down_message }}</div>
+  {% elif form.errors %}
+  <div class="login-error">
+    Invalid credentials. Access denied.
+  </div>
+  {% endif %}
+
+  <form method="post" action="{% url 'erp-login' %}">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label" for="id_username">Operator ID</label>
+      <input type="text" name="username" id="id_username" class="form-input"
+             placeholder="username" autocomplete="username" autofocus
+             value="{{ form.username.value|default:'' }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="id_password">Passphrase</label>
+      <input type="password" name="password" id="id_password" class="form-input"
+             placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <input type="hidden" name="next" value="{{ next|default:'/erp/' }}">
+    <button type="submit" class="btn-login">Authenticate</button>
+  </form>
+
+  {% if oidc_providers %}
+  <div class="login-sso">
+    {% for provider in oidc_providers %}
+    <a class="btn-login btn-sso" href="{% url 'erp-oidc-start' provider.name %}?next={{ next|default:'/erp/'|urlencode }}">Sign in with {{ provider.label }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if show_demo_login_hint %}
+  <div class="login-hint">
+    Demo site — log in with <code>{{ demo_login_username }}</code> / <code>{{ demo_login_password }}</code>
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block footer %}
+  <div class="login-footer">
+    <a href="{% url 'erp-password-reset' %}">Reset passphrase</a>
+  </div>
+{% endblock %}

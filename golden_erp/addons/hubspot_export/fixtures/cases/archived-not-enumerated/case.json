@@ -1,0 +1,12 @@
+{
+  "description": "No archived/ pages for companies (2.13 row 3).",
+  "base": "crawl-small",
+  "remove": [
+    "crawl/companies/archived"
+  ],
+  "added": {
+    "company": [
+      "archived_not_enumerated"
+    ]
+  }
+}

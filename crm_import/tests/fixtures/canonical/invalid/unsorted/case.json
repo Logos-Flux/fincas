@@ -1,0 +1,3 @@
+{
+  "description": "records not sorted by source_id (output must be byte-stable)"
+}

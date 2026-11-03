@@ -1,0 +1,25 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A call from a number with an erasure suppression writes nothing (no communication, no raw payload, no ref): erased people are never re-ingested.",
+  "seed": {
+    "erased_numbers": [
+      "+1 202-555-0143"
+    ],
+    "parties": [],
+    "staff": [
+      {
+        "email": "sam@example.org",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "status": 200,
+      "webhook": "inbound/001.json"
+    },
+    {
+      "drain": true
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/contacts",
+    "query": {
+      "limit": "100",
+      "after": "305"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "305",
+        "properties": {
+          "hs_object_id": "305",
+          "createdate": "2023-03-03T10:00:00.000Z",
+          "lastmodifieddate": "2026-09-30T08:00:00.000Z",
+          "firstname": "Eve",
+          "lastname": "Sample",
+          "email": "eve@example.com",
+          "mobilephone": "555-0115",
+          "hubspot_owner_id": "103",
+          "lead_type": "PATENT ATTORNEY",
+          "hs_marketable_status": "true"
+        },
+        "createdAt": "2023-03-03T10:00:00.000Z",
+        "updatedAt": "2026-09-30T08:00:00.000Z",
+        "archived": false
+      },
+      {
+        "id": "306",
+        "properties": {
+          "hs_object_id": "306",
+          "createdate": "2023-04-04T10:00:00.000Z",
+          "lastmodifieddate": "2026-09-30T08:00:00.000Z",
+          "firstname": "Finn",
+          "lastname": "Example",
+          "email": "finn@example.com",
+          "associatedcompanyid": "202",
+          "jobtitle": "Paralegal"
+        },
+        "createdAt": "2023-04-04T10:00:00.000Z",
+        "updatedAt": "2026-09-30T08:00:00.000Z",
+        "archived": false
+      },
+      {
+        "id": "307",
+        "properties": {
+          "hs_object_id": "307",
+          "createdate": "2024-01-02T10:00:00.000Z",
+          "lastmodifieddate": "2026-09-30T08:00:00.000Z",
+          "firstname": "Gale",
+          "lastname": "Sample",
+          "email": "gale@example.org",
+          "internal_scratch": "call back"
+        },
+        "createdAt": "2024-01-02T10:00:00.000Z",
+        "updatedAt": "2026-09-30T08:00:00.000Z",
+        "archived": false
+      }
+    ]
+  }
+}

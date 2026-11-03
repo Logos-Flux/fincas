@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/properties/notes",
+    "query": {},
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "name": "hs_object_id",
+        "label": "Record ID",
+        "type": "number",
+        "fieldType": "number",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hubspot_owner_id",
+        "label": "Owner",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_note_body",
+        "label": "Note body",
+        "type": "string",
+        "fieldType": "html",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_timestamp",
+        "label": "Activity date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_body_preview",
+        "label": "Body preview",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_body_preview_is_truncated",
+        "label": "Body preview truncated",
+        "type": "bool",
+        "fieldType": "booleancheckbox",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "True",
+            "value": "true",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "False",
+            "value": "false",
+            "displayOrder": 1,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "hs_createdate",
+        "label": "Create date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_lastmodifieddate",
+        "label": "Last Modified Date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      }
+    ]
+  }
+}

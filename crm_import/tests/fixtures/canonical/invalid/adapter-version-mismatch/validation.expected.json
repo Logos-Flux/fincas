@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "version_mismatch",
+      "file": "manifest.json",
+      "line": null,
+      "field": "adapter.schema_version"
+    }
+  ],
+  "warnings": []
+}

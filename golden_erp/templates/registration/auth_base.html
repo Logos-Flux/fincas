@@ -1,0 +1,44 @@
+{% load static %}{% comment %}
+  Shell for the five auth pages (sign-in + the four password-reset steps).
+
+  These deliberately do NOT extend base.html and load no CSS framework — see
+  the header of static/assets/css/auth.css for why. Two stylesheets only:
+  themes/eva-01.css for the :root token block, then auth.css for everything
+  visual. Re-theming the auth pages is a one-line href swap here.
+
+  Blocks:
+    title       — <title> text, minus the " — Fincas" suffix
+    header      — optional logo/title area above the card (sign-in uses it)
+    card        — card contents; the only block a reset step needs
+    status_bar  — the fixed footer strip; override to hide
+{% endcomment %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>{% block title %}Sign In{% endblock %} — Fincas</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'assets/img/favicon.svg' %}">
+  <link rel="alternate icon" type="image/png" href="{% static 'assets/img/favicon.png' %}">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="{% static 'assets/css/themes/eva-01.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/auth.css' %}" rel="stylesheet" />
+  {% block stylesheets %}{% endblock %}
+</head>
+<body>
+  <div class="login-container">
+    {% block header %}{% endblock %}
+
+    <div class="login-card">
+      {% block card %}{% endblock %}
+    </div>
+
+    {% block footer %}{% endblock %}
+  </div>
+
+  {% block status_bar %}
+  <div class="status-bar">
+    <span>&copy; 2026 Fincas</span>
+  </div>
+  {% endblock %}
+</body>
+</html>

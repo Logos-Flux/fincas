@@ -1,0 +1,100 @@
+provider,object,source_id,source_label,source_type,options,populated,total,filtered,sorted,reported,evidence,pii,decision,target,notes
+hubspot,contact,hs_object_id,Record ID,number,,,,unknown,unknown,unknown,,no,map,ExternalRef.source_id,the stable id; one ExternalRef per record
+hubspot,contact,email,Email,string,,,,unknown,unknown,unknown,,yes,map,PartyEmail.email,primary email; never a required or sole import key (many contacts have none)
+hubspot,contact,firstname,First Name,string,,,,unknown,unknown,unknown,,yes,map,Party.given_name,
+hubspot,contact,lastname,Last Name,string,,,,unknown,unknown,unknown,,yes,map,Party.family_name,
+hubspot,contact,phone,Phone Number,string,,,,unknown,unknown,unknown,,yes,map,PartyPhone(purpose=work),
+hubspot,contact,mobilephone,Mobile Phone Number,string,,,,unknown,unknown,unknown,,yes,map,PartyPhone(line_type=mobile),
+hubspot,contact,address,Street Address,string,,,,unknown,unknown,unknown,,yes,map,PartyAddress.address_line_1,
+hubspot,contact,city,City,string,,,,unknown,unknown,unknown,,yes,map,PartyAddress.city,
+hubspot,contact,state,State/Region,string,,,,unknown,unknown,unknown,,yes,map,PartyAddress.state_province,
+hubspot,contact,zip,Postal Code,string,,,,unknown,unknown,unknown,,yes,map,PartyAddress.postal_code,
+hubspot,contact,country,Country/Region,string,,,,unknown,unknown,unknown,,yes,map,PartyAddress.country,
+hubspot,contact,jobtitle,Job Title,string,,,,unknown,unknown,unknown,,yes,map,PartyRelationship.title,on the employment relationship when a company is associated; otherwise a deployment maps it to a pii custom.job_title definition
+hubspot,contact,company,Company Name,string,,,,unknown,unknown,unknown,,no,sidecar,hubspot.company,"free text; never creates an organisation (the company association does, Phase 5)"
+hubspot,contact,associatedcompanyid,Primary Associated Company ID,number,,,,unknown,unknown,unknown,,no,map,PartyRelationship(kind=employment),
+hubspot,contact,website,Website URL,string,,,,unknown,unknown,unknown,,yes,sidecar,custom.website,"a person's own site can identify them: a pii FieldDefinition, never a provider key"
+hubspot,contact,hubspot_owner_id,Contact owner,enumeration,,,,unknown,unknown,unknown,,no,map,Party.owner,archived owners included (2.5)
+hubspot,contact,hubspot_team_id,HubSpot Team,enumeration,,,,unknown,unknown,unknown,,no,promote,Party.owner_team,2.1
+hubspot,contact,lifecyclestage,Lifecycle Stage,enumeration,,,,unknown,unknown,unknown,,no,promote,Party.lifecycle_stage,2.2; values map to GOLDEN_LIFECYCLE_STAGES keys
+hubspot,contact,hs_lifecyclestage_subscriber_date,Became a Subscriber Date,datetime,,,,unknown,unknown,unknown,,no,sidecar,hubspot.hs_lifecyclestage_subscriber_date,history-shaped (rule 3); provenance
+hubspot,contact,hs_lifecyclestage_lead_date,Became a Lead Date,datetime,,,,unknown,unknown,unknown,,no,sidecar,hubspot.hs_lifecyclestage_lead_date,history-shaped (rule 3); provenance
+hubspot,contact,hs_lifecyclestage_marketingqualifiedlead_date,Became a Marketing Qualified Lead Date,datetime,,,,unknown,unknown,unknown,,no,sidecar,hubspot.hs_lifecyclestage_marketingqualifiedlead_date,history-shaped (rule 3); provenance
+hubspot,contact,hs_lifecyclestage_salesqualifiedlead_date,Became a Sales Qualified Lead Date,datetime,,,,unknown,unknown,unknown,,no,sidecar,hubspot.hs_lifecyclestage_salesqualifiedlead_date,history-shaped (rule 3); provenance
+hubspot,contact,hs_lifecyclestage_opportunity_date,Became a Opportunity Date,datetime,,,,unknown,unknown,unknown,,no,sidecar,hubspot.hs_lifecyclestage_opportunity_date,history-shaped (rule 3); provenance
+hubspot,contact,hs_lifecyclestage_customer_date,Became a Customer Date,datetime,,,,unknown,unknown,unknown,,no,sidecar,hubspot.hs_lifecyclestage_customer_date,history-shaped (rule 3); provenance
+hubspot,contact,hs_lifecyclestage_evangelist_date,Became a Evangelist Date,datetime,,,,unknown,unknown,unknown,,no,sidecar,hubspot.hs_lifecyclestage_evangelist_date,history-shaped (rule 3); provenance
+hubspot,contact,hs_lifecyclestage_other_date,Became a Other Date,datetime,,,,unknown,unknown,unknown,,no,sidecar,hubspot.hs_lifecyclestage_other_date,history-shaped (rule 3); provenance
+hubspot,contact,hs_lead_status,Lead Status,enumeration,,,,unknown,unknown,unknown,,no,map,Engagement.stage,the lead's engagement stage; a value with no stage stays as hubspot.hs_lead_status provenance
+hubspot,contact,hs_marketable_status,Marketing contact status,enumeration,,,,unknown,unknown,unknown,,no,map,Party.marketable,never a consent record
+hubspot,contact,hs_email_optout,Opted out of all email,enumeration,,,,unknown,unknown,unknown,,no,map,ConsentRecord(withdrawn) + Suppression,Phase 2 1.6
+hubspot,contact,hs_analytics_source,Original Source,enumeration,,,,unknown,unknown,unknown,,no,map,Touchpoint.channel,Phase 3 1.8
+hubspot,contact,hs_analytics_source_data_1,Original Source Drill-Down 1,string,,,,unknown,unknown,unknown,,no,map,Touchpoint,
+hubspot,contact,hs_analytics_source_data_2,Original Source Drill-Down 2,string,,,,unknown,unknown,unknown,,no,map,Touchpoint,
+hubspot,contact,hs_analytics_first_url,First Page Seen,string,,,,unknown,unknown,unknown,,no,map,Touchpoint.landing_url,
+hubspot,contact,hs_analytics_first_referrer,First Referring Site,string,,,,unknown,unknown,unknown,,no,map,Touchpoint.referrer_url,
+hubspot,contact,hs_google_click_id,Google ad click id,string,,,,unknown,unknown,unknown,,no,map,Touchpoint.click_id,
+hubspot,contact,hs_facebook_click_id,Facebook click id,string,,,,unknown,unknown,unknown,,no,map,Touchpoint.click_id,
+hubspot,contact,num_associated_deals,Number of Associated Deals,number,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,contact,notes_last_contacted,Last Contacted,datetime,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,contact,notes_last_updated,Last Activity Date,datetime,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,contact,num_contacted_notes,Number of times contacted,number,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,contact,hs_last_sales_activity_timestamp,Last Engagement Date,datetime,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,contact,createdate,Create Date,datetime,,,,unknown,unknown,unknown,,no,map,ExternalRef.metadata,source timestamp
+hubspot,contact,lastmodifieddate,Last Modified Date,datetime,,,,unknown,unknown,unknown,,no,map,ExternalRef.metadata,source timestamp
+hubspot,company,hs_object_id,Record ID,number,,,,unknown,unknown,unknown,,no,map,ExternalRef.source_id,
+hubspot,company,name,Company name,string,,,,unknown,unknown,unknown,,no,map,Party.display_name,an organisation party
+hubspot,company,domain,Company Domain Name,string,,,,unknown,unknown,unknown,,no,map,Party.primary_domain,
+hubspot,company,website,Website URL,string,,,,unknown,unknown,unknown,,no,sidecar,hubspot.website,
+hubspot,company,phone,Phone Number,string,,,,unknown,unknown,unknown,,no,map,PartyPhone(purpose=work),
+hubspot,company,address,Street Address,string,,,,unknown,unknown,unknown,,no,map,PartyAddress.address_line_1,
+hubspot,company,city,City,string,,,,unknown,unknown,unknown,,no,map,PartyAddress.city,
+hubspot,company,state,State/Region,string,,,,unknown,unknown,unknown,,no,map,PartyAddress.state_province,
+hubspot,company,zip,Postal Code,string,,,,unknown,unknown,unknown,,no,map,PartyAddress.postal_code,
+hubspot,company,country,Country/Region,string,,,,unknown,unknown,unknown,,no,map,PartyAddress.country,
+hubspot,company,industry,Industry,enumeration,,,,unknown,unknown,unknown,,no,sidecar,hubspot.industry,
+hubspot,company,numberofemployees,Number of Employees,number,,,,unknown,unknown,unknown,,no,sidecar,hubspot.numberofemployees,
+hubspot,company,annualrevenue,Annual Revenue,number,,,,unknown,unknown,unknown,,no,sidecar,hubspot.annualrevenue,
+hubspot,company,description,Description,string,,,,unknown,unknown,unknown,,no,sidecar,hubspot.description,
+hubspot,company,hubspot_owner_id,Company owner,enumeration,,,,unknown,unknown,unknown,,no,map,Party.owner,
+hubspot,company,hubspot_team_id,HubSpot Team,enumeration,,,,unknown,unknown,unknown,,no,promote,Party.owner_team,
+hubspot,company,lifecyclestage,Lifecycle Stage,enumeration,,,,unknown,unknown,unknown,,no,promote,Party.lifecycle_stage,
+hubspot,company,num_associated_contacts,Number of Associated Contacts,number,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,company,num_associated_deals,Number of Associated Deals,number,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,company,notes_last_contacted,Last Contacted,datetime,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,company,createdate,Create Date,datetime,,,,unknown,unknown,unknown,,no,map,ExternalRef.metadata,source timestamp
+hubspot,company,hs_lastmodifieddate,Last Modified Date,datetime,,,,unknown,unknown,unknown,,no,map,ExternalRef.metadata,source timestamp
+hubspot,deal,hs_object_id,Record ID,number,,,,unknown,unknown,unknown,,no,map,ExternalRef.source_id,
+hubspot,deal,dealname,Deal Name,string,,,,unknown,unknown,unknown,,no,map,Engagement.title,
+hubspot,deal,pipeline,Pipeline,enumeration,,,,unknown,unknown,unknown,,no,map,Engagement.pipeline,by Pipeline.key (Phase 3 step 11)
+hubspot,deal,dealstage,Deal Stage,enumeration,,,,unknown,unknown,unknown,,no,map,Engagement.stage,by Stage.key
+hubspot,deal,hs_is_closed_won,Is Closed Won,bool,,,,unknown,unknown,unknown,,no,map,Engagement.status,"open / won / lost, independent of stage"
+hubspot,deal,hs_is_closed,Is Deal Closed?,bool,,,,unknown,unknown,unknown,,no,map,Engagement.status,
+hubspot,deal,closed_lost_reason,Closed Lost Reason,string,,,,unknown,unknown,unknown,,no,map,Engagement.loss_reason + Engagement.loss_notes,registry key plus the raw text
+hubspot,deal,closed_won_reason,Closed Won Reason,string,,,,unknown,unknown,unknown,,yes,sidecar,custom.closed_won_reason,"free text that can name people: a pii FieldDefinition, never a provider key"
+hubspot,deal,amount,Amount,number,,,,unknown,unknown,unknown,,no,map,Engagement.expected_value,"blank is NULL, never 0 (2.6)"
+hubspot,deal,deal_currency_code,Currency,enumeration,,,,unknown,unknown,unknown,,no,map,Engagement.currency,
+hubspot,deal,closedate,Close Date,datetime,,,,unknown,unknown,unknown,,no,map,Engagement.expected_close_date + Engagement.closed_at,expected close while open; closed_at once closed
+hubspot,deal,hubspot_owner_id,Deal owner,enumeration,,,,unknown,unknown,unknown,,no,map,Engagement.owner,
+hubspot,deal,hubspot_team_id,HubSpot Team,enumeration,,,,unknown,unknown,unknown,,no,promote,Engagement.owner_team,
+hubspot,deal,dealtype,Deal Type,enumeration,,,,unknown,unknown,unknown,,no,sidecar,hubspot.dealtype,
+hubspot,deal,description,Deal Description,string,,,,unknown,unknown,unknown,,yes,sidecar,custom.deal_description,"free text that can name people: a pii FieldDefinition, never a provider key"
+hubspot,deal,hs_next_step,Next step,string,,,,unknown,unknown,unknown,,no,map,Task,one open Task per open engagement (Phase 3 step 11); the raw value stays as hubspot.* provenance
+hubspot,deal,notes_next_activity_date,Next Activity Date,datetime,,,,unknown,unknown,unknown,,no,map,Task.due_at,
+hubspot,deal,hs_analytics_source,Original Source Type,enumeration,,,,unknown,unknown,unknown,,no,map,Touchpoint.channel,
+hubspot,deal,hs_deal_stage_probability,Deal Stage Probability,number,,,,unknown,unknown,unknown,,no,drop,,derived from the stage (Stage.default_probability)
+hubspot,deal,hs_projected_amount,Weighted amount,number,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,deal,hs_closed_amount,Closed Deal Amount,number,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,deal,num_associated_contacts,Number of Associated Contacts,number,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,deal,notes_last_contacted,Last Contacted,datetime,,,,unknown,unknown,unknown,,no,drop,,derived by the provider (rule 2); golden computes its own
+hubspot,deal,createdate,Create Date,datetime,,,,unknown,unknown,unknown,,no,map,ExternalRef.metadata,source timestamp
+hubspot,deal,hs_lastmodifieddate,Last Modified Date,datetime,,,,unknown,unknown,unknown,,no,map,ExternalRef.metadata,source timestamp
+hubspot,ticket,hs_object_id,Record ID,number,,,,unknown,unknown,unknown,,no,defer,Phase 5: the partner-relationship object,
+hubspot,ticket,subject,Ticket name,string,,,,unknown,unknown,unknown,,no,defer,Phase 5: the partner-relationship object,
+hubspot,ticket,content,Ticket description,string,,,,unknown,unknown,unknown,,yes,defer,Phase 5: the partner-relationship object,
+hubspot,ticket,hs_pipeline,Pipeline,enumeration,,,,unknown,unknown,unknown,,no,defer,Phase 5: the partner-relationship object,
+hubspot,ticket,hs_pipeline_stage,Ticket status,enumeration,,,,unknown,unknown,unknown,,no,defer,Phase 5: the partner-relationship object,
+hubspot,ticket,hs_ticket_priority,Priority,enumeration,,,,unknown,unknown,unknown,,no,defer,Phase 5: the partner-relationship object,
+hubspot,ticket,hubspot_owner_id,Ticket owner,enumeration,,,,unknown,unknown,unknown,,no,defer,Phase 5: the partner-relationship object,
+hubspot,ticket,createdate,Create date,datetime,,,,unknown,unknown,unknown,,no,defer,Phase 5: the partner-relationship object,
+hubspot,ticket,closed_date,Close date,datetime,,,,unknown,unknown,unknown,,no,defer,Phase 5: the partner-relationship object,

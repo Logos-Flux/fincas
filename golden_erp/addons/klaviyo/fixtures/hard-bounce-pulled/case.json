@@ -1,0 +1,40 @@
+{
+  "klaviyo": {
+    "marketable": [
+      "ada"
+    ],
+    "profiles": [
+      {
+        "address": "ada@example.com",
+        "list": "XFIX01",
+        "lists": [],
+        "party": "ada",
+        "source_id": "01FIXTUREPROFILEADA0000000",
+        "state": "unsubscribed"
+      }
+    ],
+    "suppressions": [
+      {
+        "address": "ada@example.com",
+        "reason": "opt_out"
+      }
+    ]
+  },
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A hard bounce supersedes an active opt-out (it also blocks transactional mail): the opt-out is lifted as superseded and a hard_bounce suppression written, with no consent row.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001-event.json"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "manifest_missing",
+      "file": "manifest.json",
+      "line": null,
+      "field": ""
+    }
+  ],
+  "warnings": []
+}

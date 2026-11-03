@@ -1,0 +1,9 @@
+Example Supply LLC
+Journal
+"January 1 - December 31, 2025"
+""
+Date,Transaction Type,Num,Name,Memo/Description,Account,Debit,Credit,Amount
+01/15/2025,Invoice,1001,Acme Solar,Widget sale,Accounts Receivable,108.25,,108.25
+01/15/2025,Invoice,1001,Acme Solar,Widget sale,Sales,,100.00,100.00
+01/16/2025,Journal Entry,JE-2,Vendor Co,Office supplies,Office Expenses,50.00,,50.00
+01/16/2025,Journal Entry,JE-2,Vendor Co,Office supplies,Checking,,50.00,50.00

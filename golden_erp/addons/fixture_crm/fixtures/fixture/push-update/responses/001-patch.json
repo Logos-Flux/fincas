@@ -1,0 +1,11 @@
+{
+  "payload": {
+    "id": "fx_ct_0002"
+  },
+  "provider": "fixture",
+  "request": {
+    "method": "PATCH",
+    "path": "/v1/contacts/fx_ct_0002"
+  },
+  "schema_version": 1
+}

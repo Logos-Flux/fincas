@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+{% comment %}
+  /erp/imports/crm/<job>/ (phase5-importer.md 4.6, 4.9): one card per object
+  type in step order. Coverage sits beside the state, never folded into it.
+{% endcomment %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+  <div>
+    <h1 class="h5 mb-1">{{ job.source }}</h1>
+    <p class="text-sm mb-0">
+      <span class="badge badge-sm bg-gradient-{{ status_color }}">{{ job.get_status_display }}</span>
+      · coverage {{ job.coverage }}{% if uncovered %} ({% for c in uncovered %}{{ c.plural|lower }} {{ c.coverage.coverage }}{% if not forloop.last %}, {% endif %}{% endfor %}){% endif %}
+      · created {{ job.created_at|date:"Y-m-d H:i" }}{% if job.created_by %} by {{ job.created_by.get_username }}{% endif %}
+    </p>
+    {% if job.previous_job_id %}<p class="text-xs text-secondary mb-0">Re-imports over <a class="text-decoration-underline" href="{% url 'erp-crm-import-job' job.previous_job_id %}">the previous job</a>.</p>{% endif %}
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'erp-crm-import-report' job.pk %}" class="btn btn-sm btn-outline-primary mb-0"><i class="fas fa-file-lines me-1" aria-hidden="true"></i>Report</a>
+    <a href="{% url 'erp-crm-import-job-list' %}" class="btn btn-sm btn-outline-secondary mb-0">All CRM imports</a>
+    {% if can_apply and can_undo_job %}
+    <form method="post" action="{% url 'erp-crm-import-action' job.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" name="action" value="undo_job" class="btn btn-sm btn-outline-danger mb-0">Undo the whole job</button>
+    </form>
+    {% endif %}
+    {% if can_apply and can_cancel %}
+    <form method="post" action="{% url 'erp-crm-import-action' job.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" name="action" value="cancel" class="btn btn-sm btn-outline-secondary mb-0">Cancel job</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if not can_apply %}
+<p class="text-sm text-secondary">You can look at this import. Deciding rows, applying, retrying and undoing need the “Can apply and undo CRM imports” permission.</p>
+{% endif %}
+
+{% if applied_all and merge_hints %}
+<div class="alert alert-info text-sm" role="status"><div>
+  Applied. {{ merge_hints|intcomma }} imported {% if merge_hints == 1 %}record looks{% else %}records look{% endif %} like duplicates of each other: <a class="text-decoration-underline" href="{% url 'erp-party-merge-review' %}">review them in the merge queue</a>.
+</div></div>
+{% elif applied_all %}
+<div class="alert alert-success text-sm" role="status">Applied. Every row of this job is decided and written.</div>
+{% endif %}
+
+<section class="card mb-4" id="run-progress" aria-labelledby="runs-title" data-progress-url="{% url 'erp-crm-import-progress' job.pk %}"{% if not runs %} hidden{% endif %}>
+  <div class="card-header pb-0"><h2 class="h6 mb-0" id="runs-title">Applying</h2></div>
+  <div class="card-body pt-2" id="run-progress-body" aria-live="polite">
+    {% for run in runs %}
+    <p class="text-sm mb-1">Applying {{ run.object_type }}: chunk {{ run.chunk }} of {{ run.chunks }} ({{ run.done|intcomma }} of {{ run.total|intcomma }} rows)</p>
+    <div class="progress mb-2" role="progressbar" aria-label="Applying {{ run.object_type }}" aria-valuenow="{{ run.percent }}" aria-valuemin="0" aria-valuemax="100">
+      <div class="progress-bar bg-gradient-primary" style="width: {{ run.percent }}%"></div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<h2 class="h6 mb-2">Steps</h2>
+<p class="text-xs text-secondary">Apply in step order: a step can start once every step it needs has no approved row left unapplied. Undo runs newest step first.</p>
+<div class="row g-3 mb-4">
+  {% for c in cards %}
+  <div class="col-md-6 col-xl-4">
+    <section class="card h-100" aria-labelledby="step-{{ c.object_type }}-title">
+      <div class="card-header pb-0">
+        <div class="w-100 d-flex justify-content-between align-items-start gap-2">
+          <h3 class="h6 mb-0" id="step-{{ c.object_type }}-title">{{ c.step }}. {{ c.plural }}</h3>
+          {% if c.coverage.exact %}<span class="text-xs text-secondary">coverage complete</span>{% else %}<span class="badge badge-sm bg-gradient-warning">coverage {{ c.coverage.coverage }}</span>{% endif %}
+        </div>
+      </div>
+      <div class="card-body pt-2">
+        {% if not c.total %}
+          {% if c.coverage.exact %}
+          <p class="text-sm text-secondary mb-0">The source has no {{ c.plural|lower }}.</p>
+          {% else %}
+          <div class="alert alert-warning text-sm mb-0" role="note"><div>
+            <strong>{{ c.plural }}: coverage {{ c.coverage.coverage }}</strong> — the export could not read {% if c.coverage.coverage == "unknown" %}them{% else %}all of them{% endif %}{% if c.coverage.reason_text %} ({{ c.coverage.reason_text }}){% endif %}. 0 rows here does not mean the source has none.
+          </div></div>
+          {% endif %}
+        {% else %}
+        <p class="text-sm mb-1">{% if not c.coverage.exact %}≥ {% endif %}{{ c.total|intcomma }} rows · {{ c.decided_percent }}% decided</p>
+        <div class="progress mb-2" role="img" aria-label="{% for key, label, n, pct in c.bar %}{{ label }} {{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+          {% for key, label, n, pct in c.bar %}{% if n and key != "remaining" %}<div class="progress-bar {% if key == 'applied' %}bg-gradient-success{% elif key == 'approved' %}bg-gradient-info{% elif key == 'failed' %}bg-gradient-danger{% else %}bg-gradient-secondary{% endif %}" style="width: {{ pct }}%"></div>{% endif %}{% endfor %}
+        </div>
+        <ul class="list-inline text-xs mb-2">
+          {% for key, label, n, pct in c.bar %}<li class="list-inline-item">{{ label }} {{ n|intcomma }}</li>{% endfor %}
+        </ul>
+        {% if not c.coverage.exact %}<p class="text-xs mb-2">Coverage {{ c.coverage.coverage }}{% if c.coverage.reason_text %}: {{ c.coverage.reason_text }}{% endif %}. Every count here is “at least”.</p>{% endif %}
+        {% if c.gate %}<p class="text-xs text-secondary mb-2">Waits for {{ c.gate|join:", " }} to be applied.</p>{% endif %}
+        <div class="d-flex flex-wrap gap-2">
+          {% if c.proposed %}
+          <a class="btn btn-sm bg-gradient-primary mb-0" href="{% url 'erp-crm-import-queue' job.pk c.object_type %}">Review {{ c.proposed|intcomma }}</a>
+          {% else %}
+          <a class="btn btn-sm btn-outline-primary mb-0" href="{% url 'erp-crm-import-queue' job.pk c.object_type %}?state=all">Rows</a>
+          {% endif %}
+          {% if can_apply %}
+            {% if c.approved and not c.gate %}
+            <form method="post" action="{% url 'erp-crm-import-action' job.pk %}" class="d-inline">
+              {% csrf_token %}<input type="hidden" name="object_type" value="{{ c.object_type }}">
+              <button type="submit" name="action" value="apply" class="btn btn-sm {% if c.proposed %}btn-outline-dark{% else %}bg-gradient-primary{% endif %} mb-0">Apply {{ c.approved|intcomma }}</button>
+            </form>
+            {% endif %}
+            {% if c.failed %}
+            <form method="post" action="{% url 'erp-crm-import-action' job.pk %}" class="d-inline">
+              {% csrf_token %}<input type="hidden" name="object_type" value="{{ c.object_type }}">
+              <button type="submit" name="action" value="retry" class="btn btn-sm btn-outline-dark mb-0">Retry {{ c.failed|intcomma }} failed</button>
+            </form>
+            {% endif %}
+            {% if c.applied %}
+            <form method="post" action="{% url 'erp-crm-import-action' job.pk %}" class="d-inline">
+              {% csrf_token %}<input type="hidden" name="object_type" value="{{ c.object_type }}">
+              <button type="submit" name="action" value="undo_step" class="btn btn-sm btn-outline-secondary mb-0"{% if c.undo_first %} disabled aria-describedby="undo-{{ c.object_type }}-why"{% endif %}>Undo</button>
+            </form>
+            {% if c.undo_first %}<p class="text-xs text-secondary w-100 mb-0" id="undo-{{ c.object_type }}-why">Undo {{ c.undo_first|join:", " }} first.</p>{% endif %}
+            {% endif %}
+          {% endif %}
+        </div>
+        {% if c.too_big %}<p class="text-xs text-secondary mt-2 mb-0">More than {{ web_run_limit|intcomma }} rows: run <code>manage.py crm_import run --job {{ job.pk }} --through {{ c.object_type }}</code> on the server.</p>{% endif %}
+        {% endif %}
+      </div>
+    </section>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function () {
+  // Poll the open apply runs (4.9), so a run started from the CLI shows too.
+  var box = document.getElementById("run-progress");
+  if (!box || box.hidden) return;
+  var body = document.getElementById("run-progress-body");
+  function esc(s) { var d = document.createElement("div"); d.textContent = String(s); return d.innerHTML; }
+  function tick() {
+    fetch(box.dataset.progressUrl, {headers: {"Accept": "application/json"}, credentials: "same-origin"})
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.runs.length) { window.location.reload(); return; }
+        body.innerHTML = data.runs.map(function (run) {
+          return '<p class="text-sm mb-1">Applying ' + esc(run.object_type) + ": chunk " + run.chunk + " of " + run.chunks +
+            " (" + run.done + " of " + run.total + ' rows)</p><div class="progress mb-2" role="progressbar" aria-label="Applying ' +
+            esc(run.object_type) + '" aria-valuenow="' + run.percent + '" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar bg-gradient-primary" style="width: ' +
+            run.percent + '%"></div></div>';
+        }).join("");
+        setTimeout(tick, 4000);
+      })
+      .catch(function () { setTimeout(tick, 10000); });
+  }
+  setTimeout(tick, 4000);
+})();
+</script>
+{% endblock %}

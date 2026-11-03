@@ -1,0 +1,22 @@
+{
+  "payload": {
+    "last_page": true,
+    "tasks": []
+  },
+  "provider": "clickup",
+  "repeatable": true,
+  "request": {
+    "method": "GET",
+    "path": "/api/v2/list/901/task",
+    "query": {
+      "date_updated_gt": "1772463540000",
+      "include_closed": "true",
+      "include_markdown_description": "true",
+      "order_by": "updated",
+      "page": "0",
+      "reverse": "true",
+      "subtasks": "true"
+    }
+  },
+  "schema_version": 1
+}

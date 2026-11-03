@@ -1,0 +1,6 @@
+{
+  "description": "the manifest lists tasks with complete coverage but the file is gone",
+  "remove": [
+    "tasks.jsonl"
+  ]
+}

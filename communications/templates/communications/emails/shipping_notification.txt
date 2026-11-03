@@ -1,0 +1,29 @@
+Your order has shipped!
+
+Hi {{ customer.first_name|default:"" }}, {% if total_shipments > 1 %}shipment {{ shipment_number }} of {{ total_shipments }} for{% else %}your items from{% endif %} order {{ order.order_number }} {% if total_shipments > 1 %}is{% else %}are{% endif %} on the way.
+
+{% if total_shipments > 1 %}Shipment: {{ shipment_number }} of {{ total_shipments }}
+{% endif %}{% if carrier %}Carrier: {{ carrier }}
+{% endif %}{% if tracking_number %}Tracking Number: {{ tracking_number }}
+{% endif %}{% if tracking_url %}
+Track your package: {{ tracking_url }}
+{% endif %}
+{% if line_items %}Items in this shipment
+----------------------
+{% for item in line_items %}
+{{ item.item_name }}{% if item.sku %} ({{ item.sku }}){% endif %} x{{ item.quantity|floatformat:0 }}
+{% endfor %}{% endif %}
+{% if has_pending_shipments %}Remaining items from your order will ship separately. We'll send you another tracking notification when they're on the way.
+{% endif %}{% if shipping_address %}
+Shipping to
+-----------
+{% if shipping_address.first_name or shipping_address.last_name %}{{ shipping_address.first_name }} {{ shipping_address.last_name }}
+{% endif %}{% if shipping_address.company_name %}{{ shipping_address.company_name }}
+{% endif %}{{ shipping_address.address_line_1 }}
+{% if shipping_address.address_line_2 %}{{ shipping_address.address_line_2 }}
+{% endif %}{{ shipping_address.city }}, {{ shipping_address.state_province }} {{ shipping_address.postal_code }}
+{% endif %}
+
+Questions? Reply to this email{% if brand.website %} or visit https://{{ brand.website }}{% endif %}
+
+- {{ brand.company_name|default:"The Team" }}

@@ -1,0 +1,22 @@
+{
+  "expect": "refused",
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A visit envelope newer than the reader is refused with AdapterError (rule 2).",
+  "seed": {
+    "deals": [],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001.json",
+      "raises": "AdapterError"
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/contacts",
+    "query": {
+      "limit": "50",
+      "propertiesWithHistory": "lifecyclestage,hs_email_optout"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "301",
+        "propertiesWithHistory": {
+          "lifecyclestage": [
+            {
+              "value": "customer",
+              "timestamp": "2025-06-01T12:00:00.000Z",
+              "sourceType": "CRM_UI"
+            },
+            {
+              "value": "lead",
+              "timestamp": "2021-03-04T10:15:00.000Z",
+              "sourceType": "FORM"
+            }
+          ],
+          "hs_email_optout": [
+            {
+              "value": "false",
+              "timestamp": "2021-03-04T10:15:00.000Z",
+              "sourceType": "FORM"
+            }
+          ]
+        }
+      },
+      {
+        "id": "302",
+        "propertiesWithHistory": {
+          "lifecyclestage": [
+            {
+              "value": "lead",
+              "timestamp": "2022-07-01T12:00:00.000Z",
+              "sourceType": "IMPORT"
+            }
+          ]
+        }
+      },
+      {
+        "id": "303",
+        "propertiesWithHistory": {
+          "lifecyclestage": [
+            {
+              "value": "opportunity",
+              "timestamp": "2022-05-06T11:05:00.000Z",
+              "sourceType": "CRM_UI"
+            }
+          ],
+          "hs_email_optout": [
+            {
+              "value": "true",
+              "timestamp": "2024-04-01T08:00:00.000Z",
+              "sourceType": "EMAIL"
+            },
+            {
+              "value": "false",
+              "timestamp": "2022-05-06T11:05:00.000Z",
+              "sourceType": "FORM"
+            }
+          ]
+        }
+      },
+      {
+        "id": "304",
+        "propertiesWithHistory": {
+          "lifecyclestage": [],
+          "hs_email_optout": []
+        }
+      },
+      {
+        "id": "305",
+        "propertiesWithHistory": {
+          "lifecyclestage": [],
+          "hs_email_optout": []
+        }
+      },
+      {
+        "id": "306",
+        "propertiesWithHistory": {
+          "lifecyclestage": [],
+          "hs_email_optout": []
+        }
+      },
+      {
+        "id": "307",
+        "propertiesWithHistory": {
+          "lifecyclestage": [],
+          "hs_email_optout": []
+        }
+      }
+    ]
+  }
+}

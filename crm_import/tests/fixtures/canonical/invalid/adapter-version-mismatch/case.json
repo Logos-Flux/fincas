@@ -1,0 +1,13 @@
+{
+  "description": "the adapter claims a schema version the manifest does not",
+  "manifest": [
+    {
+      "op": "set",
+      "path": [
+        "adapter",
+        "schema_version"
+      ],
+      "value": 2
+    }
+  ]
+}

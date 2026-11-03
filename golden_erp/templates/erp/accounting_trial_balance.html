@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load humanize erp_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+{% if not company %}
+<div class="alert alert-warning">
+  Several companies exist and none was selected. Append <code>?company=&lt;uuid&gt;</code> to choose one.
+</div>
+{% else %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <div class="row align-items-end">
+          <div class="col-md-4">
+            <h6 class="mb-0">Trial Balance</h6>
+            <p class="text-xs text-secondary mb-0">
+              {{ company.name }}
+              {% if date_from or date_to %}· {{ date_from|default:"start" }} → {{ date_to|default:"today" }}{% else %}· all dates{% endif %}
+            </p>
+          </div>
+          <div class="col-md-8">
+            <form method="get" class="row g-2 justify-content-end">
+              {% if q_company %}<input type="hidden" name="company" value="{{ company.pk }}">{% endif %}
+              <div class="col-auto">
+                <select name="account_type" aria-label="Filter by account type" class="form-control form-control-sm" data-auto-submit>
+                  <option value="">All types</option>
+                  {% for value, label in account_types %}
+                  <option value="{{ value }}" {% if account_type == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-auto">
+                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from }}" title="From" aria-label="From date">
+              </div>
+              <div class="col-auto">
+                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to }}" title="To" aria-label="To date">
+              </div>
+              <div class="col-auto">
+                <label class="text-xs mb-0 d-flex align-items-center gap-1">
+                  <input type="checkbox" name="show_empty" value="1" {% if show_empty %}checked{% endif %}> zero-activity
+                </label>
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn bg-gradient-primary btn-sm mb-0">Apply</button>
+              </div>
+              <div class="col-auto">
+                <a href="?export=csv&amp;show_empty={{ show_empty|yesno:'1,' }}&amp;account_type={{ account_type }}&amp;date_from={{ date_from }}&amp;date_to={{ date_to }}{% if q_company %}&amp;{{ q_company }}{% endif %}"
+                   class="btn btn-outline-secondary btn-sm mb-0">CSV</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body px-0 pt-3 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">#</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Account</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Type</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Debit</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Credit</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr>
+                <td class="text-xs text-secondary">{{ row.account_number|default:"—" }}</td>
+                <td>
+                  <a href="{% url 'erp-accounting-account-register' row.pk %}{% if q_company %}?{{ q_company }}{% endif %}" class="text-sm font-weight-bold">{{ row.full_name|default:row.name }}</a>
+                  {% if not row.is_active %}<span class="badge badge-sm bg-gradient-warning ms-1">placeholder</span>{% endif %}
+                </td>
+                <td class="text-xs text-secondary">{{ row.get_account_type_display }}</td>
+                <td class="text-sm text-end">{% if row.debit %}{{ row.debit|money }}{% else %}—{% endif %}</td>
+                <td class="text-sm text-end">{% if row.credit %}{{ row.credit|money }}{% else %}—{% endif %}</td>
+                <td class="text-sm text-end font-weight-bold">{{ row.balance|money }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-sm text-secondary text-center py-4">
+                No accounts with activity{% if not show_empty %} — <a class="text-decoration-underline" href="?show_empty=1{% if q_company %}&amp;{{ q_company }}{% endif %}">show zero-activity accounts</a>{% endif %}.
+              </td></tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              {% comment %}
+              Footer totals are the ledger-wide figures from the database, NOT
+              a sum of the rows above — the rows may be filtered by type.
+              {% endcomment %}
+              <tr class="border-top">
+                <td colspan="3" class="text-sm font-weight-bold">Ledger total{% if account_type %} <span class="text-xs text-secondary font-weight-normal">(all types — rows above are filtered)</span>{% endif %}</td>
+                <td class="text-sm text-end font-weight-bold">{{ total_debit|money }}</td>
+                <td class="text-sm text-end font-weight-bold">{{ total_credit|money }}</td>
+                <td class="text-sm text-end font-weight-bold {% if out_of_balance %}text-danger{% else %}text-success{% endif %}">
+                  {% if out_of_balance %}{{ out_of_balance|money }} out{% else %}in balance{% endif %}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% include "erp/_list_a11y_script.html" %}
+{% endblock %}

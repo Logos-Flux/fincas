@@ -1,0 +1,38 @@
+{
+  "payload": {
+    "data": {
+      "answered_at": 1772461212,
+      "archived": false,
+      "asset": null,
+      "comments": [],
+      "direct_link": "https://api.aircall.io/v1/calls/1002",
+      "direction": "outbound",
+      "duration": 400,
+      "ended_at": 1772461600,
+      "id": 1002,
+      "missed_call_reason": null,
+      "number": {
+        "digits": "+1 202-555-0100",
+        "id": 5101,
+        "name": "Sales line"
+      },
+      "raw_digits": "+1 202-555-0144",
+      "recording": null,
+      "started_at": 1772461200,
+      "status": "done",
+      "tags": [],
+      "user": {
+        "email": "sam@example.org",
+        "id": 7201,
+        "name": "Sam Seller"
+      },
+      "voicemail": null
+    },
+    "event": "call.ended",
+    "resource": "call",
+    "timestamp": 1772461610,
+    "token": "fixture-webhook-secret-1"
+  },
+  "provider": "aircall",
+  "schema_version": 1
+}

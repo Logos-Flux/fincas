@@ -1,0 +1,59 @@
+{
+  "golden": [
+    {
+      "op": "edit",
+      "task": "t1",
+      "title": "Call Ada at 3"
+    }
+  ],
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "Golden's edit is pushed; ClickUp's webhook echoing it back changes nothing and pushes nothing back.",
+  "seed": {
+    "engagements": [
+      {
+        "key": "deal",
+        "number": "EN-00042",
+        "party": "ada"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.com",
+        "key": "sam"
+      }
+    ],
+    "tasks": [
+      {
+        "assignee": "sam",
+        "assignee_clickup": "81000001",
+        "clickup_id": "86a0fx01",
+        "date_updated": "1772460000000",
+        "due": "2026-03-05",
+        "engagement": "deal",
+        "key": "t1",
+        "list": "901",
+        "title": "Call Ada back"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "drain": true
+    },
+    {
+      "status": 200,
+      "webhook": "inbound/001-echo.json"
+    },
+    {
+      "drain": true
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "payload": {
+    "history": [
+      {
+        "id": "2001",
+        "messages": [
+          {
+            "id": "19b00000000000b8",
+            "threadId": "19b00000000000b8"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b00000000000b8",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b00000000000b8"
+            }
+          }
+        ]
+      },
+      {
+        "id": "2002",
+        "messages": [
+          {
+            "id": "19b0000000000009",
+            "threadId": "19b0000000000009"
+          }
+        ],
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "19b0000000000009",
+              "labelIds": [
+                "INBOX"
+              ],
+              "threadId": "19b0000000000009"
+            }
+          }
+        ]
+      }
+    ],
+    "historyId": "2010"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/history",
+    "query": {
+      "historyTypes": "messageAdded",
+      "maxResults": "50",
+      "startHistoryId": "2000"
+    }
+  },
+  "schema_version": 1
+}

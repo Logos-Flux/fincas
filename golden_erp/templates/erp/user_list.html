@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <div class="row">
+          <div class="col-lg-6 col-7">
+            <h6>Users</h6>
+          </div>
+          <div class="col-lg-6 col-5 my-auto text-end">
+            <a href="{% url 'erp-user-create' %}" class="btn bg-gradient-primary btn-sm mb-0">
+              <i class="fas fa-plus me-1"></i> New User
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body px-0 pt-0 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Username</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Email</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Name</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Roles</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Date Joined</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+              <tr>
+                <td>
+                  <span class="text-sm font-weight-bold ps-3">{{ u.username }}</span>
+                </td>
+                <td>
+                  <span class="text-sm">{{ u.email|default:"—" }}</span>
+                </td>
+                <td>
+                  <span class="text-sm">{{ u.get_full_name|default:"—" }}</span>
+                </td>
+                <td>
+                  <span class="text-sm">{{ u.role_labels|join:", "|default:"—" }}</span>
+                  {% if can_manage_roles and u != request.user %}
+                  <a href="{% url 'erp-user-roles' u.pk %}" class="btn btn-link btn-sm text-primary mb-0 p-1" aria-label="Change roles for {{ u.username }}">Roles</a>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if u.is_active %}
+                  <span class="badge badge-sm bg-gradient-success">Active</span>
+                  {% else %}
+                  <span class="badge badge-sm bg-gradient-secondary">Inactive</span>
+                  {% endif %}
+                  {% if u.is_staff %}
+                  <span class="badge badge-sm bg-gradient-info">Staff</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="text-sm">{{ u.date_joined|date:"N j, Y" }}</span>
+                </td>
+                <td>
+                  {% if u != request.user %}
+                  <form method="post" action="{% url 'erp-user-toggle-active' u.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    {% if u.is_active %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm mb-0" onclick="return confirm('Disable user &quot;{{ u.username }}&quot;?')">
+                      <i class="fas fa-ban me-1"></i>Disable
+                    </button>
+                    {% else %}
+                    <button type="submit" class="btn btn-outline-success btn-sm mb-0">
+                      <i class="fas fa-check me-1"></i>Enable
+                    </button>
+                    {% endif %}
+                  </form>
+                  {% else %}
+                  <span class="text-xs text-secondary">You</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-sm text-secondary">No users found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

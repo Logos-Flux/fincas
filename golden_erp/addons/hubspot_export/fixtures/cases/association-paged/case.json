@@ -1,0 +1,9 @@
+{
+  "description": "A ticket with more contact associations than its page inlined (the v3 association limit): page_missing on associations.",
+  "base": "crawl-small",
+  "added": {
+    "association": [
+      "page_missing"
+    ]
+  }
+}

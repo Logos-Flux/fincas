@@ -1,0 +1,33 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A body whose signature does not match the account's secret is 401 and writes nothing.",
+  "seed": {
+    "engagements": [
+      {
+        "key": "deal",
+        "number": "EN-00042",
+        "party": "ada"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.com",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "status": 401,
+      "webhook": "inbound/001.json"
+    }
+  ]
+}

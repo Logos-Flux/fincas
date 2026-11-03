@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load humanize erp_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+{% if not company %}
+<div class="alert alert-warning">
+  Several companies exist and none was selected. Append <code>?company=&lt;uuid&gt;</code> to choose one.
+</div>
+{% else %}
+
+{# Import-verification band: does the ledger tie, and is anything suspect? #}
+<div class="row">
+  <div class="col-xl-3 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body p-3">
+        <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Debits</p>
+        <h5 class="font-weight-bolder mb-0">{{ total_debit|money }}</h5>
+        <p class="text-xs text-secondary mb-0">{{ line_count|intcomma }} lines</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body p-3">
+        <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Credits</p>
+        <h5 class="font-weight-bolder mb-0">{{ total_credit|money }}</h5>
+        <p class="text-xs text-secondary mb-0">{{ entry_count|intcomma }} entries</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6 mb-4">
+    <div class="card {% if out_of_balance %}border border-danger{% endif %}">
+      <div class="card-body p-3">
+        <p class="text-sm mb-0 text-uppercase font-weight-bold">Balance Check</p>
+        {% if out_of_balance %}
+        <h5 class="font-weight-bolder mb-0 text-danger">{{ out_of_balance|money }}</h5>
+        <p class="text-xs text-danger mb-0">Out of balance</p>
+        {% else %}
+        <h5 class="font-weight-bolder mb-0 text-success">In balance</h5>
+        <p class="text-xs text-secondary mb-0">Debits = credits</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body p-3">
+        <p class="text-sm mb-0 text-uppercase font-weight-bold">Accounts</p>
+        <h5 class="font-weight-bolder mb-0">{{ account_count|intcomma }}</h5>
+        <p class="text-xs text-secondary mb-0">
+          {% if first_entry_date %}{{ first_entry_date|date:"M j, Y" }} – {{ last_entry_date|date:"M j, Y" }}{% else %}No entries{% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% comment %}
+Anything below is a reason not to trust the numbers above. Each of these is
+silent by nature, so it is stated rather than left to be noticed.
+{% endcomment %}
+{% if unbalanced_count or placeholder_count or excluded_count %}
+<div class="row">
+  <div class="col-12 mb-4">
+    <div class="alert alert-warning text-sm mb-0">
+      {% if unbalanced_count %}<strong>{{ unbalanced_count }}</strong> unbalanced {{ unbalanced_count|pluralize:"entry,entries" }}. {% endif %}
+      {% if placeholder_count %}<strong>{{ placeholder_count }}</strong> inactive/placeholder account{{ placeholder_count|pluralize }} — accounts the importer invented because the source referenced a name not in the chart. {% endif %}
+      {% if excluded_count %}<strong>{{ excluded_count }}</strong> draft/void {{ excluded_count|pluralize:"entry,entries" }} excluded from all balances on this page.{% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-lg-7 mb-4">
+    <div class="card h-100">
+      <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Balances by classification</h6>
+        <span>
+          <a href="{% url 'erp-accounting-periods' %}{% if q_company %}?{{ q_company }}{% endif %}" class="btn btn-outline-secondary btn-sm mb-0">Periods</a>
+          <a href="{% url 'erp-accounting-reconciliation' %}{% if q_company %}?{{ q_company }}{% endif %}" class="btn btn-outline-secondary btn-sm mb-0">Reconciliation</a>
+          <a href="{% url 'erp-accounting-trial-balance' %}{% if q_company %}?{{ q_company }}{% endif %}" class="btn btn-outline-secondary btn-sm mb-0">Trial Balance</a>
+        </span>
+      </div>
+      <div class="card-body px-0 pt-3 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Type</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Accounts</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Debits</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Credits</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in by_type %}
+              <tr>
+                <td><span class="text-sm font-weight-bold">{{ row.label }}</span>
+                    <span class="text-xxs text-secondary">({{ row.normal_side }})</span></td>
+                <td class="text-center text-sm">{{ row.account_count }}</td>
+                <td class="text-end text-sm">{{ row.debit|money }}</td>
+                <td class="text-end text-sm">{{ row.credit|money }}</td>
+                <td class="text-end text-sm font-weight-bold">{{ row.balance|money }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5 mb-4">
+    <div class="card h-100">
+      <div class="card-header pb-0"><h6 class="mb-0">Entries by source</h6></div>
+      <div class="card-body pt-3">
+        <ul class="list-group">
+          {% for row in by_source %}
+          <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-1 border-radius-lg">
+            <span class="text-sm">{{ row.label }}</span>
+            <span class="text-sm font-weight-bold">{{ row.n|intcomma }}</span>
+          </li>
+          {% empty %}
+          <li class="text-sm text-secondary">No entries yet.</li>
+          {% endfor %}
+        </ul>
+        <a href="{% url 'erp-accounting-entries' %}{% if q_company %}?{{ q_company }}{% endif %}" class="btn bg-gradient-primary btn-sm w-100 mt-3 mb-0">Browse journal entries</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0"><h6 class="mb-0">Most recent entries</h6></div>
+      <div class="card-body px-0 pt-3 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Date</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Number</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Reference</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Memo</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in recent_entries %}
+              <tr>
+                <td class="text-sm">{{ e.entry_date|date:"Y-m-d" }}</td>
+                <td class="text-sm"><a href="{% url 'erp-accounting-entry-detail' e.pk %}{% if q_company %}?{{ q_company }}{% endif %}">{{ e.entry_number|default:"—" }}</a></td>
+                <td class="text-sm">{{ e.source_reference|default:"—" }}</td>
+                <td class="text-sm text-secondary">{{ e.memo|truncatechars:60|default:"—" }}</td>
+                <td class="text-sm text-end">{{ e.d|money }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-sm text-secondary text-center py-4">
+                No journal entries. <a class="text-decoration-underline" href="{% url 'erp-accounting-import' %}{% if q_company %}?{{ q_company }}{% endif %}">Import a QBO export</a>.
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

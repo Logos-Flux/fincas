@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load erp_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <div class="row align-items-end">
+          <div class="col-md-6">
+            <h6 class="mb-0">Fiscal Periods</h6>
+            <p class="text-xs text-secondary mb-0">{{ paginator.count }} periods · {{ company }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body px-0 pt-3 pb-2">
+        {% if messages %}
+        <div class="px-3" role="status">
+          {% for message in messages %}
+          <div class="alert alert-warning text-sm mb-2">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Period</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Range</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Status</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Drafts</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in periods %}
+              <tr>
+                <td class="text-sm">{{ p.name }}</td>
+                <td class="text-sm">{{ p.start_date }} – {{ p.end_date }}</td>
+                <td class="text-center"><span class="badge badge-sm bg-gradient-{{ p.status|status_color:status_colors }}">{{ p.get_status_display }}</span></td>
+                <td class="text-center text-sm">
+                  {% if p.draft_entry_count %}<strong>{{ p.draft_entry_count }}</strong> unposted{% else %}—{% endif %}
+                </td>
+                <td class="text-center">
+                  {% if p.status == "open" %}
+                  <form method="post" style="display:inline" onsubmit="return confirm('Close {{ p.name|escapejs }}? Nothing can be posted into it until someone reopens it.')">
+                    {% csrf_token %}
+                    <input type="hidden" name="period" value="{{ p.pk }}">
+                    <input type="hidden" name="action" value="close">
+                    <button type="submit" class="btn btn-sm btn-outline-dark mb-0"
+                      {% if p.draft_entry_count %}title="{{ p.draft_entry_count }} draft entries overlap — post or void them first"{% endif %}>
+                      Close period
+                    </button>
+                  </form>
+                  {% elif p.status == "closed" %}
+                  <form method="post" style="display:inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="period" value="{{ p.pk }}">
+                    <input type="hidden" name="action" value="reopen">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary mb-0">Reopen</button>
+                  </form>
+                  {% else %}
+                  <span class="text-xs text-secondary">Locked — corrections go in the next open period</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-sm text-secondary py-4">
+                No fiscal periods yet. Create one in the admin to start closing books.
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

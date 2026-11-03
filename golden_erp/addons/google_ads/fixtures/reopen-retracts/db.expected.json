@@ -1,0 +1,45 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {
+        "click_id_kind": "gclid",
+        "pipeline": "sales",
+        "retracted_at": "2026-03-02T15:00:00+00:00"
+      },
+      "object_type": "conversion",
+      "source": "google_ads",
+      "source_id": "EN-00001",
+      "source_url": "",
+      "target": "crm.engagement:engagement:deal1"
+    }
+  ],
+  "outbox": [
+    {
+      "consumer": "google_ads.conversion",
+      "event": "retract",
+      "idempotency_key": "retract:<uuid>",
+      "object": "engagement:deal1",
+      "state": "done"
+    },
+    {
+      "consumer": "google_ads.conversion",
+      "event": "upload",
+      "idempotency_key": "conv:<uuid>",
+      "object": "engagement:deal1",
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": [
+    {
+      "channel": "paid_search",
+      "occurred_at": "2026-02-20T15:00:00Z",
+      "party": "party:ada",
+      "utm_campaign": "",
+      "utm_source": ""
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "communications": [
+    {
+      "direction": "inbound",
+      "engagement": null,
+      "kind": "email",
+      "occurred_at": "2026-03-02T14:00:00Z",
+      "participants": [
+        {
+          "address": "ada@example.com",
+          "party": "party:ada",
+          "role": "from"
+        },
+        {
+          "address": "rep@example.org",
+          "party": null,
+          "role": "to"
+        }
+      ],
+      "party": "party:ada",
+      "provider": "gmail",
+      "status": "completed",
+      "subject": "Pushed",
+      "thread_key": "mid:31518f7f789fa81e34371a3145b92d7b0957c2dc"
+    }
+  ],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {},
+      "object_type": "message",
+      "source": "gmail",
+      "source_id": "mid:31518f7f789fa81e34371a3145b92d7b0957c2dcbd750c0a745cd1bcfe9a9ff1",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    }
+  ],
+  "outbox": [
+    {
+      "consumer": "gmail.inbound",
+      "event": "webhook",
+      "idempotency_key": "account:2070443601311540",
+      "object": null,
+      "state": "done"
+    },
+    {
+      "consumer": "gmail.poll",
+      "event": "poll",
+      "idempotency_key": "account:staff:rep:1010",
+      "object": null,
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

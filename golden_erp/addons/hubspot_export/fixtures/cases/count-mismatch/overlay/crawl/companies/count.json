@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "POST",
+    "path": "/crm/v3/objects/companies/search",
+    "query": {},
+    "body": {
+      "limit": 1,
+      "filterGroups": []
+    }
+  },
+  "payload": {
+    "total": 5,
+    "results": [
+      {
+        "id": "201"
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Fincas pinned tab</title>
+  <desc id="desc">Monochrome Fincas Grid symbol for Safari pinned tabs.</desc>
+<g transform="translate(8 8) scale(0.33802817)">
+<rect x="0.0000" y="0.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+<rect x="50.0000" y="0.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+<rect x="100.0000" y="0.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+<rect x="0.0000" y="50.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+<rect x="50.0000" y="50.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+<rect x="0.0000" y="100.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#000000"/>
+</g>
+</svg>

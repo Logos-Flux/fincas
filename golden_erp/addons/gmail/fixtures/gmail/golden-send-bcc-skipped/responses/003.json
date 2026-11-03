@@ -1,0 +1,38 @@
+{
+  "payload": {
+    "labels": [
+      {
+        "id": "INBOX",
+        "name": "INBOX",
+        "type": "system"
+      },
+      {
+        "id": "SPAM",
+        "name": "SPAM",
+        "type": "system"
+      },
+      {
+        "id": "CATEGORY_PROMOTIONS",
+        "name": "CATEGORY_PROMOTIONS",
+        "type": "system"
+      },
+      {
+        "id": "Label_7",
+        "name": "golden-private",
+        "type": "user"
+      },
+      {
+        "id": "Label_8",
+        "name": "Customers",
+        "type": "user"
+      }
+    ]
+  },
+  "provider": "gmail",
+  "repeatable": true,
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/labels"
+  },
+  "schema_version": 1
+}

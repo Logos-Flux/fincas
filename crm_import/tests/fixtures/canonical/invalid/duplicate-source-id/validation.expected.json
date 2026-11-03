@@ -1,0 +1,18 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "duplicate_source_id",
+      "file": "contacts.jsonl",
+      "line": 4,
+      "field": "source_id"
+    },
+    {
+      "code": "duplicate_source_id",
+      "file": "contacts.jsonl",
+      "line": 5,
+      "field": "aliases[0]"
+    }
+  ],
+  "warnings": []
+}

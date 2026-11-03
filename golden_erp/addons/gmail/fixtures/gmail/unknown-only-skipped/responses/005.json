@@ -1,0 +1,51 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000004",
+    "internalDate": "1772460000000",
+    "labelIds": [
+      "INBOX"
+    ],
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "boss@example.org"
+        },
+        {
+          "name": "To",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "Cc",
+          "value": "ops@example.org"
+        },
+        {
+          "name": "Subject",
+          "value": "Internal: pricing"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<int-0004@example.org>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        }
+      ],
+      "mimeType": "multipart/mixed"
+    },
+    "sizeEstimate": 4200,
+    "snippet": "internal",
+    "threadId": "19b0000000000004"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000004",
+    "query": {
+      "format": "metadata"
+    }
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,66 @@
+{
+  "communications": [
+    {
+      "direction": "outbound",
+      "engagement": null,
+      "kind": "marketing_email",
+      "occurred_at": "2026-03-01T12:00:00Z",
+      "participants": [
+        {
+          "address": "ada@example.com",
+          "party": "party:ada",
+          "role": "to"
+        }
+      ],
+      "party": "party:ada",
+      "provider": "klaviyo",
+      "status": "completed",
+      "subject": "Spring panels",
+      "thread_key": "klaviyo:01FIXTURECAMPAIGNMSG00001:01FIXTUREPROFILEADA0000000"
+    }
+  ],
+  "consents": [
+    {
+      "channel": "email",
+      "occurred_at": "2026-02-01T10:00:00Z",
+      "party": "party:ada",
+      "purpose": "marketing",
+      "source": "portal",
+      "state": "granted"
+    }
+  ],
+  "external_refs": [
+    {
+      "metadata": {
+        "address": "b5fc85e55755f9e0d030a10ab4429b6b2944855f9a0d60077fe832becbc41d72",
+        "list": "XFIX01",
+        "state": "subscribed"
+      },
+      "object_type": "profile",
+      "source": "klaviyo",
+      "source_id": "01FIXTUREPROFILEADA0000000",
+      "source_url": "",
+      "target": "parties.party:party:ada"
+    },
+    {
+      "metadata": {},
+      "object_type": "event",
+      "source": "klaviyo",
+      "source_id": "01FIXTUREEVENTOPEN0000001",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    },
+    {
+      "metadata": {},
+      "object_type": "message",
+      "source": "klaviyo",
+      "source_id": "01FIXTUREEVENTRECV0000001",
+      "source_url": "",
+      "target": "communications.communication:<new>"
+    }
+  ],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

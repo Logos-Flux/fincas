@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Create User{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card">
+      {# d-block: Tabler's flex card-header would inline the h6 and its subtitle. #}
+      <div class="card-header pb-0 d-block">
+        <h6>Create User</h6>
+        <p class="text-sm mb-0">The user will be required to change their password on first login.</p>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {% if form.errors %}
+          <div class="alert alert-danger">
+            {% for field in form %}
+              {% for error in field.errors %}
+              <p class="mb-0 text-sm">{{ field.label }}: {{ error }}</p>
+              {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+            <p class="mb-0 text-sm">{{ error }}</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="id_first_name" class="form-label text-sm font-weight-bold">First Name</label>
+              <input type="text" name="first_name" id="id_first_name" class="form-control" value="{{ form.first_name.value|default:'' }}">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="id_last_name" class="form-label text-sm font-weight-bold">Last Name</label>
+              <input type="text" name="last_name" id="id_last_name" class="form-control" value="{{ form.last_name.value|default:'' }}">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="id_username" class="form-label text-sm font-weight-bold">Username <span class="text-danger">*</span></label>
+            <input type="text" name="username" id="id_username" class="form-control" value="{{ form.username.value|default:'' }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_email" class="form-label text-sm font-weight-bold">Email <span class="text-danger">*</span></label>
+            <input type="email" name="email" id="id_email" class="form-control" value="{{ form.email.value|default:'' }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_role" class="form-label text-sm font-weight-bold">Role</label>
+            {{ form.role }}
+            <small class="form-text text-secondary text-xs d-block">Back-office access follows the role (docs/roles.md); more roles can be added from the Users list.</small>
+          </div>
+          <div class="mb-3">
+            <label for="id_password1" class="form-label text-sm font-weight-bold">Temporary Password <span class="text-danger">*</span></label>
+            <input type="password" name="password1" id="id_password1" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_password2" class="form-label text-sm font-weight-bold">Confirm Password <span class="text-danger">*</span></label>
+            <input type="password" name="password2" id="id_password2" class="form-control" required>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn bg-gradient-dark mb-0">Create User</button>
+            <a href="{% url 'erp-user-list' %}" class="btn btn-outline-secondary mb-0">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

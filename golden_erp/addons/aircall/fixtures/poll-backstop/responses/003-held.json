@@ -1,0 +1,26 @@
+{
+  "payload": {
+    "calls": [],
+    "meta": {
+      "count": 0,
+      "current_page": 1,
+      "next_page_link": null,
+      "per_page": 50,
+      "previous_page_link": null,
+      "total": 0
+    }
+  },
+  "provider": "aircall",
+  "repeatable": true,
+  "request": {
+    "method": "GET",
+    "path": "/v1/calls",
+    "query": {
+      "from": "1772463200",
+      "order": "asc",
+      "page": "1",
+      "per_page": "50"
+    }
+  },
+  "schema_version": 1
+}

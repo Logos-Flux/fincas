@@ -1,0 +1,50 @@
+[
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:oauth_access>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/gmail/v1/users/me/history",
+    "query": {
+      "historyTypes": "messageAdded",
+      "maxResults": "50",
+      "startHistoryId": "1000"
+    }
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:oauth_access>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/gmail/v1/users/me/labels",
+    "query": {}
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:oauth_access>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000001",
+    "query": {
+      "format": "metadata"
+    }
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:oauth_access>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000001",
+    "query": {
+      "format": "full"
+    }
+  }
+]

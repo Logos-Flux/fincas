@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "errors": [],
+  "warnings": [
+    {
+      "code": "unresolved_ref",
+      "file": "tasks.jsonl",
+      "line": 2,
+      "field": "data.target_refs[0]"
+    }
+  ]
+}

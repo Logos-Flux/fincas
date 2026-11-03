@@ -1,0 +1,34 @@
+{
+  "payload": {
+    "data": {
+      "answered_at": null,
+      "archived": false,
+      "asset": null,
+      "comments": [],
+      "direct_link": "https://api.aircall.io/v1/calls/1003",
+      "direction": "inbound",
+      "duration": 21,
+      "ended_at": 1772461221,
+      "id": 1003,
+      "missed_call_reason": "agents_did_not_answer",
+      "number": {
+        "digits": "+1 202-555-0100",
+        "id": 5101,
+        "name": "Sales line"
+      },
+      "raw_digits": "+1 202-555-0188",
+      "recording": null,
+      "started_at": 1772461200,
+      "status": "done",
+      "tags": [],
+      "user": null,
+      "voicemail": null
+    },
+    "event": "call.ended",
+    "resource": "call",
+    "timestamp": 1772461610,
+    "token": "fixture-webhook-secret-1"
+  },
+  "provider": "aircall",
+  "schema_version": 1
+}

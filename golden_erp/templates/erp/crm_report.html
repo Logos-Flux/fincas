@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load labels %}
+
+{% block title %}{% include "erp/_report_heading.html" with h=report_heading %}{% endblock %}
+
+{% block content %}
+{# CRM reports (docs/crm/phase3-engagement.md 4.2). Headings name nouns through #}
+{# the label layer; the CSV export writes canonical names only (spec 3.4). #}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <div class="row align-items-end">
+          <div class="col-lg-4">
+            <h6 data-testid="report-title">{% include "erp/_report_heading.html" with h=report_heading %}</h6>
+            {% if scope_label %}<p class="text-xs text-secondary mb-1" data-testid="report-scope">Data for: {{ scope_label }}</p>{% endif %}
+            <nav aria-label="CRM reports" class="d-flex flex-wrap gap-1 mb-2">
+              {% for r in crm_reports %}
+              <a class="btn btn-sm mb-0 {% if r.key == active_report %}bg-gradient-primary{% else %}btn-outline-secondary{% endif %}" {% if r.key == active_report %}aria-current="page"{% endif %} href="{% url r.url_name %}?period={{ period }}&date_from={{ date_from|date:'Y-m-d' }}&date_to={{ date_to|date:'Y-m-d' }}">{% include "erp/_report_heading.html" with h=r.title %}</a>
+              {% endfor %}
+              <a class="btn btn-sm btn-outline-secondary mb-0" href="{% url 'erp-report-list' %}">All reports</a>
+            </nav>
+          </div>
+          <div class="col-lg-8">
+            <form method="get" class="row g-2 justify-content-end">
+              {% if attribution_choices %}
+              <div class="col-auto">
+                <select name="by" aria-label="Attribution" class="form-control form-control-sm" onchange="this.form.submit()">
+                  {% for value, h in attribution_choices %}
+                  <option value="{{ value }}" {% if attribution == value %}selected{% endif %}>{% include "erp/_report_heading.html" with h=h %}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              {% endif %}
+              {% if pipeline_choices %}
+              <div class="col-auto">
+                <select name="pipeline" aria-label="{% label 'crm.pipeline' %}" class="form-control form-control-sm" onchange="this.form.submit()">
+                  {% for value, name in pipeline_choices %}
+                  <option value="{{ value }}" {% if selected_pipeline == value %}selected{% endif %}>{{ name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              {% endif %}
+              <div class="col-auto">
+                <select name="period" aria-label="Period" class="form-control form-control-sm" onchange="this.form.date_from.value='';this.form.date_to.value='';this.form.submit()">
+                  <option value="today" {% if period == "today" %}selected{% endif %}>Today</option>
+                  <option value="week" {% if period == "week" %}selected{% endif %}>This Week</option>
+                  <option value="month" {% if period == "month" %}selected{% endif %}>This Month</option>
+                  <option value="quarter" {% if period == "quarter" %}selected{% endif %}>This Quarter</option>
+                  <option value="year" {% if period == "year" %}selected{% endif %}>This Year</option>
+                </select>
+              </div>
+              <div class="col-auto">
+                <input type="date" name="date_from" aria-label="From date" class="form-control form-control-sm" value="{{ date_from|date:'Y-m-d' }}">
+              </div>
+              <div class="col-auto">
+                <input type="date" name="date_to" aria-label="To date" class="form-control form-control-sm" value="{{ date_to|date:'Y-m-d' }}">
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn bg-gradient-primary btn-sm mb-0">Apply</button>
+              </div>
+              <div class="col-auto">
+                <a href="?{% if attribution %}by={{ attribution }}&{% endif %}{% if selected_pipeline %}pipeline={{ selected_pipeline }}&{% endif %}period={{ period }}&date_from={{ date_from|date:'Y-m-d' }}&date_to={{ date_to|date:'Y-m-d' }}&export=csv" class="btn btn-outline-secondary btn-sm mb-0" data-testid="report-csv">
+                  <i class="ti ti-cloud-download me-1" aria-hidden="true"></i> CSV
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+        {% if report_notes or completeness %}
+        <div class="row">
+          <div class="col-12">
+            <ul class="list-unstyled text-xs text-secondary mb-2" data-testid="report-notes">
+              {% for note in report_notes %}<li>{{ note }}</li>{% endfor %}
+              {% if completeness %}
+              <li data-testid="amount-completeness">Amounts known for {{ completeness.pct }} of won {% label "crm.engagement" plural=True case="lower" %} ({{ completeness.known }} of {{ completeness.total }}).</li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if summary_cards %}
+<div class="row">
+  {% for card in summary_cards %}
+  <div class="col-xl-3 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body p-3">
+        <div class="row">
+          <div class="col-8">
+            <div class="numbers">
+              <p class="text-sm mb-0 font-weight-bold">{% include "erp/_report_heading.html" with h=card.heading %}</p>
+              <h5 class="font-weight-bolder mb-0">{{ card.value }}</h5>
+              {% if card.detail %}<p class="text-xs text-secondary mb-0">{{ card.detail }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="col-4 text-end">
+            <div class="icon icon-shape bg-gradient-{{ card.color|default:'primary' }} shadow text-center border-radius-md">
+              <i class="{{ card.icon|default:'ti ti-chart-bar' }} text-lg opacity-10" aria-hidden="true"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <h6>Data</h6>
+      </div>
+      <div class="card-body px-0 pt-0 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0" data-testid="report-table">
+            <thead>
+              <tr>
+                {% for col in table_columns %}{% if not col.csv_only %}
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 {% if forloop.first %}ps-3{% else %}ps-2{% endif %} {% if col.align == 'end' %}text-end pe-3{% endif %}">{% include "erp/_report_heading.html" with h=col.heading %}</th>
+                {% endif %}{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in table_rows %}
+              <tr>
+                {% for c in row %}{% if not c.csv_only %}
+                <td class="text-sm {% if forloop.first %}ps-3{% else %}text-end pe-3{% endif %}">{{ c.display }}</td>
+                {% endif %}{% endfor %}
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="{{ visible_column_count }}" class="text-center py-4 text-sm text-secondary">No data for selected period.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            {% if total_row %}
+            <tfoot>
+              <tr>
+                {% for c in total_row %}{% if not c.csv_only %}
+                <td class="text-sm font-weight-bold {% if forloop.first %}ps-3{% else %}text-end pe-3{% endif %}">{{ c.display }}</td>
+                {% endif %}{% endfor %}
+              </tr>
+            </tfoot>
+            {% endif %}
+          </table>
+        </div>
+        {% if no_history_excluded or reconstructed_visits %}
+        <p class="text-xs text-secondary px-3 pt-3 mb-0" id="no-history-footnote" data-testid="no-history-footnote">
+          *{% if no_history_excluded %} {{ no_history_excluded }} {% if no_history_excluded == 1 %}{% label "crm.engagement" case="lower" %} was{% else %}{% label "crm.engagement" plural=True case="lower" %} were{% endif %} left out: no stage history except backfill or import rows (or none), so time in stage is unknown.{% endif %}
+          {% if reconstructed_visits %}{{ reconstructed_visits }} visit{{ reconstructed_visits|pluralize }} in the period began or ended at a backfill or import row and {{ reconstructed_visits|pluralize:"was,were" }} not timed.{% endif %}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if definitions %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4" id="report-definitions">
+      <div class="card-header pb-0">
+        <h6>How these numbers are calculated</h6>
+      </div>
+      <div class="card-body pt-2">
+        <dl class="row text-sm mb-0">
+          {% for term, meaning in definitions %}
+          <dt class="col-sm-3">{{ term }}</dt>
+          <dd class="col-sm-9">{{ meaning }}</dd>
+          {% endfor %}
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

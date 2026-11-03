@@ -1,0 +1,31 @@
+Thank you for your order!
+
+Hi {{ customer.first_name|default:"" }}, we've received your order and will be in touch with updates.
+
+Order Number: {{ order.order_number }}
+Date: {{ order.order_date|date:"N j, Y" }}
+
+Items
+-----
+{% for item in line_items %}
+{{ item.item_name }}{% if item.sku %} ({{ item.sku }}){% endif %} x{{ item.quantity|floatformat:0 }}  ${{ item.line_total_ex_tax|floatformat:2 }}
+{% endfor %}
+
+Subtotal: ${{ order.subtotal_ex_tax|floatformat:2 }}
+{% if order.discount_amount %}Discount: -${{ order.discount_amount|floatformat:2 }}
+{% endif %}{% if order.tax_total %}Tax: ${{ order.tax_total|floatformat:2 }}
+{% endif %}{% if order.shipping_cost_ex_tax %}Shipping: ${{ order.shipping_cost_ex_tax|floatformat:2 }}
+{% endif %}Total: ${{ order.grand_total|floatformat:2 }}
+{% if shipping_address %}
+Shipping to
+-----------
+{% if shipping_address.first_name or shipping_address.last_name %}{{ shipping_address.first_name }} {{ shipping_address.last_name }}
+{% endif %}{% if shipping_address.company_name %}{{ shipping_address.company_name }}
+{% endif %}{{ shipping_address.address_line_1 }}
+{% if shipping_address.address_line_2 %}{{ shipping_address.address_line_2 }}
+{% endif %}{{ shipping_address.city }}, {{ shipping_address.state_province }} {{ shipping_address.postal_code }}
+{% endif %}
+
+Questions? Reply to this email{% if brand.website %} or visit https://{{ brand.website }}{% endif %}
+
+- {{ brand.company_name|default:"The Team" }}

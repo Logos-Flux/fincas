@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/calls",
+    "query": {
+      "limit": "100",
+      "associations": "contacts,companies,deals,tickets"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "901",
+        "properties": {
+          "hs_object_id": "901",
+          "hs_timestamp": "2026-09-01T16:00:00.000Z",
+          "hs_createdate": "2026-09-01T16:00:00.000Z",
+          "hs_lastmodifieddate": "2026-09-01T16:00:00.000Z",
+          "hs_call_title": "Follow-up call",
+          "hs_call_body": "Left a voicemail.",
+          "hs_call_direction": "OUTBOUND",
+          "hs_call_status": "NO_ANSWER",
+          "hs_call_duration": "45000",
+          "hs_call_from_number": "+1 202-555-0100",
+          "hs_call_to_number": "+1 202-555-0111",
+          "hs_call_recording_url": "https://recordings.example.com/901.mp3",
+          "hubspot_owner_id": "101"
+        },
+        "createdAt": "2026-09-01T16:00:00.000Z",
+        "updatedAt": "2026-09-01T16:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "contacts": {
+            "results": [
+              {
+                "id": "301",
+                "type": "call_to_contact"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "902",
+        "properties": {
+          "hs_object_id": "902",
+          "hs_timestamp": "2023-03-01T10:00:00.000Z",
+          "hs_createdate": "2023-03-01T10:00:00.000Z",
+          "hs_lastmodifieddate": "2023-03-01T10:00:00.000Z",
+          "hs_call_title": "Inbound referral",
+          "hs_call_body": "<p>Two new referrals.</p>",
+          "hs_call_direction": "INBOUND",
+          "hs_call_status": "COMPLETED",
+          "hs_call_duration": "125500",
+          "hs_call_from_number": "312-555-0113",
+          "hs_call_to_number": "+1 202-555-0100",
+          "hubspot_owner_id": "102"
+        },
+        "createdAt": "2023-03-01T10:00:00.000Z",
+        "updatedAt": "2023-03-01T10:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "contacts": {
+            "results": [
+              {
+                "id": "302",
+                "type": "call_to_contact"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

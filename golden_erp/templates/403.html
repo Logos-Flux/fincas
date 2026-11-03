@@ -1,0 +1,7 @@
+{% extends "errors/base.html" %}
+{% block title %}Access denied{% endblock %}
+{% block code %}403{% endblock %}
+{% block heading %}Access denied{% endblock %}
+{% block lede %}You do not have permission to open this page. If you need it, sign in with a staff account that does, or ask an administrator for access.{% endblock %}
+{% block back_label %}Back to the sign-in page{% endblock %}
+{% block back_href %}{% url 'erp-login' %}{% endblock %}

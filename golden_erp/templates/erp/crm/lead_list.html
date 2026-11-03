@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load erp_tags labels %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "list", "entity": "Lead"}'>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+  <div class="card-header pb-0">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h1 class="h6 mb-0">{{ page_title }}</h1>
+        <p class="text-xs text-secondary mb-0">The intake log: what came in, from where and when. The work happens on the {% label "crm.engagement" case="lower" %}.</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <a href="{% url 'erp-crm-lead-create' %}" class="btn bg-gradient-primary btn-sm mb-0">
+          <i class="fas fa-plus me-1" aria-hidden="true"></i> New {{ entity_label|lower }}
+        </a>
+        <div>{% include "erp/_list_export.html" %}{% include "erp/_column_chooser.html" %}</div>
+      </div>
+    </div>
+    {% include "erp/_saved_filters.html" %}
+    <details class="erp-filters mt-3" open>
+    <summary class="btn btn-outline-secondary btn-sm mb-2">Filters</summary>
+    <form method="get" class="row g-2 align-items-start">
+      <div class="col-md-3"><input type="search" name="q" value="{{ search_query }}" class="form-control form-control-sm mb-2" aria-label="Search by number, exact email, last name or company" placeholder="Number, email, name"></div>
+      <div class="col-md-auto col-6">
+        <select name="source" class="form-control form-control-sm mb-2" aria-label="Filter by source" data-auto-submit>
+          <option value="">Source: any</option>
+          {% for value, text in source_choices %}<option value="{{ value }}"{% if active.source == value %} selected{% endif %}>{{ text }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-auto col-6">
+        <select name="request_type" class="form-control form-control-sm mb-2" aria-label="Filter by request type" data-auto-submit>
+          <option value="">Request: any</option>
+          {% for value, text in request_choices %}<option value="{{ value }}"{% if active.request_type == value %} selected{% endif %}>{{ text }}</option>{% endfor %}
+        </select>
+      </div>
+      {% include "erp/_list_sort_inputs.html" %}
+      <div class="col-md-auto col-6"><button type="submit" class="btn btn-outline-primary btn-sm mb-2">Apply</button></div>
+    </form>
+    </details>
+  </div>
+  <div class="card-body px-0 pt-0 pb-2">
+    {% include "erp/_list_live_region.html" %}
+    <div class="table-responsive p-0">
+      <table class="table align-items-center mb-0" id="lead-list-table">
+            {% include "erp/_list_caption.html" %}
+        <thead><tr>{% include "erp/crm/_list_header.html" %}</tr></thead>
+        <tbody>
+          {% for lead in object_list %}
+          <tr>
+            {% for col in visible_columns %}
+            {% if col.id == "created_at" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm" title="{{ lead.created_at|date:'Y-m-d H:i' }}">{{ lead.created_at|date:"M j, Y" }}</span></td>
+            {% elif col.id == "name" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm font-weight-bold">{{ lead.first_name }} {{ lead.last_name }}</span>{% if lead.company_name %}<div class="text-xs text-secondary">{{ lead.company_name }}</div>{% endif %}</td>
+            {% elif col.id == "email" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm text-break">{{ lead.email|default:"—" }}</span></td>
+            {% elif col.id == "source" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{{ lead.get_source_display }}</span></td>
+            {% elif col.id == "request_type" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{{ lead.get_request_type_display|default:"—" }}</span></td>
+            {% elif col.id == "engagement" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}">{% if lead.engagement %}<a href="{% url 'erp-crm-engagement-detail' lead.engagement_id %}" class="text-sm text-primary">{{ lead.engagement.number }}</a>{% else %}<span class="text-sm text-secondary">—</span>{% endif %}</td>
+            {% elif col.id == "status" %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}"><span class="text-sm">{{ lead.status_text }}</span></td>
+            {% else %}
+            <td class="{% if forloop.first %}ps-3{% endif %} {{ col.priority_class }}">{% list_cell lead col %}</td>
+            {% endif %}
+            {% endfor %}
+          </tr>
+          {% empty %}
+          <tr><td colspan="{{ visible_columns|length }}" class="text-center py-4 text-sm text-secondary">No {{ entity_label_plural|lower }}.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% include "erp/crm/_pager.html" %}
+</div>
+{% include "erp/_list_responsive.html" %}
+{% endblock %}
+
+{% block javascripts %}
+{% include "erp/_list_a11y_script.html" %}
+<script>
+(function() {
+{% include "erp/_list_tools_js.html" %}
+})();
+</script>
+{% endblock %}

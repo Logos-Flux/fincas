@@ -1,0 +1,29 @@
+[
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:api_key>",
+      "idempotency-key": "party:ada"
+    },
+    "json": {
+      "email": "ada@example.com",
+      "golden_id": "party:ada",
+      "name": "Ada Lovelace"
+    },
+    "method": "POST",
+    "path": "/v1/contacts",
+    "query": {}
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:api_key>"
+    },
+    "json": null,
+    "method": "GET",
+    "path": "/v1/contacts",
+    "query": {
+      "golden_id": "party:ada"
+    }
+  }
+]

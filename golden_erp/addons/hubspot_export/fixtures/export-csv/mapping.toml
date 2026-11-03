@@ -1,0 +1,5 @@
+source = "hubspot:1234567"
+default_currency = "USD"
+
+[contact.properties]
+lead_type = "sidecar"

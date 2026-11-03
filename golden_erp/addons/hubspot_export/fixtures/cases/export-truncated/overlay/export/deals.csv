@@ -1,0 +1,4 @@
+﻿Record ID,Deal Name,Pipeline,Deal Stage,Amount,Currency,Close Date,Is Deal Closed?,Is Closed Won,Owner,Next step,Create Date,Last Modified Date,Associated Contact IDs,Associated Company IDs
+401,Widget retrofit,Sales Pipeline,Contract Sent,12000,US Dollar,2026-11-30 12:00,False,False,Avery Example,Send revised quote,2026-08-01 05:00,2026-09-30 04:00,301,201
+402,Legal review package,Sales Pipeline,Closed Won,4500.50,US Dollar,2025-06-01 08:00,True,True,Blair Sample,,2025-03-01 04:00,2025-06-01 08:00,303,202
+404,Referral: Riley,Partner Referrals,Closed - referred out,,

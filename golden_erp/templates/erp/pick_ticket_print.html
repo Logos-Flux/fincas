@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pick Ticket {{ object.ticket_number }}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #222; padding: 24px; }
+
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #222; padding-bottom: 12px; }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-left img { height: 44px; }
+    .header-left h1 { font-size: 22px; font-weight: 700; }
+    .header-right { text-align: right; }
+    .header-right .ticket-num { font-size: 20px; font-weight: 700; }
+    .header-right .ticket-date { font-size: 12px; color: #555; margin-top: 2px; }
+
+    .info-row { display: flex; gap: 32px; margin-bottom: 18px; }
+    .info-col { flex: 1; }
+    .info-col h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 6px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+    .info-col p { margin: 2px 0; font-size: 13px; line-height: 1.4; }
+    .info-col .label { font-weight: 600; }
+
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    thead th { background: #f0f0f0; text-align: left; padding: 8px 10px; font-size: 12px; font-weight: 700; text-transform: uppercase; border: 1px solid #bbb; }
+    tbody td { padding: 7px 10px; border: 1px solid #ccc; font-size: 13px; vertical-align: top; }
+    tbody tr:nth-child(even) { background: #fafafa; }
+    .col-num { width: 36px; text-align: center; }
+    .col-sku { width: 140px; }
+    .col-bin { width: 100px; }
+    .col-qty { width: 80px; text-align: center; }
+    .col-picked { width: 80px; }
+    .picked-cell { border: 1px solid #999; background: #fff; }
+
+    .footer { margin-top: 28px; border-top: 1px solid #ccc; padding-top: 16px; }
+    .signature-row { display: flex; gap: 48px; margin-top: 10px; }
+    .sig-field { flex: 1; }
+    .sig-field .sig-line { border-bottom: 1px solid #222; height: 28px; margin-top: 4px; }
+    .sig-field .sig-label { font-size: 11px; color: #666; margin-top: 2px; }
+
+    .notes-area { margin-top: 16px; }
+    .notes-area h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 4px; }
+    .notes-box { border: 1px solid #ccc; min-height: 50px; padding: 6px; font-size: 12px; white-space: pre-wrap; }
+
+    .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 24px; background: #344767; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; z-index: 100; }
+    .print-btn:hover { background: #1a2c4e; }
+
+    @media print {
+      .print-btn { display: none; }
+      body { padding: 0; }
+      .header { border-bottom-color: #000; }
+      thead th { background: #e8e8e8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tbody tr:nth-child(even) { background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <button class="print-btn" onclick="window.print()">Print</button>
+
+  <div class="header">
+    <div class="header-left">
+      <img src="{% static 'assets/img/logo.svg' %}" alt="Logo">
+      <h1>Pick Ticket</h1>
+    </div>
+    <div class="header-right">
+      <div class="ticket-num">{{ object.ticket_number }}</div>
+      <div class="ticket-date">{{ object.created_at|date:"M d, Y" }}</div>
+    </div>
+  </div>
+
+  <div class="info-row">
+    <div class="info-col">
+      <h3>Order Information</h3>
+      {% if object.order %}
+      <p><span class="label">Order #:</span> {{ object.order.order_number }}</p>
+      {% if object.order.customer %}
+      <p><span class="label">Customer:</span> {{ object.order.customer }}</p>
+      {% endif %}
+      {% if object.order.customer_po_number %}
+      <p><span class="label">Customer PO:</span> {{ object.order.customer_po_number }}</p>
+      {% endif %}
+      <p><span class="label">Order Date:</span> {{ object.order.order_date|date:"M d, Y" }}</p>
+      {% if object.order.requested_ship_date %}
+      <p><span class="label">Ship By:</span> {{ object.order.requested_ship_date|date:"M d, Y" }}</p>
+      {% endif %}
+      {% endif %}
+    </div>
+    <div class="info-col">
+      <h3>Ship To</h3>
+      {% if object.ship_to_attention %}
+      <p><span class="label">Attn:</span> {{ object.ship_to_attention }}</p>
+      {% endif %}
+      {% if object.ship_to_address %}
+      {% for line in object.ship_to_address.splitlines %}
+      <p>{{ line }}</p>
+      {% endfor %}
+      {% endif %}
+    </div>
+    <div class="info-col">
+      <h3>Warehouse</h3>
+      {% if object.warehouse %}
+      <p><span class="label">{{ object.warehouse.name }}</span></p>
+      {% if object.warehouse.city %}
+      <p>{{ object.warehouse.city }}{% if object.warehouse.state_province %}, {{ object.warehouse.state_province }}{% endif %}</p>
+      {% endif %}
+      {% endif %}
+      <p style="margin-top: 6px;"><span class="label">Status:</span> {{ object.get_status_display }}</p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="col-num">#</th>
+        <th class="col-sku">SKU</th>
+        <th>Item</th>
+        <th class="col-bin">Bin</th>
+        <th class="col-qty">Qty</th>
+        <th class="col-picked">Picked</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in object.lines.all %}
+      <tr>
+        <td class="col-num">{{ forloop.counter }}</td>
+        <td class="col-sku">{{ line.sku }}</td>
+        <td>{{ line.item_name }}</td>
+        <td class="col-bin">{{ line.bin_location }}</td>
+        <td class="col-qty">{{ line.quantity|floatformat:0 }}</td>
+        <td class="picked-cell"></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" style="text-align:center; color:#999;">No line items</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <div class="signature-row">
+      <div class="sig-field">
+        <div class="sig-line"></div>
+        <div class="sig-label">Picked by</div>
+      </div>
+      <div class="sig-field">
+        <div class="sig-line"></div>
+        <div class="sig-label">Date</div>
+      </div>
+      <div class="sig-field">
+        <div class="sig-line"></div>
+        <div class="sig-label">Checked by</div>
+      </div>
+    </div>
+
+    {% if object.notes %}
+    <div class="notes-area">
+      <h3>Notes</h3>
+      <div class="notes-box">{{ object.notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <script>
+    setTimeout(function() { window.print(); }, 300);
+  </script>
+</body>
+</html>

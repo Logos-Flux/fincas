@@ -1,0 +1,78 @@
+{
+  "brand": {
+    "primary": {
+      "value": "#6C4CF1"
+    },
+    "primaryHover": {
+      "value": "#593BD9"
+    },
+    "accent": {
+      "value": "#C7F36B"
+    },
+    "ink": {
+      "value": "#211C35"
+    }
+  },
+  "light": {
+    "background": {
+      "value": "#FCFCFE"
+    },
+    "surface": {
+      "value": "#FFFFFF"
+    },
+    "surfaceTint": {
+      "value": "#F7F5FF"
+    },
+    "text": {
+      "value": "#211C35"
+    },
+    "textSecondary": {
+      "value": "#6F687E"
+    },
+    "border": {
+      "value": "#E2DDEA"
+    }
+  },
+  "dark": {
+    "background": {
+      "value": "#121017"
+    },
+    "surface": {
+      "value": "#1A1722"
+    },
+    "surfaceRaised": {
+      "value": "#231E2E"
+    },
+    "text": {
+      "value": "#F7F5FF"
+    },
+    "textSecondary": {
+      "value": "#B4ADC2"
+    },
+    "border": {
+      "value": "#383143"
+    },
+    "primaryInteractive": {
+      "value": "#9A86F7"
+    }
+  },
+  "radius": {
+    "tile": {
+      "value": "8px"
+    },
+    "button": {
+      "value": "10px"
+    },
+    "card": {
+      "value": "16px"
+    }
+  },
+  "font": {
+    "display": {
+      "value": "Space Grotesk"
+    },
+    "body": {
+      "value": "Manrope"
+    }
+  }
+}

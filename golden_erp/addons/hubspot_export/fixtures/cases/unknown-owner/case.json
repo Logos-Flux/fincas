@@ -1,0 +1,9 @@
+{
+  "description": "A deal owned by an owner in neither owners list (deleted from the portal): owners are partial, count_mismatch.",
+  "base": "crawl-small",
+  "added": {
+    "owner": [
+      "count_mismatch"
+    ]
+  }
+}

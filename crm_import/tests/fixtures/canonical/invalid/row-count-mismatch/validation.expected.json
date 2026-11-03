@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "row_count_mismatch",
+      "file": "manifest.json",
+      "line": null,
+      "field": "objects.deal.rows"
+    }
+  ],
+  "warnings": []
+}

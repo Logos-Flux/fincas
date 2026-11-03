@@ -1,0 +1,12 @@
+{
+  "payload": null,
+  "provider": "klaviyo",
+  "request": {
+    "method": "POST",
+    "path": "/api/profile-suppression-bulk-create-jobs/"
+  },
+  "response": {
+    "status": 202
+  },
+  "schema_version": 1
+}

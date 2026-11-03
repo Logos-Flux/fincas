@@ -1,0 +1,37 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A click older than the account's click_window_days at close is skipped as click_too_old.",
+  "seed": {
+    "deals": [
+      {
+        "actions": [
+          "win"
+        ],
+        "currency": "USD",
+        "key": "deal1",
+        "party": "party:ada",
+        "touches": [
+          {
+            "click_id": "Cj0KFIXTUREgclid01",
+            "click_id_kind": "gclid",
+            "days": 40
+          }
+        ],
+        "value": "1200.00"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "drain": true
+    }
+  ]
+}

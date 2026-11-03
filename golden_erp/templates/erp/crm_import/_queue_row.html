@@ -1,0 +1,175 @@
+{% comment %}
+  One queue row (phase5-importer.md 4.6). Collapsed: name, the decision as a
+  sentence, confidence, flags. Expanded (<details>, so it works without JS):
+  source and Fincas side by side, the field diff with keep/take, the
+  candidates, the AI suggestion, the raw record, and the actions. Buttons
+  carry data-shortcut for the queue's keyboard handler.
+{% endcomment %}
+{% with row=item.row %}
+<li class="crm-review-row border rounded mb-2" id="row-{{ row.pk }}" data-row="{{ row.pk }}" data-state="{{ row.mapping_state }}" data-decidable="{% if item.decidable %}1{% else %}0{% endif %}">
+  <div class="d-flex align-items-start gap-2 p-2">
+    {% if can_apply and item.decidable or can_apply and item.skippable %}
+    <input type="checkbox" class="form-check-input mt-1 crm-select" name="ids" value="{{ row.pk }}" form="bulk-form" aria-label="Select row {{ row.row_number }}, {{ item.name }}">
+    {% endif %}
+    <details class="flex-grow-1 crm-row-details" style="min-width:0">
+      <summary class="crm-row-summary">
+        <span class="fw-bold">{{ item.name }}</span>
+        <span class="text-sm"> — {{ item.sentence }}</span>
+        <span class="d-inline-flex flex-wrap gap-1 align-middle ms-1">
+          <span class="badge badge-sm bg-gradient-secondary">{% if item.confidence is not None %}{{ item.confidence|floatformat:2 }}{% else %}—{% endif %}</span>
+          {% if row.mapping_state != "proposed" %}<span class="badge badge-sm {% if row.mapping_state == 'failed' %}bg-gradient-danger{% elif row.mapping_state == 'na' %}bg-gradient-secondary{% else %}bg-gradient-success{% endif %}">{{ row.get_mapping_state_display }}{% if item.error_code %}: {{ item.error_code }}{% endif %}</span>{% endif %}
+          {% for code, text in item.flags %}<span class="badge badge-sm bg-gradient-warning">{{ text }}</span>{% endfor %}
+          {% if item.claim %}<span class="badge badge-sm bg-gradient-info">{% if item.claim.mine %}Claimed by you{% else %}Claimed by {{ item.claim.by }}{% endif %} until {{ item.claim.until|date:"H:i" }}</span>{% endif %}
+        </span>
+      </summary>
+      <div class="pt-2">
+        <p class="text-xs text-secondary mb-2">Row {{ row.row_number }} of the export · source id {{ row.raw.source_id|default:"—" }}{% if row.mapping_actor %} · last decided by {{ row.mapping_actor }}{% endif %}</p>
+        {% if row.error %}<p class="text-sm mb-2"><strong>Error:</strong> {% if can_pii %}{{ row.error }}{% else %}{{ item.error_code }}{% endif %}</p>{% endif %}
+
+        {% if item.comparison %}
+        <div class="table-responsive mb-2" tabindex="0" role="region" aria-label="Source and Fincas side by side, row {{ row.row_number }}">
+          <table class="table table-sm align-middle mb-0">
+            <caption class="visually-hidden">The source record next to {% if item.compared_name %}{{ item.compared_name }}{% else %}nothing in Fincas (a new record){% endif %}</caption>
+            <thead>
+              <tr>
+                <th scope="col" class="text-xxs text-uppercase text-secondary">Field</th>
+                <th scope="col" class="text-xxs text-uppercase text-secondary">Source record</th>
+                <th scope="col" class="text-xxs text-uppercase text-secondary">{% if item.compared_name %}Fincas: {{ item.compared_name }}{% else %}Fincas (none: a new record){% endif %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for line in item.comparison %}
+              <tr>
+                <th scope="row" class="text-xs text-secondary">{{ line.label }}</th>
+                <td class="text-xs {% if line.differs %}fw-bold{% else %}text-secondary{% endif %}">{{ line.source|default:"—" }}</td>
+                <td class="text-xs {% if line.differs %}fw-bold{% else %}text-secondary{% endif %}">{% if item.compared_name %}{{ line.golden|default:"—" }}{% else %}—{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if not can_pii %}<p class="text-xs text-secondary mb-2">Addresses and numbers are masked and other values hidden: unmasking needs “Can view unmasked values in CRM import reports”.</p>{% endif %}
+        {% endif %}
+
+        {% if can_apply and item.decidable %}
+        <form method="post" action="{% url 'erp-crm-import-decide' job.pk object_type row.pk %}" class="crm-decide-form" data-row="{{ row.pk }}">
+          {% csrf_token %}
+          <input type="hidden" name="query" value="{{ view_query }}">
+          <input type="hidden" name="seen" value="{{ item.fingerprint }}">
+          <input type="hidden" name="next" value="{{ item.next_id }}">
+        {% endif %}
+
+        {% if item.diff %}
+        <fieldset class="mb-2">
+          <legend class="text-xs text-uppercase text-secondary mb-1">Fields the source changed</legend>
+          <div class="table-responsive" tabindex="0" role="region" aria-label="Field changes, row {{ row.row_number }}">
+            <table class="table table-sm align-middle mb-0">
+              <thead><tr>
+                <th scope="col" class="text-xxs text-uppercase text-secondary">Field</th>
+                <th scope="col" class="text-xxs text-uppercase text-secondary">Old (Fincas now)</th>
+                <th scope="col" class="text-xxs text-uppercase text-secondary">New (source)</th>
+                <th scope="col" class="text-xxs text-uppercase text-secondary">Choice</th>
+              </tr></thead>
+              <tbody>
+                {% for f in item.diff %}
+                <tr>
+                  <th scope="row" class="text-xs">{{ f.field }}{% if f.conflict %} <span class="badge badge-sm bg-gradient-warning">staff changed</span>{% endif %}</th>
+                  <td class="text-xs">{{ f.golden }}</td>
+                  <td class="text-xs fw-bold">{{ f.source }}</td>
+                  <td class="text-xs">
+                    {% if f.conflict and can_apply and item.decidable %}
+                    <div class="d-flex gap-2" role="radiogroup" aria-label="{{ f.field }}">
+                      <label class="mb-0"><input type="radio" name="field:{{ f.field }}" value="keep"> Keep Fincas</label>
+                      <label class="mb-0"><input type="radio" name="field:{{ f.field }}" value="take"> Take source</label>
+                    </div>
+                    {% elif f.conflict %}needs a choice{% else %}updated{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </fieldset>
+        {% endif %}
+
+        {% if item.candidates %}
+        <div class="mb-2">
+          <p class="text-xs text-uppercase text-secondary mb-1">Candidates</p>
+          <ul class="list-unstyled text-sm mb-0">
+            {% for cand in item.candidates %}
+            <li class="d-flex flex-wrap align-items-center gap-2 mb-1">
+              {% if can_apply and item.decidable %}
+              <button type="submit" name="pick" value="{{ cand.id }}" class="btn btn-sm btn-outline-dark mb-0" data-shortcut="{{ cand.key }}" aria-keyshortcuts="{{ cand.key }}">{{ cand.key }}. Pick</button>
+              {% else %}<span class="text-xs">{{ cand.key }}.</span>{% endif %}
+              <span>{{ cand.name }}</span>
+              <span class="text-xs text-secondary">{{ cand.rule }}{% if cand.confidence is not None %} · {{ cand.confidence|floatformat:2 }}{% endif %}{% if cand.chosen %} · proposed{% endif %}{% if ai_on and cand.ai_pick %} · AI's pick{% endif %}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        {% if ai_on and item.ai %}
+        <p class="text-sm mb-2"><strong>AI suggestion:</strong> {{ item.ai.label|default:item.ai.suggested }}{% if item.ai.confidence is not None %} ({{ item.ai.confidence|floatformat:2 }}){% endif %}{% if item.ai.reason %} — {{ item.ai.reason }}{% endif %}{% if item.ai.disagrees %} <span class="badge badge-sm bg-gradient-warning">disagrees with the rule</span>{% endif %} <span class="text-xs text-secondary">A suggestion, never a decision.</span></p>
+        {% endif %}
+
+        {% if can_apply and item.decidable %}
+          {% if item.outcome_choice %}
+          <div class="row g-2 align-items-center mb-2">
+            <label class="col-auto text-sm mb-0" for="outcome-{{ row.pk }}">Outcome</label>
+            <div class="col-auto">
+              <select class="form-select form-select-sm" name="outcome" id="outcome-{{ row.pk }}">
+                <option value="">Choose…</option><option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option>
+              </select>
+            </div>
+          </div>
+          {% endif %}
+          {% for key in item.closed_stages %}
+          <div class="row g-2 align-items-center mb-2">
+            <label class="col-auto text-sm mb-0" for="so-{{ row.pk }}-{{ forloop.counter }}">Closed stage “{{ key }}” means</label>
+            <div class="col-auto">
+              <select class="form-select form-select-sm" name="stage_outcome:{{ key }}" id="so-{{ row.pk }}-{{ forloop.counter }}">
+                <option value="won">Won</option><option value="lost">Lost</option><option value="">Neither</option>
+              </select>
+            </div>
+          </div>
+          {% endfor %}
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            {% if item.decision != "none" %}
+            <button type="submit" name="action" value="approve" class="btn btn-sm bg-gradient-primary mb-0" data-shortcut="a" aria-keyshortcuts="a">Approve</button>
+            {% endif %}
+            {% if item.can_create and item.decision != "create" %}
+            <button type="submit" name="action" value="create" class="btn btn-sm btn-outline-dark mb-0" data-shortcut="c{% if item.decision == 'link' or item.decision == 'none' %} r{% endif %}" aria-keyshortcuts="c">Create new instead</button>
+            {% endif %}
+            {% if item.skippable %}
+            <label class="visually-hidden" for="reason-{{ row.pk }}">Reason for skipping row {{ row.row_number }}</label>
+            <select class="form-select form-select-sm w-auto" name="reason" id="reason-{{ row.pk }}">
+              {% for value, label in skip_reasons %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+            </select>
+            <button type="submit" name="action" value="skip" class="btn btn-sm btn-outline-secondary mb-0" data-shortcut="s n{% if item.decision != 'link' and item.decision != 'none' %} r{% endif %}" aria-keyshortcuts="s">Skip (N/A)</button>
+            {% endif %}
+          </div>
+        </form>
+        {% elif can_apply and item.skippable %}
+        <form method="post" action="{% url 'erp-crm-import-decide' job.pk object_type row.pk %}" class="crm-decide-form d-flex flex-wrap align-items-center gap-2" data-row="{{ row.pk }}">
+          {% csrf_token %}
+          <input type="hidden" name="query" value="{{ view_query }}">
+          <label class="visually-hidden" for="reason-{{ row.pk }}">Reason for skipping row {{ row.row_number }}</label>
+          <select class="form-select form-select-sm w-auto" name="reason" id="reason-{{ row.pk }}">
+            {% for value, label in skip_reasons %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+          </select>
+          <button type="submit" name="action" value="skip" class="btn btn-sm btn-outline-secondary mb-0" data-shortcut="s n" aria-keyshortcuts="s">Skip (N/A) instead</button>
+        </form>
+        {% endif %}
+
+        {% if can_pii and item.raw_json %}
+        <details class="mt-2">
+          <summary class="text-xs">Raw source record</summary>
+          <pre class="text-xs mb-0 mt-1" style="white-space:pre-wrap;max-height:20rem;overflow:auto" tabindex="0">{{ item.raw_json }}</pre>
+        </details>
+        {% endif %}
+      </div>
+    </details>
+  </div>
+</li>
+{% endwith %}

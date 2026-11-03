@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "wrong_ref_type",
+      "file": "deals.jsonl",
+      "line": 1,
+      "field": "data.owner_ref"
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,29 @@
+{
+  "payload": {
+    "event": {
+      "attributes": {
+        "datetime": "2026-03-01T13:00:00Z",
+        "event_properties": {},
+        "timestamp": 0
+      },
+      "id": "01FIXTUREEVENTSUBSCR00001",
+      "type": "event"
+    },
+    "metric": {
+      "attributes": {
+        "name": "Subscribed to Email Marketing"
+      },
+      "id": "MSUBSCRIB",
+      "type": "metric"
+    },
+    "profile": {
+      "attributes": {
+        "email": "grace@example.net"
+      },
+      "id": "01FIXTUREPROFILEGRACE00000",
+      "type": "profile"
+    }
+  },
+  "provider": "klaviyo",
+  "schema_version": 1
+}

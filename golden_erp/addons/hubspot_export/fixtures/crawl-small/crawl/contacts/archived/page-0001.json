@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/contacts",
+    "query": {
+      "limit": "100",
+      "archived": "true"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "308",
+        "properties": {
+          "hs_object_id": "308",
+          "createdate": "2020-01-01T10:00:00.000Z",
+          "lastmodifieddate": "2022-01-01T10:00:00.000Z",
+          "firstname": "Hal",
+          "lastname": "Former",
+          "email": "hal@example.com"
+        },
+        "createdAt": "2020-01-01T10:00:00.000Z",
+        "updatedAt": "2022-01-01T10:00:00.000Z",
+        "archived": true,
+        "archivedAt": "2022-01-01T10:00:00.000Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000003",
+    "internalDate": "1772460000000",
+    "labelIds": [
+      "INBOX"
+    ],
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "News <news@example.net>"
+        },
+        {
+          "name": "To",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "Subject",
+          "value": "Weekly digest"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<digest-0003@example.net>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        }
+      ],
+      "mimeType": "multipart/mixed"
+    },
+    "sizeEstimate": 4200,
+    "snippet": "unsubscribe",
+    "threadId": "19b0000000000003"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000003",
+    "query": {
+      "format": "metadata"
+    }
+  },
+  "schema_version": 1
+}

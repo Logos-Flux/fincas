@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Discount Codes{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card">
+      {# d-block: Tabler's flex card-header would inline the title-row and the subtitle below it. #}
+      <div class="card-header pb-0 d-block">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="font-weight-bolder mb-0">Generate Discount Codes</h5>
+          <a href="{% url 'erp-discount-list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to List
+          </a>
+        </div>
+        <p class="text-sm text-secondary mb-0">
+          Batch create codes with the same discount settings.
+          Codes will be generated as PREFIX-XXXXXXXX.
+        </p>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+
+          <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-3 mb-3">Generation</h6>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="{{ form.prefix.id_for_label }}" class="form-label text-sm">{{ form.prefix.label }}</label>
+              {{ form.prefix }}
+              {% if form.prefix.help_text %}<small class="text-muted">{{ form.prefix.help_text }}</small>{% endif %}
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="{{ form.count.id_for_label }}" class="form-label text-sm">{{ form.count.label }}</label>
+              {{ form.count }}
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="{{ form.code_length.id_for_label }}" class="form-label text-sm">{{ form.code_length.label }}</label>
+              {{ form.code_length }}
+            </div>
+          </div>
+
+          <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-4 mb-3">Discount</h6>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="{{ form.discount_type.id_for_label }}" class="form-label text-sm">{{ form.discount_type.label }}</label>
+              {{ form.discount_type }}
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="{{ form.value.id_for_label }}" class="form-label text-sm">{{ form.value.label }}</label>
+              {{ form.value }}
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="{{ form.minimum_order.id_for_label }}" class="form-label text-sm">{{ form.minimum_order.label }}</label>
+              {{ form.minimum_order }}
+            </div>
+          </div>
+
+          <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-4 mb-3">Validity</h6>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="{{ form.max_uses.id_for_label }}" class="form-label text-sm">{{ form.max_uses.label }}</label>
+              {{ form.max_uses }}
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="{{ form.valid_from.id_for_label }}" class="form-label text-sm">{{ form.valid_from.label }}</label>
+              {{ form.valid_from }}
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="{{ form.valid_to.id_for_label }}" class="form-label text-sm">{{ form.valid_to.label }}</label>
+              {{ form.valid_to }}
+            </div>
+          </div>
+
+          <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-4 mb-3">Scope</h6>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="{{ form.applies_to.id_for_label }}" class="form-label text-sm">{{ form.applies_to.label }}</label>
+              {{ form.applies_to }}
+            </div>
+            <div class="col-md-8 mb-3">
+              <label for="{{ form.allowed_skus.id_for_label }}" class="form-label text-sm">{{ form.allowed_skus.label }}</label>
+              {{ form.allowed_skus }}
+              {% if form.allowed_skus.help_text %}<small class="text-muted">{{ form.allowed_skus.help_text }}</small>{% endif %}
+            </div>
+          </div>
+
+          {% if form.errors %}
+          <div class="alert alert-danger mt-3">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+              <p class="mb-0 text-sm">{{ field }}: {{ error }}</p>
+              {% endfor %}
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="mt-4">
+            <button type="submit" class="btn bg-gradient-primary">
+              <i class="fas fa-magic me-1"></i> Generate Codes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

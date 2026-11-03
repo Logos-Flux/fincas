@@ -1,0 +1,44 @@
+[
+  {
+    "form": {
+      "client_id": "fixture-client-id",
+      "client_secret": "<redacted:oauth_client>",
+      "grant_type": "refresh_token",
+      "refresh_token": "<redacted:oauth_refresh>"
+    },
+    "headers": {
+      "accept": "application/json"
+    },
+    "json": null,
+    "method": "POST",
+    "path": "/token",
+    "query": {}
+  },
+  {
+    "form": null,
+    "headers": {
+      "authorization": "Bearer <redacted:oauth_access>",
+      "content-type": "application/json",
+      "developer-token": "<redacted:api_key>"
+    },
+    "json": {
+      "conversions": [
+        {
+          "consent": {
+            "adUserData": "UNSPECIFIED"
+          },
+          "conversionAction": "customers/1234567890/conversionActions/555000111",
+          "conversionDateTime": "2026-03-02 15:00:00+00:00",
+          "conversionValue": 1200.0,
+          "currencyCode": "USD",
+          "gclid": "Cj0KFIXTUREgclid01",
+          "orderId": "EN-00001"
+        }
+      ],
+      "partialFailure": true
+    },
+    "method": "POST",
+    "path": "/v25/customers/1234567890:uploadClickConversions",
+    "query": {}
+  }
+]

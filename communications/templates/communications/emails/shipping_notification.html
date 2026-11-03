@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Order Has Shipped</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f1f2; font-family: 'Source Sans Pro', 'Segoe UI', Arial, Helvetica, sans-serif; font-size: 14px; color: #1f2937;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f1f2;">
+    <tr>
+      <td align="center" style="padding: 24px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #042e0d; padding: 24px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="vertical-align: middle;">
+                    {% if brand.logo_url %}<img src="{{ brand.logo_url }}" alt="{{ brand.company_name|default:'Logo' }}" width="36" height="36" style="display: inline-block; vertical-align: middle; border-radius: 4px;">{% endif %}
+                    <span style="display: inline-block; vertical-align: middle; margin-left: 12px; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;">{{ brand.company_name|default:"Commerce" }}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Green accent bar -->
+          <tr>
+            <td style="background-color: #56c270; height: 4px; font-size: 0; line-height: 0;">&nbsp;</td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding: 32px 32px 16px;">
+              <h2 style="margin: 0 0 8px; font-size: 22px; color: #042e0d; font-weight: 700;">Your order has shipped!</h2>
+              <p style="margin: 0; color: #4b5563; font-size: 15px; line-height: 1.5;">
+                Hi {{ customer.first_name|default:"" }}, {% if total_shipments > 1 %}shipment {{ shipment_number }} of {{ total_shipments }} for{% else %}your items from{% endif %} order <strong>{{ order.order_number }}</strong> {% if total_shipments > 1 %}is{% else %}are{% endif %} on the way.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Shipment Info -->
+          <tr>
+            <td style="padding: 0 32px 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #d4d4d5; border-radius: 6px; overflow: hidden;">
+                {% if total_shipments > 1 %}
+                <tr style="background-color: #f1f1f2;">
+                  <td style="padding: 14px 16px; border-bottom: 1px solid #d4d4d5;">
+                    <strong style="color: #042e0d;">Shipment</strong>
+                  </td>
+                  <td style="padding: 14px 16px; border-bottom: 1px solid #d4d4d5; text-align: right; font-weight: 600; color: #042e0d;">
+                    {{ shipment_number }} of {{ total_shipments }}
+                  </td>
+                </tr>
+                {% endif %}
+                {% if carrier %}
+                <tr style="background-color: #f1f1f2;">
+                  <td style="padding: 14px 16px; border-bottom: 1px solid #d4d4d5;">
+                    <strong style="color: #042e0d;">Carrier</strong>
+                  </td>
+                  <td style="padding: 14px 16px; border-bottom: 1px solid #d4d4d5; text-align: right; color: #4b5563;">
+                    {{ carrier }}
+                  </td>
+                </tr>
+                {% endif %}
+                {% if tracking_number %}
+                <tr style="background-color: #f1f1f2;">
+                  <td style="padding: 14px 16px;">
+                    <strong style="color: #042e0d;">Tracking Number</strong>
+                  </td>
+                  <td style="padding: 14px 16px; text-align: right; color: #4b5563;">
+                    {{ tracking_number }}
+                  </td>
+                </tr>
+                {% endif %}
+              </table>
+            </td>
+          </tr>
+
+          <!-- Track Button -->
+          {% if tracking_url %}
+          <tr>
+            <td style="padding: 0 32px 24px;" align="center">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background-color: #56c270; border-radius: 6px;">
+                    <a href="{{ tracking_url }}" style="display: inline-block; padding: 14px 32px; color: #042e0d; font-size: 16px; font-weight: 700; text-decoration: none; letter-spacing: 0.3px;">Track Your Package</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Items in this shipment -->
+          {% if line_items %}
+          <tr>
+            <td style="padding: 0 32px 8px;">
+              <h3 style="margin: 0 0 12px; font-size: 16px; color: #042e0d; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Items in this shipment</h3>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #d4d4d5; border-radius: 6px; overflow: hidden;">
+                <tr style="background-color: #042e0d;">
+                  <th style="padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #b1e1bc; letter-spacing: 0.5px;">Item</th>
+                  <th style="padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #b1e1bc; letter-spacing: 0.5px;">Qty</th>
+                </tr>
+                {% for item in line_items %}
+                <tr style="background-color: {% cycle '#ffffff' '#f9fafb' %};">
+                  <td style="padding: 12px 12px; border-bottom: 1px solid #e5e5e6;">
+                    <span style="color: #1f2937; font-weight: 600;">{{ item.item_name }}</span>{% if item.sku %}<br><span style="font-size: 12px; color: #6b7280;">{{ item.sku }}</span>{% endif %}
+                  </td>
+                  <td style="padding: 12px 12px; text-align: center; border-bottom: 1px solid #e5e5e6; color: #4b5563;">
+                    {{ item.quantity|floatformat:0 }}
+                  </td>
+                </tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Remaining items note -->
+          {% if has_pending_shipments %}
+          <tr>
+            <td style="padding: 16px 32px 8px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f1f2; border-radius: 6px; border-left: 4px solid #56c270;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.5;">
+                      Remaining items from your order will ship separately. We'll send you another tracking notification when they're on the way.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Shipping Address -->
+          {% if shipping_address %}
+          <tr>
+            <td style="padding: 16px 32px 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f1f2; border-radius: 6px; border-left: 4px solid #56c270;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <h3 style="margin: 0 0 8px; font-size: 14px; color: #042e0d; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Shipping to</h3>
+                    <p style="margin: 0; color: #4b5563; line-height: 1.6; font-size: 14px;">
+                      {% if shipping_address.first_name or shipping_address.last_name %}<strong>{{ shipping_address.first_name }} {{ shipping_address.last_name }}</strong><br>{% endif %}
+                      {% if shipping_address.company_name %}{{ shipping_address.company_name }}<br>{% endif %}
+                      {{ shipping_address.address_line_1 }}<br>
+                      {% if shipping_address.address_line_2 %}{{ shipping_address.address_line_2 }}<br>{% endif %}
+                      {{ shipping_address.city }}, {{ shipping_address.state_province }} {{ shipping_address.postal_code }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; background-color: #042e0d;">
+              <p style="margin: 0 0 12px; color: #b1e1bc; font-size: 14px;">
+                Questions? Reply to this email{% if brand.website %} or visit <a href="https://{{ brand.website }}" style="color: #56c270; font-weight: 600; text-decoration: none;">{{ brand.website }}</a>{% endif %}.
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-top: 1px solid #278040; padding-top: 12px;">
+                    <span style="display: inline-block; vertical-align: middle; color: #56c270; font-size: 13px;">The {{ brand.company_name|default:"Commerce" }} Team</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+
+        <!-- Sub-footer -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding: 16px 0; text-align: center;">
+              <p style="margin: 0; color: #9ca3af; font-size: 11px;">
+                {{ brand.company_name|default:"" }}{% if brand.address_line1 %} &bull; {{ brand.address_line1 }}{% endif %}{% if brand.address_line2 %}, {{ brand.address_line2 }}{% endif %}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

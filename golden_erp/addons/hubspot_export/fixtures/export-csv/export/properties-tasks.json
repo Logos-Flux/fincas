@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/properties/tasks",
+    "query": {},
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "name": "hs_object_id",
+        "label": "Record ID",
+        "type": "number",
+        "fieldType": "number",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hubspot_owner_id",
+        "label": "Owner",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_task_subject",
+        "label": "Task Title",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_task_body",
+        "label": "Task notes",
+        "type": "string",
+        "fieldType": "html",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_task_type",
+        "label": "Task Type",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "To-do",
+            "value": "TODO",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "Call",
+            "value": "CALL",
+            "displayOrder": 1,
+            "hidden": false
+          },
+          {
+            "label": "Email",
+            "value": "EMAIL",
+            "displayOrder": 2,
+            "hidden": false
+          },
+          {
+            "label": "LinkedIn",
+            "value": "LINKED_IN",
+            "displayOrder": 3,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "hs_task_status",
+        "label": "Task Status",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "Not started",
+            "value": "NOT_STARTED",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "In progress",
+            "value": "IN_PROGRESS",
+            "displayOrder": 1,
+            "hidden": false
+          },
+          {
+            "label": "Waiting",
+            "value": "WAITING",
+            "displayOrder": 2,
+            "hidden": false
+          },
+          {
+            "label": "Deferred",
+            "value": "DEFERRED",
+            "displayOrder": 3,
+            "hidden": false
+          },
+          {
+            "label": "Completed",
+            "value": "COMPLETED",
+            "displayOrder": 4,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "hs_task_priority",
+        "label": "Priority",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "Low",
+            "value": "LOW",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "Medium",
+            "value": "MEDIUM",
+            "displayOrder": 1,
+            "hidden": false
+          },
+          {
+            "label": "High",
+            "value": "HIGH",
+            "displayOrder": 2,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "hs_timestamp",
+        "label": "Due date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_task_completion_date",
+        "label": "Completed at",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_createdate",
+        "label": "Create date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_lastmodifieddate",
+        "label": "Last Modified Date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      }
+    ]
+  }
+}

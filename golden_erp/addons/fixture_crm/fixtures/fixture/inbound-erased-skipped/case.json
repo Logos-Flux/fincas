@@ -1,0 +1,27 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A message whose source id belongs to an erased person is skipped (tombstone).",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ],
+    "refs": [
+      {
+        "erased": true,
+        "object_type": "message",
+        "source_id": "fx_msg_0003",
+        "target": "party:ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001.json"
+    }
+  ]
+}

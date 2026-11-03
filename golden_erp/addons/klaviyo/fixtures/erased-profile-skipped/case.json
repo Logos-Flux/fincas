@@ -1,0 +1,31 @@
+{
+  "klaviyo": {
+    "marketable": [
+      "ada"
+    ],
+    "profiles": [
+      {
+        "erased": true,
+        "party": "ada",
+        "source_id": "01FIXTUREPROFILEERASED0000"
+      }
+    ]
+  },
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "An event for an erased profile ref is skipped and writes nothing (the importer's tombstone, 2.4).",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001-event.json"
+    }
+  ]
+}

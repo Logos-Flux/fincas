@@ -1,0 +1,27 @@
+[
+  {
+    "form": null,
+    "headers": {
+      "accept": "application/vnd.api+json",
+      "authorization": "Klaviyo-API-Key <redacted:api_key>",
+      "content-type": "application/vnd.api+json",
+      "revision": "2024-10-15"
+    },
+    "json": {
+      "data": {
+        "attributes": {
+          "profile": {
+            "data": {
+              "id": "01FIXTUREPROFILEADA0000000",
+              "type": "profile"
+            }
+          }
+        },
+        "type": "data-privacy-deletion-job"
+      }
+    },
+    "method": "POST",
+    "path": "/api/data-privacy-deletion-jobs/",
+    "query": {}
+  }
+]

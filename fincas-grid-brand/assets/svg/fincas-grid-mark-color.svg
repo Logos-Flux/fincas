@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="142" height="142" viewBox="0 0 142 142" role="img" aria-labelledby="title desc">
+  <title id="title">Fincas symbol</title>
+  <desc id="desc">Six modular tiles forming the letter F, with one lime accent tile.</desc>
+<rect x="0.0000" y="0.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#6C4CF1"/>
+<rect x="50.0000" y="0.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#6C4CF1"/>
+<rect x="100.0000" y="0.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#C7F36B"/>
+<rect x="0.0000" y="50.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#6C4CF1"/>
+<rect x="50.0000" y="50.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#6C4CF1"/>
+<rect x="0.0000" y="100.0000" width="42.0000" height="42.0000" rx="8.0000" fill="#6C4CF1"/>
+</svg>

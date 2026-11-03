@@ -1,0 +1,14 @@
+{
+  "description": "the manifest claims more rows than the file has",
+  "manifest": [
+    {
+      "op": "set",
+      "path": [
+        "objects",
+        "deal",
+        "rows"
+      ],
+      "value": 5
+    }
+  ]
+}

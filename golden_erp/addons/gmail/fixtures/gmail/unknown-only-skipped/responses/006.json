@@ -1,0 +1,51 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000005",
+    "internalDate": "1772460000000",
+    "labelIds": [
+      "SENT"
+    ],
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "To",
+          "value": "stranger@example.net"
+        },
+        {
+          "name": "Bcc",
+          "value": "ada@example.com"
+        },
+        {
+          "name": "Subject",
+          "value": "Intro"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<bcc-0005@example.org>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        }
+      ],
+      "mimeType": "multipart/mixed"
+    },
+    "sizeEstimate": 4200,
+    "snippet": "hello",
+    "threadId": "19b0000000000005"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000005",
+    "query": {
+      "format": "metadata"
+    }
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,51 @@
+# Paths that stay in the private dev repo and never reach the public tree.
+# One git pathspec per line; `#` starts a comment. Read by
+# scripts/release/public_tree.sh (docs/release-process.md §3.2), which removes
+# every match from the index of the release branch before the squash commit,
+# and by its --check mode, which fails CI when a tracked file looks like a
+# working document but is not covered here.
+#
+# Working documents: session state, plans, test evidence, design phases.
+HANDOFF.md
+TODO.md
+TODOS.md
+RELEASE_CHECKLIST*.md
+REPO-REVIEW.md
+docs/release-hardening-plan.md
+# Our release program and its internal test chapters (the docs lane splits
+# the internal parts of release-testing out into release-testing-internal.md).
+docs/release-process.md
+docs/release-testing-internal.md
+docs/testing-plan.md
+docs/testing-gaps.md
+docs/decisions-pending.md
+docs/findings-log.md
+docs/persona-run-*.md
+docs/perf/
+docs/erp-theme-sweep-*.md
+docs/crm/phase*.md
+docs/crm/phase3-to-phase5-handoff.md
+docs/visual-baselines/
+# The first downstream's adoption lineage (rehearsals, baseline, its cutover
+# runbook). check_schema_parity is documented in docs/deployment.md.
+docs/pin/
+# Our own deployment of the public demo (docs/deploy-fly.md stays, as the
+# generic Fly chapter).
+fly.toml
+deploy/
+storefront/fly.toml
+# Estate-specific leak fingerprints; the public tree starts a fresh file.
+.gitleaksignore
+# The tripwire's downstream and estate patterns (scripts/tripwire.sh reads any
+# scripts/release/tripwire-*.txt; the public tree ships none of ours).
+scripts/release/tripwire-private.txt
+# Our staging demo host: provisioning, demo setup and its nightly reset.
+scripts/provision-staging.sh
+scripts/staging-demo-*.sh
+# Visual-baseline capture scripts; they write docs/visual-baselines/.
+storefront/vb-shots*.mjs
+# Agent files with estate detail. The public tree keeps the short CLAUDE.md
+# that scripts/release/public_tree.sh writes in its place.
+CLAUDE.md
+.agents/
+.claude/

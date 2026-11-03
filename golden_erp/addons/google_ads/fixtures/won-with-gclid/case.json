@@ -1,0 +1,37 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A won engagement whose last touch carries a gclid uploads exactly one click conversion: value and currency as is, order id = the engagement number, ad_user_data UNSPECIFIED; the upload is recorded as an ExternalRef.",
+  "seed": {
+    "deals": [
+      {
+        "actions": [
+          "win"
+        ],
+        "currency": "USD",
+        "key": "deal1",
+        "party": "party:ada",
+        "touches": [
+          {
+            "click_id": "Cj0KFIXTUREgclid01",
+            "click_id_kind": "gclid",
+            "days": 10
+          }
+        ],
+        "value": "1200.00"
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "drain": true
+    }
+  ]
+}

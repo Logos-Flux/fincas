@@ -1,0 +1,46 @@
+[
+  {
+    "form": null,
+    "headers": {
+      "accept": "application/vnd.api+json",
+      "authorization": "Klaviyo-API-Key <redacted:api_key>",
+      "content-type": "application/vnd.api+json",
+      "revision": "2024-10-15"
+    },
+    "json": {
+      "data": {
+        "attributes": {
+          "email": "ada@example.com",
+          "external_id": "party:ada",
+          "first_name": "Ada",
+          "last_name": "Lovelace"
+        },
+        "id": "01FIXTUREPROFILEADA0000000",
+        "type": "profile"
+      }
+    },
+    "method": "POST",
+    "path": "/api/profile-import/",
+    "query": {}
+  },
+  {
+    "form": null,
+    "headers": {
+      "accept": "application/vnd.api+json",
+      "authorization": "Klaviyo-API-Key <redacted:api_key>",
+      "content-type": "application/vnd.api+json",
+      "revision": "2024-10-15"
+    },
+    "json": {
+      "data": [
+        {
+          "id": "01FIXTUREPROFILEADA0000000",
+          "type": "profile"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/lists/XFIX02/relationships/profiles/",
+    "query": {}
+  }
+]

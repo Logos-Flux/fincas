@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% load static erp_tags bunny_images %}
+
+{% block title %}{{ product.title }} — Product{% endblock %}
+
+{% block chat_context %}
+<meta name="chat-context" content='{"page_type": "product_detail", "product_id": "{{ product.id }}", "product_title": "{{ product.title|escapejs }}", "product_part_number": "{{ product.part_number|escapejs }}"}'>
+{% endblock %}
+
+{% block content %}
+{# Product Header #}
+<div class="row">
+  {# Left: Images #}
+  <div class="col-lg-5 mb-4">
+    <div class="card">
+      <div class="card-body p-3">
+        {% if primary_image %}
+        {% bunny_image_url primary_image.cf_image_id 'public' as primary_image_url %}
+        <img src="{{ primary_image_url }}" alt="{{ product.title }}" class="w-100 border-radius-lg shadow-sm" id="main-product-image">
+        {% else %}
+        <div class="bg-gray-200 border-radius-lg d-flex align-items-center justify-content-center" style="height:300px">
+          <i class="ti ti-photo text-secondary" style="font-size:4rem"></i>
+        </div>
+        {% endif %}
+        {% if images|length > 1 %}
+        <div class="d-flex mt-3 gap-2 flex-wrap">
+          {% for img in images %}
+          {% bunny_image_url img.cf_image_id 'thumbnail' as img_thumb_url %}
+          {% bunny_image_url img.cf_image_id 'public' as img_full_url %}
+          <img src="{{ img_thumb_url }}" alt="{{ img.alt_text }}" class="border-radius-md cursor-pointer" style="width:60px;height:60px;object-fit:cover" onclick="document.getElementById('main-product-image').src='{{ img_full_url }}'">
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# Right: Product Info #}
+  <div class="col-lg-7 mb-4">
+    <div class="card">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h5 class="font-weight-bolder mb-1">{{ product.title }}</h5>
+            {% if product.brand %}
+            <p class="text-sm text-secondary mb-2">{{ product.brand.title }}</p>
+            {% endif %}
+          </div>
+          {% if product.is_active %}
+          <span class="badge bg-gradient-success">Active</span>
+          {% else %}
+          <span class="badge bg-gradient-secondary">Inactive</span>
+          {% endif %}
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4 mb-3">
+            <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">SKU</p>
+            <p class="text-sm mb-0">{{ product.part_number|default:"—" }}</p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Type</p>
+            <p class="text-sm mb-0">{{ product.get_product_type_display }}</p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">MPN</p>
+            <p class="text-sm mb-0">{{ product.mpn|default:"—" }}</p>
+          </div>
+        </div>
+
+        {# Pricing (from default variant) #}
+        {% if default_variant %}
+        <div class="row mt-2">
+          <div class="col-md-4 mb-3">
+            <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Retail Price</p>
+            <h5 class="text-dark mb-0">{{ default_variant.retail_price|money }}</h5>
+          </div>
+          <div class="col-md-4 mb-3">
+            <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Wholesale</p>
+            <p class="text-sm mb-0">{{ default_variant.wholesale_price|money }}</p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <p class="text-xs text-uppercase text-secondary font-weight-bolder mb-0">Stock</p>
+            <p class="text-sm mb-0">
+              {% if default_variant.stock > 0 %}
+              <span class="text-success font-weight-bold">{{ default_variant.stock }}</span> in stock
+              {% else %}
+              <span class="text-danger font-weight-bold">Out of stock</span>
+              {% endif %}
+            </p>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="mt-3">
+          <a href="{% url 'erp-order-create' %}?product={{ product.pk }}" class="btn bg-gradient-primary btn-sm me-2">
+            <i class="fas fa-cart-plus me-1"></i> Add to Order
+          </a>
+          <a href="{% url 'erp-quote-create' %}?product={{ product.pk }}" class="btn bg-gradient-info btn-sm">
+            <i class="fas fa-file-invoice me-1"></i> Add to Quote
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Tabbed Detail Sections #}
+<div class="card mb-4">
+  <div class="card-body p-3 pb-0">
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-details" role="tab">Details</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-variants" role="tab">Variants ({{ variants|length }})</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-pricing" role="tab">Pricing</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-stock" role="tab">Stock</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-documents" role="tab">Documents</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="tab-content">
+  {# Details Tab #}
+  <div class="tab-pane fade show active" id="tab-details" role="tabpanel">
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-8">
+            <h6 class="text-sm text-uppercase text-secondary">Description</h6>
+            <div class="text-sm">{{ product.description|default:"No description" }}</div>
+          </div>
+          <div class="col-md-4">
+            <h6 class="text-sm text-uppercase text-secondary">Categories</h6>
+            {% for pc in categories %}
+            <span class="badge bg-gradient-secondary mb-1">{{ pc.category.title }}</span>
+            {% empty %}
+            <span class="text-sm text-secondary">None</span>
+            {% endfor %}
+
+            <h6 class="text-sm text-uppercase text-secondary mt-3">Dimensions</h6>
+            {% if product.item_length or product.item_width or product.item_height %}
+            <p class="text-xs text-secondary mb-0">Product</p>
+            <p class="text-sm mb-1">
+              {{ product.item_length|floatformat:1|default:"—" }} x {{ product.item_width|floatformat:1|default:"—" }} x {{ product.item_height|floatformat:1|default:"—" }} {{ product.item_dimension_uom|default:"in" }}
+            </p>
+            {% endif %}
+            {% if product.shipping_length or product.shipping_width or product.shipping_height %}
+            <p class="text-xs text-secondary mb-0">Shipping</p>
+            <p class="text-sm mb-1">
+              {{ product.shipping_length|floatformat:1|default:"—" }} x {{ product.shipping_width|floatformat:1|default:"—" }} x {{ product.shipping_height|floatformat:1|default:"—" }} {{ product.shipping_dimension_uom|default:"in" }}
+            </p>
+            {% endif %}
+            {% if product.item_weight or product.shipping_weight %}
+            <p class="text-xs text-secondary mb-0">Weight</p>
+            <p class="text-sm mb-0">
+              {% if product.item_weight %}{{ product.item_weight|floatformat:1 }} {{ product.item_weight_uom|default:"lb" }}{% endif %}
+              {% if product.shipping_weight %}{% if product.item_weight %} · {% endif %}Ship: {{ product.shipping_weight|floatformat:1 }} {{ product.shipping_weight_uom|default:"lb" }}{% endif %}
+            </p>
+            {% endif %}
+            {% if not product.item_length and not product.shipping_length and not product.item_weight and not product.shipping_weight %}
+            <p class="text-sm text-secondary mb-0">No dimension data</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Variants Tab #}
+  <div class="tab-pane fade" id="tab-variants" role="tabpanel">
+    <div class="card mb-4">
+      <div class="card-body px-0 pt-0 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">SKU</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Name</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Retail</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Wholesale</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stock</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for v in variants %}
+              <tr>
+                <td class="ps-3"><span class="text-sm font-weight-bold">{{ v.sku }}</span></td>
+                <td><span class="text-sm">{{ v.name|default:"Default" }}</span></td>
+                <td class="text-end"><span class="text-sm">{{ v.retail_price|money }}</span></td>
+                <td class="text-end"><span class="text-sm">{{ v.wholesale_price|money }}</span></td>
+                <td class="text-center"><span class="text-sm">{{ v.stock|default:0 }}</span></td>
+                <td class="text-center">
+                  {% if v.is_active %}<span class="badge badge-sm bg-gradient-success">Active</span>{% else %}<span class="badge badge-sm bg-gradient-secondary">Inactive</span>{% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center py-4 text-sm text-secondary">No variants</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Pricing Tab #}
+  <div class="tab-pane fade" id="tab-pricing" role="tabpanel">
+    <div class="card mb-4">
+      <div class="card-body px-0 pt-0 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Price List</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Variant</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Price</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Min Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pli in price_list_items %}
+              <tr>
+                <td class="ps-3"><span class="text-sm">{{ pli.price_list.name }}</span></td>
+                <td><span class="text-sm">{{ pli.variant.sku }}</span></td>
+                <td class="text-end"><span class="text-sm font-weight-bold">{{ pli.price|money }}</span></td>
+                <td class="text-center"><span class="text-sm">{{ pli.min_qty }}</span></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center py-4 text-sm text-secondary">No pricing data</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Stock Tab #}
+  <div class="tab-pane fade" id="tab-stock" role="tabpanel">
+    <div class="card mb-4">
+      <div class="card-body px-0 pt-0 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Warehouse</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Variant</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">On Hand</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Reserved</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Available</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Bin</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ws in warehouse_stock %}
+              <tr>
+                <td class="ps-3"><span class="text-sm">{{ ws.warehouse.name }}</span></td>
+                <td><span class="text-sm">{{ ws.variant.sku }}</span></td>
+                <td class="text-center"><span class="text-sm">{{ ws.quantity }}</span></td>
+                <td class="text-center"><span class="text-sm">{{ ws.reserved_qty }}</span></td>
+                <td class="text-center">
+                  <span class="text-sm font-weight-bold {% if ws.available_qty > 0 %}text-success{% else %}text-danger{% endif %}">{{ ws.available_qty }}</span>
+                </td>
+                <td><span class="text-sm">{{ ws.bin_location|default:"—" }}</span></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center py-4 text-sm text-secondary">No stock data</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Documents Tab #}
+  <div class="tab-pane fade" id="tab-documents" role="tabpanel">
+    <div class="card mb-4">
+      <div class="card-body px-0 pt-0 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Title</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Type</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-4">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in documents %}
+              <tr>
+                <td class="ps-3"><span class="text-sm">{{ doc.title }}</span></td>
+                <td><span class="badge badge-sm bg-gradient-info">{{ doc.get_document_type_display }}</span></td>
+                <td class="text-end pe-4">
+                  {% if doc.r2_url %}
+                  <a href="{{ doc.r2_url }}" target="_blank" class="btn btn-link text-primary p-0 text-sm">
+                    <i class="fas fa-download me-1"></i> Download
+                  </a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center py-4 text-sm text-secondary">No documents</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {
+        "ignored": "provider_subscribe"
+      },
+      "object_type": "event",
+      "source": "klaviyo",
+      "source_id": "01FIXTUREEVENTSUBSCR00001",
+      "source_url": "",
+      "target": "parties.party:party:grace"
+    }
+  ],
+  "outbox": [
+    {
+      "consumer": "klaviyo.profile",
+      "event": "push",
+      "idempotency_key": "sync:grace:1",
+      "object": "party:grace",
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": []
+}

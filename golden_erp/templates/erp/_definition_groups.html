@@ -1,0 +1,21 @@
+{% comment %}
+  Defined fields on a detail page, one definition list per group
+  (docs/crm/phase4-fields.md 5.2). Context: ``groups`` from
+  core.sidecar_forms.definition_groups. Empty values show "—" with a
+  visually hidden "unknown", never hidden; personal data the viewer may not
+  see says so in text.
+{% endcomment %}
+{% for group in groups %}
+<h3 class="text-xs text-uppercase text-secondary font-weight-bolder mt-3 mb-2">{{ group.title }}</h3>
+<dl class="row erp-defs mb-0">
+  {% for row in group.rows %}
+  <dt class="col-md-4">{{ row.label }}</dt>
+  <dd class="col-md-8"{% if row.multiline and row.value %} style="white-space: pre-line;"{% endif %}>
+    {% if row.hidden %}<span class="text-secondary">Hidden: personal data</span>
+    {% elif row.url %}<a href="{{ row.url }}" target="_blank" rel="noopener noreferrer nofollow" class="text-primary text-decoration-underline">{{ row.value }}</a>
+    {% elif row.value %}{{ row.value }}
+    {% else %}<span aria-hidden="true">—</span><span class="visually-hidden">unknown</span>{% endif %}
+  </dd>
+  {% endfor %}
+</dl>
+{% endfor %}

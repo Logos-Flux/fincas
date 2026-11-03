@@ -1,0 +1,47 @@
+{
+  "payload": {
+    "assignees": [
+      {
+        "email": "sam@example.com",
+        "id": 81000001,
+        "username": "81000001"
+      }
+    ],
+    "custom_fields": [
+      {
+        "id": "cf_engagement",
+        "name": "Engagement",
+        "type": "short_text",
+        "value": "EN-00042"
+      }
+    ],
+    "date_closed": null,
+    "date_created": "1772460000000",
+    "date_done": null,
+    "date_updated": "1772463600000",
+    "description": "",
+    "due_date": "1772618400000",
+    "due_date_time": true,
+    "id": "86a0fx02",
+    "list": {
+      "id": "901"
+    },
+    "markdown_description": "",
+    "name": "Measure the roof",
+    "priority": {
+      "id": "2",
+      "priority": "high"
+    },
+    "status": {
+      "status": "in progress",
+      "type": "custom"
+    },
+    "url": "https://app.clickup.com/t/86a0fx02"
+  },
+  "provider": "clickup",
+  "request": {
+    "method": "GET",
+    "path": "/api/v2/task/86a0fx02"
+  },
+  "schema_version": 1
+}

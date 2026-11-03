@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "settings": {
+    "conversion_actions": {
+      "sales": "555000111"
+    },
+    "customer_id": "123-456-7890"
+  }
+}

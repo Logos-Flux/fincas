@@ -1,0 +1,59 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000009",
+    "internalDate": "1772461800000",
+    "labelIds": [
+      "SENT"
+    ],
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "boss@example.org"
+        },
+        {
+          "name": "To",
+          "value": "ada@example.com"
+        },
+        {
+          "name": "Cc",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "Subject",
+          "value": "Re: Site visit"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<boss-0009@mail.example.org>"
+        },
+        {
+          "name": "In-Reply-To",
+          "value": "<CAF-ada-0008@mail.example.com>"
+        },
+        {
+          "name": "References",
+          "value": "<CAF-ada-0008@mail.example.com>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        }
+      ],
+      "mimeType": "multipart/mixed"
+    },
+    "sizeEstimate": 4200,
+    "snippet": "Tuesday works.",
+    "threadId": "19b0000000000009"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000009",
+    "query": {
+      "format": "metadata"
+    }
+  },
+  "schema_version": 1
+}

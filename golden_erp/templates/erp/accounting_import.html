@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load erp_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Import QBO exports</h5>
+        <p class="text-sm text-secondary mb-0">Upload cleaned chart-of-accounts and/or transaction files. Company selection is required — accounts and entries are company-scoped and the wrong one corrupts the books.</p>
+      </div>
+      <div class="card-body">
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger text-sm">{{ form.non_field_errors.0 }}</div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label text-sm" for="{{ form.company.id_for_label }}">{{ form.company.label }} <span class="text-danger">*</span></label>
+            {{ form.company|add_class:"form-select form-select-sm" }}
+            {% if form.company.errors %}<div class="text-danger text-xs mt-1">{{ form.company.errors.0 }}</div>{% endif %}
+            {% if form.company.help_text %}<small class="form-text text-muted text-xs">{{ form.company.help_text }}</small>{% endif %}
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label text-sm" for="{{ form.chart_of_accounts.id_for_label }}">{{ form.chart_of_accounts.label }}</label>
+              {{ form.chart_of_accounts }}
+              {% if form.chart_of_accounts.errors %}<div class="text-danger text-xs mt-1">{{ form.chart_of_accounts.errors.0 }}</div>{% endif %}
+              {% if form.chart_of_accounts.help_text %}<small class="form-text text-muted text-xs d-block">{{ form.chart_of_accounts.help_text }}</small>{% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label text-sm" for="{{ form.transactions.id_for_label }}">{{ form.transactions.label }}</label>
+              {{ form.transactions }}
+              {% if form.transactions.errors %}<div class="text-danger text-xs mt-1">{{ form.transactions.errors.0 }}</div>{% endif %}
+              {% if form.transactions.help_text %}<small class="form-text text-muted text-xs d-block">{{ form.transactions.help_text }}</small>{% endif %}
+            </div>
+          </div>
+
+          <div class="form-check mb-2">
+            {{ form.dayfirst }}
+            <label class="form-check-label text-sm" for="{{ form.dayfirst.id_for_label }}">{{ form.dayfirst.label }}</label>
+            {% if form.dayfirst.help_text %}<small class="form-text text-muted text-xs d-block ms-4">{{ form.dayfirst.help_text }}</small>{% endif %}
+          </div>
+
+          <div class="form-check mb-3">
+            {{ form.dry_run }}
+            <label class="form-check-label text-sm fw-bold" for="{{ form.dry_run.id_for_label }}">{{ form.dry_run.label }}</label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-upload me-1"></i> Run import</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0 text-sm">Allowed formats</h6></div>
+      <div class="card-body pt-2">
+        <p class="text-sm mb-1"><span class="badge bg-success">.csv</span> <span class="badge bg-success">.xlsx</span> <span class="badge bg-success">.xlsm</span> — accepted.</p>
+        <p class="text-sm mb-0"><span class="badge bg-danger">.xls</span> — legacy Excel, refused (openpyxl cannot read it; re-export as .xlsx or .csv).</p>
+        <hr class="my-3" />
+        <p class="text-xs text-secondary mb-0">Dry run is checked by default. It runs the true import inside a rolled-back transaction so the report shows exactly what would be written before anything commits.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if report %}
+<div class="card mt-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h6 class="mb-0">Import report{% if import_company %} — {{ import_company.name }}{% endif %}</h6>
+    {% if dry_run %}
+      <span class="badge bg-warning">Dry run</span>
+    {% else %}
+      <span class="badge bg-success">Committed</span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    {% if dry_run_text %}
+      <div class="alert alert-warning text-sm py-2">{{ dry_run_text }}</div>
+    {% endif %}
+    {% if error_text %}
+      <div class="alert alert-danger text-sm py-2">{{ error_text }}</div>
+    {% endif %}
+
+    <div class="row mb-3">
+      <div class="col-sm-6 col-lg-3 mb-2">
+        <div class="border rounded p-3 text-center">
+          <div class="text-xs text-uppercase text-secondary mb-1">Accounts</div>
+          <div class="h5 mb-0">{{ report.accounts_created }} created</div>
+          <div class="text-sm text-secondary">{{ report.accounts_updated }} updated</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3 mb-2">
+        <div class="border rounded p-3 text-center">
+          <div class="text-xs text-uppercase text-secondary mb-1">Entries</div>
+          <div class="h5 mb-0">{{ report.entries_created }} created</div>
+          <div class="text-sm text-secondary">{{ report.entries_updated }} updated</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3 mb-2">
+        <div class="border rounded p-3 text-center">
+          <div class="text-xs text-uppercase text-secondary mb-1">Lines</div>
+          <div class="h5 mb-0">{{ report.lines_created }} written</div>
+          <div class="text-sm text-secondary">{{ report.skipped_zero }} zero-amount skipped</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3 mb-2">
+        <div class="border rounded p-3 text-center">
+          <div class="text-xs text-uppercase text-secondary mb-1">Issues</div>
+          <div class="h5 mb-0 {% if report.errors %}text-danger{% endif %}">{{ report.errors|length }} error(s)</div>
+          <div class="text-sm {% if report.skipped_unbalanced %}text-danger{% endif %}">{{ report.skipped_unbalanced|length }} unbalanced skipped</div>
+        </div>
+      </div>
+    </div>
+
+    {% if report.placeholders_created %}
+    <div class="alert alert-info text-sm py-2">
+      <strong>Placeholder accounts ({{ report.placeholders_created|length }}) — referenced by transactions but absent from the chart:</strong>
+      <ul class="mb-0 mt-1">
+        {% for name in report.placeholders_created %}<li>{{ name }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if report.unmapped_detail_types %}
+    <div class="alert alert-warning text-sm py-2">
+      <strong>Unknown QBO detail types ({{ report.unmapped_detail_types|length }}, kept as provenance — not guessed):</strong>
+      <ul class="mb-0 mt-1">
+        {% for t in report.unmapped_detail_types %}<li>{{ t }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if report.skipped_unbalanced %}
+    <div class="alert alert-danger text-sm py-2">
+      <strong>Unbalanced groups — not written ({{ report.skipped_unbalanced|length }}):</strong>
+      <ul class="mb-0 mt-1">
+        {% for s in report.skipped_unbalanced|slice:":20" %}<li>{{ s }}</li>{% endfor %}
+      </ul>
+      {% if report.skipped_unbalanced|length > 20 %}<div class="text-xs mt-1">…and {{ report.skipped_unbalanced|length|add:"-20" }} more.</div>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if report.errors %}
+    <div class="alert alert-danger text-sm py-2">
+      <strong>Errors ({{ report.errors|length }}):</strong>
+      <ul class="mb-0 mt-1">
+        {% for e in report.errors|slice:":20" %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+      {% if report.errors|length > 20 %}<div class="text-xs mt-1">…and {{ report.errors|length|add:"-20" }} more.</div>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if report_lines %}
+    <details class="mt-3">
+      <summary class="text-sm text-secondary cursor-pointer">Raw report lines</summary>
+      <pre class="bg-light p-3 mt-2 text-xs mb-0" style="white-space:pre-wrap">{% for line in report_lines %}{{ line }}
+{% endfor %}</pre>
+    </details>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

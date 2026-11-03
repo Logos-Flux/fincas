@@ -1,0 +1,81 @@
+{
+  "payload": {
+    "last_page": false,
+    "tasks": [
+      {
+        "assignees": [],
+        "custom_fields": [
+          {
+            "id": "cf_engagement",
+            "name": "Engagement",
+            "type": "short_text",
+            "value": "EN-00042"
+          }
+        ],
+        "date_closed": null,
+        "date_created": "1772460000000",
+        "date_done": null,
+        "date_updated": "1772463600000",
+        "description": "",
+        "due_date": null,
+        "due_date_time": false,
+        "id": "86a0fx02",
+        "list": {
+          "id": "901"
+        },
+        "markdown_description": "",
+        "name": "Measure the roof",
+        "priority": {
+          "id": "3",
+          "priority": "normal"
+        },
+        "status": {
+          "status": "to do",
+          "type": "open"
+        },
+        "url": "https://app.clickup.com/t/86a0fx02"
+      },
+      {
+        "assignees": [],
+        "custom_fields": [],
+        "date_closed": null,
+        "date_created": "1772460000000",
+        "date_done": null,
+        "date_updated": "1772463600000",
+        "description": "",
+        "due_date": null,
+        "due_date_time": false,
+        "id": "86a0fx03",
+        "list": {
+          "id": "901"
+        },
+        "markdown_description": "",
+        "name": "Order coffee",
+        "priority": {
+          "id": "3",
+          "priority": "normal"
+        },
+        "status": {
+          "status": "to do",
+          "type": "open"
+        },
+        "url": "https://app.clickup.com/t/86a0fx03"
+      }
+    ]
+  },
+  "provider": "clickup",
+  "request": {
+    "method": "GET",
+    "path": "/api/v2/list/901/task",
+    "query": {
+      "date_updated_gt": "1764687540000",
+      "include_closed": "true",
+      "include_markdown_description": "true",
+      "order_by": "updated",
+      "page": "0",
+      "reverse": "true",
+      "subtasks": "true"
+    }
+  },
+  "schema_version": 1
+}

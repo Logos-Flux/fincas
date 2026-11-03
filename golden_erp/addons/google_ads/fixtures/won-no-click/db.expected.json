@@ -1,0 +1,39 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [],
+  "outbox": [
+    {
+      "consumer": "google_ads.conversion",
+      "event": "upload",
+      "idempotency_key": "conv:<uuid>",
+      "object": "engagement:deal1",
+      "state": "cancelled"
+    },
+    {
+      "consumer": "google_ads.conversion",
+      "event": "upload",
+      "idempotency_key": "conv:<uuid>",
+      "object": "engagement:deal2",
+      "state": "cancelled"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": [
+    {
+      "channel": "paid_social",
+      "occurred_at": "2026-02-26T15:00:00Z",
+      "party": "party:grace",
+      "utm_campaign": "",
+      "utm_source": ""
+    },
+    {
+      "channel": "referral",
+      "occurred_at": "2026-02-27T15:00:00Z",
+      "party": "party:ada",
+      "utm_campaign": "",
+      "utm_source": ""
+    }
+  ]
+}

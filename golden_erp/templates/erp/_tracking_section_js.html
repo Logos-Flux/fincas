@@ -1,0 +1,115 @@
+{# Include once at bottom of page, after all _tracking_section.html includes #}
+<script>
+(function() {
+  function getCsrf() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+  }
+
+  // Toggle tracking URL readonly based on carrier selection
+  document.querySelectorAll('.tracking-section').forEach(function(section) {
+    var carrierSelect = section.querySelector('.tracking-carrier');
+    var urlInput = section.querySelector('.tracking-url');
+    if (!carrierSelect || !urlInput) return;
+
+    carrierSelect.addEventListener('change', function() {
+      var isOther = this.value === 'other';
+      urlInput.readOnly = !isOther;
+      if (!isOther) urlInput.value = '';
+    });
+  });
+
+  // Save Tracking button
+  document.querySelectorAll('.btn-save-tracking').forEach(function(btn) {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', function() {
+      var section = this.closest('.tracking-section');
+      var subOrderId = section.dataset.suborderId;
+      var carrier = section.querySelector('.tracking-carrier').value;
+      var trackingNumber = section.querySelector('.tracking-number').value;
+      var trackingUrl = section.querySelector('.tracking-url').value;
+
+      btn.disabled = true;
+      fetch('/erp/orders/sub-orders/' + subOrderId + '/update-tracking/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrf(),
+        },
+        body: JSON.stringify({
+          carrier: carrier,
+          tracking_number: trackingNumber,
+          tracking_url: trackingUrl,
+        }),
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        btn.disabled = false;
+        if (data.success) {
+          section.querySelector('.tracking-url').value = data.tracking_url || '';
+          btn.classList.remove('bg-gradient-primary');
+          btn.classList.add('bg-gradient-success');
+          setTimeout(function() {
+            btn.classList.remove('bg-gradient-success');
+            btn.classList.add('bg-gradient-primary');
+          }, 1500);
+        } else {
+          alert('Error: ' + (data.error || 'Unknown error'));
+        }
+      })
+      .catch(function(err) {
+        btn.disabled = false;
+        alert('Network error: ' + err.message);
+      });
+    });
+  });
+
+  // Send Shipping Email button
+  document.querySelectorAll('.btn-send-shipping-email').forEach(function(btn) {
+    if (btn.disabled || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', function() {
+      var section = this.closest('.tracking-section');
+      var subOrderId = section.dataset.suborderId;
+      var trackingNumber = section.querySelector('.tracking-number').value;
+
+      if (!trackingNumber.trim()) {
+        alert('Please enter and save a tracking number first.');
+        return;
+      }
+
+      if (!confirm('Send shipping notification email to the customer?')) return;
+
+      btn.disabled = true;
+      fetch('/erp/orders/sub-orders/' + subOrderId + '/send-shipping-email/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrf(),
+        },
+        body: JSON.stringify({}),
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        btn.disabled = false;
+        if (data.success) {
+          alert(data.message);
+          var sentDiv = section.querySelector('.text-muted');
+          if (!sentDiv) {
+            sentDiv = document.createElement('div');
+            sentDiv.className = 'text-xs text-muted mt-1';
+            section.appendChild(sentDiv);
+          }
+          sentDiv.innerHTML = '<i class="fas fa-check-circle text-success me-1"></i>Sent just now';
+        } else {
+          alert('Error: ' + (data.error || 'Unknown error'));
+        }
+      })
+      .catch(function(err) {
+        btn.disabled = false;
+        alert('Network error: ' + err.message);
+      });
+    });
+  });
+})();
+</script>

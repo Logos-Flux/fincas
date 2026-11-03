@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "wrong_object_type",
+      "file": "deals.jsonl",
+      "line": 2,
+      "field": "object_type"
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,6 @@
+{
+  "description": "no manifest.json: the adapter did not finish",
+  "remove": [
+    "manifest.json"
+  ]
+}

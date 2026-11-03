@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "stage_not_in_pipeline",
+      "file": "deals.jsonl",
+      "line": 1,
+      "field": "data.stage_ref"
+    }
+  ],
+  "warnings": []
+}

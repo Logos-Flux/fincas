@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card mb-4">
+      <div class="card-header pb-0 d-block">
+        <h1 class="h6 mb-1">{{ page_title }}</h1>
+        <p class="text-sm text-secondary mb-0">{{ target.get_full_name|default:target.username }}{% if target.email %} · {{ target.email }}{% endif %}. Back-office access follows the roles: a staff role grants it, losing the last one removes it.</p>
+      </div>
+      <div class="card-body">
+        {% if is_self %}
+        <p class="text-sm text-secondary mb-3">You cannot change your own roles.</p>
+        {% elif target.is_superuser %}
+        <p class="text-sm text-secondary mb-3">A superuser has every permission; roles still record what they do here.</p>
+        {% endif %}
+        <form method="post" id="user-roles-form">
+          {% csrf_token %}
+          <fieldset{% if is_self %} disabled{% endif %}>
+            <legend class="visually-hidden">Roles</legend>
+            {% for row in rows %}
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" name="roles" value="{{ row.role.name }}" id="role-{{ row.role.name }}"{% if row.held %} checked{% endif %}>
+              <label class="form-check-label text-sm" for="role-{{ row.role.name }}">
+                {{ row.role.label }} <code class="text-xs">{{ row.role.name }}</code>
+                {% if row.role.staff %}<span class="badge badge-sm bg-gradient-info ms-1">back office</span>{% endif %}
+                {% if row.role.portal %}<span class="badge badge-sm bg-gradient-secondary ms-1">portal</span>{% endif %}
+              </label>
+            </div>
+            {% endfor %}
+          </fieldset>
+          <div class="d-flex gap-2 mt-3">
+            <a href="{% url 'erp-user-list' %}" class="btn btn-outline-secondary btn-sm mb-0">Cancel</a>
+            {% if not is_self %}<button type="submit" class="btn bg-gradient-primary btn-sm mb-0">Save roles</button>{% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

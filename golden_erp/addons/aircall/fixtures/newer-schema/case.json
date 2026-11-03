@@ -1,0 +1,28 @@
+{
+  "expect": "refused",
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "An envelope newer than the reader (schema_version 2) is refused with AdapterError (rule 2).",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada",
+        "phone": "+1 202-555-0143"
+      }
+    ],
+    "staff": [
+      {
+        "email": "sam@example.org",
+        "key": "sam"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "ingest": "inbound/001.json",
+      "raises": "AdapterError"
+    }
+  ]
+}

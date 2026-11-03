@@ -1,0 +1,152 @@
+{
+  "adapter": {
+    "id": "hubspot_export",
+    "schema_version": 1,
+    "version": "0.1.0"
+  },
+  "exported_at": "2026-10-02T14:30:00Z",
+  "files": {
+    "associations.jsonl": "sha256:00166413a5e94f7f5079ad6ce3b66dabb2af44feb7761c096337274e9a170b8e",
+    "companies.jsonl": "sha256:3d2a73d1b555a33936693f9575d10db507685a0664b37615f760fde9557c7d1a",
+    "consent.jsonl": "sha256:e01cdd4f6d43929312e9d54abc0e8f6492c5e5563a8c076b971485b4641ac9f8",
+    "contacts.jsonl": "sha256:58771b0c52a79e76f935c6509056067f86408d19a615d6c7cd031911def6720b",
+    "deals.jsonl": "sha256:dbfd68c0d18c3e07aeb4e2438daf363b02a1a12396dadaa79b9652f7c3219d32",
+    "owners.jsonl": "sha256:bd6542cb0b1ad2b9216dc9ce40a0624f6cbe76a835d096227ecd14b16c6b894c",
+    "pipelines.jsonl": "sha256:5d404d3adc2eec06083bcc9d626d7fcc3e33f06aed4eb40bc3580552b402b92f",
+    "property_defs.jsonl": "sha256:62aafd7c2a36ed449eed32323cf25f69ac253f7a2588795c491eb77615093521",
+    "relationships.jsonl": "sha256:161ed2f13196b84799b6345ed92317ef164564cbe56f0c73033ff7396f534b0e",
+    "tasks.jsonl": "sha256:034a3a871204036bd783cc383d0cbc2f242733d655b7922a8434650066ea4084"
+  },
+  "input": {
+    "kind": "export",
+    "time_zone": "America/New_York"
+  },
+  "objects": {
+    "association": {
+      "archived": "not_applicable",
+      "coverage": "complete",
+      "file": "associations.jsonl",
+      "rows": 9
+    },
+    "communication": {
+      "coverage": "unknown",
+      "file": "communications.jsonl",
+      "reasons": [
+        {
+          "code": "file_absent",
+          "detail": "no calls in the input (neither crawl/calls/ nor export/calls.csv)"
+        },
+        {
+          "code": "file_absent",
+          "detail": "no emails in the input (neither crawl/emails/ nor export/emails.csv)"
+        },
+        {
+          "code": "file_absent",
+          "detail": "no meetings in the input (neither crawl/meetings/ nor export/meetings.csv)"
+        },
+        {
+          "code": "file_absent",
+          "detail": "no notes in the input (neither crawl/notes/ nor export/notes.csv)"
+        }
+      ],
+      "rows": 0
+    },
+    "company": {
+      "archived": "not_enumerated",
+      "coverage": "partial",
+      "file": "companies.jsonl",
+      "reasons": [
+        {
+          "code": "archived_not_enumerated",
+          "detail": "export/companies.csv: a file export holds no archived companies"
+        }
+      ],
+      "rows": 2
+    },
+    "consent": {
+      "archived": "not_applicable",
+      "coverage": "partial",
+      "file": "consent.jsonl",
+      "reasons": [
+        {
+          "code": "archived_not_enumerated",
+          "detail": "contacts: export/contacts.csv: a file export holds no archived contacts"
+        },
+        {
+          "code": "file_absent",
+          "detail": "no subscription statuses: a file export has none, so per-subscription grants and withdrawals are unknown"
+        }
+      ],
+      "rows": 1
+    },
+    "contact": {
+      "archived": "not_enumerated",
+      "coverage": "partial",
+      "file": "contacts.jsonl",
+      "reasons": [
+        {
+          "code": "archived_not_enumerated",
+          "detail": "export/contacts.csv: a file export holds no archived contacts"
+        }
+      ],
+      "rows": 3
+    },
+    "deal": {
+      "archived": "not_enumerated",
+      "coverage": "partial",
+      "file": "deals.jsonl",
+      "reasons": [
+        {
+          "code": "archived_not_enumerated",
+          "detail": "export/deals.csv: a file export holds no archived deals"
+        }
+      ],
+      "rows": 3
+    },
+    "owner": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "file": "owners.jsonl",
+      "rows": 4
+    },
+    "pipeline": {
+      "archived": "not_applicable",
+      "coverage": "complete",
+      "file": "pipelines.jsonl",
+      "rows": 3
+    },
+    "property_def": {
+      "archived": "not_applicable",
+      "coverage": "complete",
+      "file": "property_defs.jsonl",
+      "rows": 79
+    },
+    "relationship": {
+      "archived": "not_enumerated",
+      "coverage": "partial",
+      "file": "relationships.jsonl",
+      "reasons": [
+        {
+          "code": "archived_not_enumerated",
+          "detail": "export/tickets.csv: a file export holds no archived tickets"
+        }
+      ],
+      "rows": 1
+    },
+    "task": {
+      "archived": "not_enumerated",
+      "coverage": "partial",
+      "file": "tasks.jsonl",
+      "reasons": [
+        {
+          "code": "archived_not_enumerated",
+          "detail": "export/tasks.csv: a file export holds no archived tasks"
+        }
+      ],
+      "rows": 2
+    }
+  },
+  "provider": "hubspot",
+  "schema_version": 1,
+  "source": "hubspot:1234567"
+}

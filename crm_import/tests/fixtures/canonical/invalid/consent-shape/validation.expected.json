@@ -1,0 +1,18 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "inconsistent",
+      "file": "consent.jsonl",
+      "line": 1,
+      "field": "data.purpose"
+    },
+    {
+      "code": "inconsistent",
+      "file": "consent.jsonl",
+      "line": 3,
+      "field": "data.state"
+    }
+  ],
+  "warnings": []
+}

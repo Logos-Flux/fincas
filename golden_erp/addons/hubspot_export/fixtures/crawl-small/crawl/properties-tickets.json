@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/properties/tickets",
+    "query": {},
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "name": "hs_object_id",
+        "label": "Record ID",
+        "type": "number",
+        "fieldType": "number",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hubspot_owner_id",
+        "label": "Owner",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "subject",
+        "label": "Ticket name",
+        "type": "string",
+        "fieldType": "text",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "content",
+        "label": "Ticket description",
+        "type": "string",
+        "fieldType": "textarea",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_pipeline",
+        "label": "Pipeline",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "Partner Pipeline",
+            "value": "0",
+            "displayOrder": 0,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "hs_pipeline_stage",
+        "label": "Ticket status",
+        "type": "enumeration",
+        "fieldType": "radio",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "New partner",
+            "value": "1",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "Onboarding",
+            "value": "2",
+            "displayOrder": 1,
+            "hidden": false
+          },
+          {
+            "label": "Active partner",
+            "value": "3",
+            "displayOrder": 2,
+            "hidden": false
+          },
+          {
+            "label": "Ended",
+            "value": "4",
+            "displayOrder": 3,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "hs_ticket_priority",
+        "label": "Priority",
+        "type": "enumeration",
+        "fieldType": "select",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": [
+          {
+            "label": "Low",
+            "value": "LOW",
+            "displayOrder": 0,
+            "hidden": false
+          },
+          {
+            "label": "High",
+            "value": "HIGH",
+            "displayOrder": 1,
+            "hidden": false
+          }
+        ]
+      },
+      {
+        "name": "createdate",
+        "label": "Create date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "closed_date",
+        "label": "Close date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "name": "hs_lastmodifieddate",
+        "label": "Last Modified Date",
+        "type": "datetime",
+        "fieldType": "date",
+        "groupName": "information",
+        "hubspotDefined": true,
+        "hidden": false,
+        "options": []
+      }
+    ]
+  }
+}

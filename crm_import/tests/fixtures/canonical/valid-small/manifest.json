@@ -1,0 +1,113 @@
+{
+  "adapter": {
+    "id": "hand_written",
+    "schema_version": 1,
+    "version": "1.0.0"
+  },
+  "exported_at": "2026-10-01T09:00:00Z",
+  "files": {
+    "associations.jsonl": "sha256:2f341d518cfe889b3853f24383dbf0175ad9d52666b26b08cbba6e65136a5cb3",
+    "communications.jsonl": "sha256:3b93fbf7c51fe8ebe6ce8df93f5defe329186d4ac41e78a980293358622ea3b5",
+    "companies.jsonl": "sha256:1f594a4b4c958629be4004f40059287ac06a6fd76043b7190de6278444b1bec4",
+    "consent.jsonl": "sha256:2af1dd8e870e0604cbfd6ff4e82707d0ef8ec083c43096d1a28cf5fac2fe7de1",
+    "contacts.jsonl": "sha256:0353e0b452297349c2d8501e0aed3ee9e0dad82425f977ddacad9ae6503e16fa",
+    "deals.jsonl": "sha256:384a160f26fcd9db6a161fb74e56267b93641ce8f29587d1cba89e0d6336a0b8",
+    "owners.jsonl": "sha256:06cc02666f1df67a210fc465bf60b460a25f2304b583d716016bf347fa8ca9e9",
+    "pipelines.jsonl": "sha256:fe230510dd3dfa592526cf3b5b996008cf082dcea84616f5e262be576444de7e",
+    "property_defs.jsonl": "sha256:e46dc3f4e36915b9b9eb20c4104b506b8cff3a4ac5a97f9f308b058e9e437daf",
+    "relationships.jsonl": "sha256:009475c7de3629963e4e13aefd7594b03b4ade0c5bae383e8e726201f4078820",
+    "tasks.jsonl": "sha256:1b0f3901bc983e416a71297b33b992039ffaac6196b1cb493facda351fe5aeef"
+  },
+  "input": {
+    "kind": "hand_written",
+    "time_zone": null
+  },
+  "objects": {
+    "association": {
+      "archived": "not_applicable",
+      "coverage": "complete",
+      "declared_total": null,
+      "file": "associations.jsonl",
+      "rows": 3
+    },
+    "communication": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "declared_total": 2,
+      "file": "communications.jsonl",
+      "rows": 2
+    },
+    "company": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "declared_total": 1,
+      "file": "companies.jsonl",
+      "rows": 2
+    },
+    "consent": {
+      "archived": "not_applicable",
+      "coverage": "complete",
+      "declared_total": null,
+      "file": "consent.jsonl",
+      "rows": 3
+    },
+    "contact": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "declared_total": 3,
+      "file": "contacts.jsonl",
+      "history": [
+        "lifecyclestage"
+      ],
+      "rows": 3
+    },
+    "deal": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "declared_total": 2,
+      "file": "deals.jsonl",
+      "history": [
+        "dealstage"
+      ],
+      "rows": 2
+    },
+    "owner": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "declared_total": 1,
+      "file": "owners.jsonl",
+      "rows": 2
+    },
+    "pipeline": {
+      "archived": "not_applicable",
+      "coverage": "complete",
+      "declared_total": null,
+      "file": "pipelines.jsonl",
+      "rows": 2
+    },
+    "property_def": {
+      "archived": "not_applicable",
+      "coverage": "complete",
+      "declared_total": null,
+      "file": "property_defs.jsonl",
+      "rows": 2
+    },
+    "relationship": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "declared_total": 1,
+      "file": "relationships.jsonl",
+      "rows": 1
+    },
+    "task": {
+      "archived": "enumerated",
+      "coverage": "complete",
+      "declared_total": 2,
+      "file": "tasks.jsonl",
+      "rows": 2
+    }
+  },
+  "provider": "examplecrm",
+  "schema_version": 1,
+  "source": "examplecrm:4242"
+}

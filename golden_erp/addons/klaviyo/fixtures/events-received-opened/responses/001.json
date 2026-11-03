@@ -1,0 +1,99 @@
+{
+  "payload": {
+    "data": [
+      {
+        "attributes": {
+          "datetime": "2026-03-01T12:00:00Z",
+          "event_properties": {
+            "$message": "01FIXTURECAMPAIGNMSG00001",
+            "Subject": "Spring panels"
+          },
+          "timestamp": 0
+        },
+        "id": "01FIXTUREEVENTRECV0000001",
+        "relationships": {
+          "metric": {
+            "data": {
+              "id": "m-rec",
+              "type": "metric"
+            }
+          },
+          "profile": {
+            "data": {
+              "id": "01FIXTUREPROFILEADA0000000",
+              "type": "profile"
+            }
+          }
+        },
+        "type": "event"
+      },
+      {
+        "attributes": {
+          "datetime": "2026-03-01T12:05:00Z",
+          "event_properties": {
+            "$message": "01FIXTURECAMPAIGNMSG00001",
+            "Subject": "Spring panels"
+          },
+          "timestamp": 0
+        },
+        "id": "01FIXTUREEVENTOPEN0000001",
+        "relationships": {
+          "metric": {
+            "data": {
+              "id": "m-ope",
+              "type": "metric"
+            }
+          },
+          "profile": {
+            "data": {
+              "id": "01FIXTUREPROFILEADA0000000",
+              "type": "profile"
+            }
+          }
+        },
+        "type": "event"
+      }
+    ],
+    "included": [
+      {
+        "attributes": {
+          "name": "Received Email"
+        },
+        "id": "m-rec",
+        "type": "metric"
+      },
+      {
+        "attributes": {
+          "name": "Opened Email"
+        },
+        "id": "m-ope",
+        "type": "metric"
+      },
+      {
+        "attributes": {
+          "email": "ada@example.com"
+        },
+        "id": "01FIXTUREPROFILEADA0000000",
+        "type": "profile"
+      }
+    ],
+    "links": {
+      "next": null
+    }
+  },
+  "provider": "klaviyo",
+  "request": {
+    "method": "GET",
+    "path": "/api/events/",
+    "query": {
+      "filter": "greater-or-equal(datetime,2026-02-02T14:00:00Z)",
+      "include": "metric,profile",
+      "page[size]": "100",
+      "sort": "datetime"
+    }
+  },
+  "response": {
+    "status": 200
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,28 @@
+{
+  "description": "a coverage reason outside the closed list",
+  "manifest": [
+    {
+      "op": "set",
+      "path": [
+        "objects",
+        "contact",
+        "coverage"
+      ],
+      "value": "partial"
+    },
+    {
+      "op": "set",
+      "path": [
+        "objects",
+        "contact",
+        "reasons"
+      ],
+      "value": [
+        {
+          "code": "rate_limited",
+          "detail": ""
+        }
+      ]
+    }
+  ]
+}

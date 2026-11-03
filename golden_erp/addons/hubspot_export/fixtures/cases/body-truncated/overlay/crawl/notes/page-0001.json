@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/objects/notes",
+    "query": {
+      "limit": "100",
+      "associations": "contacts,companies,deals,tickets"
+    },
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "701",
+        "properties": {
+          "hs_object_id": "701",
+          "hs_timestamp": "2026-08-02T15:00:00.000Z",
+          "hs_createdate": "2026-08-02T15:00:00.000Z",
+          "hs_lastmodifieddate": "2026-08-02T15:00:00.000Z",
+          "hubspot_owner_id": "101",
+          "hs_body_preview": "Met at the expo. Wants a quote & sam",
+          "hs_body_preview_is_truncated": "true"
+        },
+        "createdAt": "2026-08-02T15:00:00.000Z",
+        "updatedAt": "2026-08-02T15:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "contacts": {
+            "results": [
+              {
+                "id": "301",
+                "type": "note_to_contact"
+              }
+            ]
+          },
+          "deals": {
+            "results": [
+              {
+                "id": "401",
+                "type": "note_to_deal"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "702",
+        "properties": {
+          "hs_object_id": "702",
+          "hs_timestamp": "2023-01-12T10:00:00.000Z",
+          "hs_createdate": "2023-01-12T10:00:00.000Z",
+          "hs_lastmodifieddate": "2023-01-12T10:00:00.000Z",
+          "hs_note_body": "Partner call recap: two referrals expected.",
+          "hubspot_owner_id": "102"
+        },
+        "createdAt": "2023-01-12T10:00:00.000Z",
+        "updatedAt": "2023-01-12T10:00:00.000Z",
+        "archived": false,
+        "associations": {
+          "contacts": {
+            "results": [
+              {
+                "id": "302",
+                "type": "note_to_contact"
+              }
+            ]
+          },
+          "tickets": {
+            "results": [
+              {
+                "id": "501",
+                "type": "note_to_ticket"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

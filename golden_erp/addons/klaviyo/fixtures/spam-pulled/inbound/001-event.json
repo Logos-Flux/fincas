@@ -1,0 +1,29 @@
+{
+  "payload": {
+    "event": {
+      "attributes": {
+        "datetime": "2026-03-01T13:00:00Z",
+        "event_properties": {},
+        "timestamp": 0
+      },
+      "id": "01FIXTUREEVENTSPAM0000001",
+      "type": "event"
+    },
+    "metric": {
+      "attributes": {
+        "name": "Marked Email as Spam"
+      },
+      "id": "MMARKEDEM",
+      "type": "metric"
+    },
+    "profile": {
+      "attributes": {
+        "email": "ada@example.com"
+      },
+      "id": "01FIXTUREPROFILEADA0000000",
+      "type": "profile"
+    }
+  },
+  "provider": "klaviyo",
+  "schema_version": 1
+}

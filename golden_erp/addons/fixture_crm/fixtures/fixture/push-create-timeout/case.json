@@ -1,0 +1,32 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A create whose answer was lost (503) is retried after backoff by searching the dedupe key first, and the record the provider made is adopted, not duplicated.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "enqueue": {
+        "consumer": "fixture.contact",
+        "key": "contact:ada:3",
+        "object": "party:ada"
+      }
+    },
+    {
+      "drain": true
+    },
+    {
+      "advance": 3600
+    },
+    {
+      "drain": true
+    }
+  ]
+}

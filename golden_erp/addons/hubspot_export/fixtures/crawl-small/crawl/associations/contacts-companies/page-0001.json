@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "POST",
+    "path": "/crm/v4/associations/contacts/companies/batch/read",
+    "query": {},
+    "body": {
+      "inputs": [
+        {
+          "id": "301"
+        },
+        {
+          "id": "302"
+        },
+        {
+          "id": "303"
+        },
+        {
+          "id": "304"
+        },
+        {
+          "id": "305"
+        },
+        {
+          "id": "306"
+        },
+        {
+          "id": "307"
+        },
+        {
+          "id": "308"
+        }
+      ]
+    }
+  },
+  "payload": {
+    "results": [
+      {
+        "from": {
+          "id": "301"
+        },
+        "to": [
+          {
+            "toObjectId": 201,
+            "associationTypes": [
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 1,
+                "label": "Primary"
+              },
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 279,
+                "label": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "from": {
+          "id": "303"
+        },
+        "to": [
+          {
+            "toObjectId": 202,
+            "associationTypes": [
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 1,
+                "label": "Primary"
+              },
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 279,
+                "label": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "from": {
+          "id": "304"
+        },
+        "to": [
+          {
+            "toObjectId": 203,
+            "associationTypes": [
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 1,
+                "label": "Primary"
+              },
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 279,
+                "label": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "from": {
+          "id": "306"
+        },
+        "to": [
+          {
+            "toObjectId": 202,
+            "associationTypes": [
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 1,
+                "label": "Primary"
+              },
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 279,
+                "label": null
+              }
+            ]
+          },
+          {
+            "toObjectId": 201,
+            "associationTypes": [
+              {
+                "category": "HUBSPOT_DEFINED",
+                "typeId": 279,
+                "label": null
+              },
+              {
+                "category": "USER_DEFINED",
+                "typeId": 31,
+                "label": "Billing contact"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

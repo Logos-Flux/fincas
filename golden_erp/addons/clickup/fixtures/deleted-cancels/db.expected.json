@@ -1,0 +1,64 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [
+    {
+      "metadata": {
+        "date_updated": "1772460000000"
+      },
+      "object_type": "task",
+      "source": "clickup",
+      "source_id": "86a0fx01",
+      "source_url": "https://app.clickup.com/t/86a0fx01",
+      "target": "crm.task:task:t1"
+    },
+    {
+      "metadata": {
+        "date_updated": "1772460000000"
+      },
+      "object_type": "task",
+      "source": "clickup",
+      "source_id": "86a0fx05",
+      "source_url": "https://app.clickup.com/t/86a0fx05",
+      "target": "crm.task:task:t2"
+    }
+  ],
+  "outbox": [
+    {
+      "consumer": "clickup.inbound",
+      "event": "webhook",
+      "idempotency_key": "account:sha256:152b22f5ba19e376c8398b03406254edc168fac2a1d83df4a9a9334610dc80c4",
+      "object": null,
+      "state": "done"
+    },
+    {
+      "consumer": "clickup.inbound",
+      "event": "webhook",
+      "idempotency_key": "account:sha256:435d3e1cfd02c9a22b64279449cdadd1329ed122b8b0321bb8a0d00072af2050",
+      "object": null,
+      "state": "done"
+    }
+  ],
+  "suppressions": [],
+  "tasks": [
+    {
+      "all_day": true,
+      "assignee": "staff:sam",
+      "due_at": "2026-03-06T04:59:59.999999Z",
+      "party": "party:ada",
+      "source": "erp",
+      "status": "cancelled",
+      "title": "Call Ada back"
+    },
+    {
+      "all_day": true,
+      "assignee": "staff:sam",
+      "due_at": "2026-03-06T04:59:59.999999Z",
+      "party": "party:ada",
+      "source": "erp",
+      "status": "done",
+      "title": "Send the quote"
+    }
+  ],
+  "touchpoints": []
+}

@@ -1,0 +1,6 @@
+{
+  "enabled": true,
+  "settings": {
+    "pubsub_service_account": "push@fixture-project.example.com"
+  }
+}

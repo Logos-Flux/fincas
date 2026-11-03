@@ -1,0 +1,37 @@
+{
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "A null expected_value uploads with no conversionValue at all (never zero) and the ref is flagged value_unknown.",
+  "seed": {
+    "deals": [
+      {
+        "actions": [
+          "win"
+        ],
+        "currency": "USD",
+        "key": "deal1",
+        "party": "party:ada",
+        "touches": [
+          {
+            "click_id": "Cj0KFIXTUREgclid01",
+            "click_id_kind": "gclid",
+            "days": 10
+          }
+        ],
+        "value": null
+      }
+    ],
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "drain": true
+    }
+  ]
+}

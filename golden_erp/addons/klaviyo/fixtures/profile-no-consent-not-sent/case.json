@@ -1,0 +1,57 @@
+{
+  "klaviyo": {
+    "consents": [
+      {
+        "occurred_at": "2026-01-01T10:00:00Z",
+        "party": "grace",
+        "state": "granted"
+      },
+      {
+        "occurred_at": "2026-02-01T10:00:00Z",
+        "party": "grace",
+        "state": "withdrawn"
+      }
+    ],
+    "marketable": [
+      "ada",
+      "grace"
+    ]
+  },
+  "now": "2026-03-02T15:00:00Z",
+  "proves": "Golden never uploads a person without consent: no grant (or a withdrawal) and no profile ref means no request at all.",
+  "seed": {
+    "parties": [
+      {
+        "email": "ada@example.com",
+        "family": "Lovelace",
+        "given": "Ada",
+        "key": "ada"
+      },
+      {
+        "email": "grace@example.net",
+        "family": "Hopper",
+        "given": "Grace",
+        "key": "grace"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "enqueue": {
+        "consumer": "klaviyo.profile",
+        "key": "sync:ada:1",
+        "object": "party:ada"
+      }
+    },
+    {
+      "enqueue": {
+        "consumer": "klaviyo.profile",
+        "key": "sync:grace:1",
+        "object": "party:grace"
+      }
+    },
+    {
+      "drain": true
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "blank_line",
+      "file": "tasks.jsonl",
+      "line": 2,
+      "field": ""
+    },
+    {
+      "code": "invalid_json",
+      "file": "tasks.jsonl",
+      "line": 3,
+      "field": ""
+    },
+    {
+      "code": "not_an_object",
+      "file": "tasks.jsonl",
+      "line": 4,
+      "field": ""
+    }
+  ],
+  "warnings": []
+}

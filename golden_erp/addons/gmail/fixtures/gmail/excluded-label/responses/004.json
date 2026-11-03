@@ -1,0 +1,47 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000014",
+    "internalDate": "1772460000000",
+    "labelIds": [
+      "SPAM"
+    ],
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "ada@example.com"
+        },
+        {
+          "name": "To",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "Subject",
+          "value": "Spam-filtered"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<x-0014@example.com>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        }
+      ],
+      "mimeType": "multipart/mixed"
+    },
+    "sizeEstimate": 4200,
+    "snippet": "x",
+    "threadId": "19b0000000000014"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000014",
+    "query": {
+      "format": "metadata"
+    }
+  },
+  "schema_version": 1
+}

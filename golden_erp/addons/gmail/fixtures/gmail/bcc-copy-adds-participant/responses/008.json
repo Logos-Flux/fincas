@@ -1,0 +1,51 @@
+{
+  "payload": {
+    "historyId": "1005",
+    "id": "19b0000000000007",
+    "internalDate": "1772460000000",
+    "labelIds": [
+      "SENT"
+    ],
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "rep@example.org"
+        },
+        {
+          "name": "To",
+          "value": "ada@example.com"
+        },
+        {
+          "name": "Bcc",
+          "value": "boss@example.org"
+        },
+        {
+          "name": "Subject",
+          "value": "Your order"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<rep-0007@mail.example.org>"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 2 Mar 2026 14:00:00 +0000"
+        }
+      ],
+      "mimeType": "multipart/mixed"
+    },
+    "sizeEstimate": 4200,
+    "snippet": "Your order shipped.",
+    "threadId": "19b0000000000007"
+  },
+  "provider": "gmail",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/me/messages/19b0000000000007",
+    "query": {
+      "format": "metadata"
+    }
+  },
+  "schema_version": 1
+}

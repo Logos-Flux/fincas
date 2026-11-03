@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "errors": [
+    {
+      "code": "invalid_value",
+      "file": "pipelines.jsonl",
+      "line": 1,
+      "field": "data.key"
+    }
+  ],
+  "warnings": []
+}

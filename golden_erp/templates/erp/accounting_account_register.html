@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load humanize erp_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <div class="row align-items-end">
+          <div class="col-md-6">
+            <h6 class="mb-0">{{ account.full_name|default:account.name }}</h6>
+            <p class="text-xs text-secondary mb-0">
+              {{ account.account_number|default:"no number" }} ·
+              {{ account.get_account_type_display }}{% if account.account_subtype %} / {{ account.get_account_subtype_display }}{% endif %} ·
+              normal side {{ normal_side }}
+              {% if not account.is_active %}· <span class="text-warning">placeholder</span>{% endif %}
+            </p>
+          </div>
+          <div class="col-md-6">
+            <form method="get" class="row g-2 justify-content-end">
+              {% if q_company %}<input type="hidden" name="company" value="{{ company.pk }}">{% endif %}
+              <div class="col-auto">
+                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from }}" title="From" aria-label="From date">
+              </div>
+              <div class="col-auto">
+                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to }}" title="To" aria-label="To date">
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn bg-gradient-primary btn-sm mb-0">Apply</button>
+              </div>
+              <div class="col-auto">
+                <a href="{% url 'erp-accounting-trial-balance' %}{% if q_company %}?{{ q_company }}{% endif %}" class="btn btn-outline-secondary btn-sm mb-0">Back</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body px-0 pt-3 pb-2">
+        <div class="row px-4 mb-2">
+          {% if is_date_filtered %}
+          <div class="col"><p class="text-xs text-secondary mb-0">Opening balance</p>
+            <h6 class="mb-0">{{ opening_balance|money }}</h6>
+            <p class="text-xxs text-secondary mb-0">brought forward</p></div>
+          {% endif %}
+          <div class="col"><p class="text-xs text-secondary mb-0">Debits</p>
+            <h6 class="mb-0">{{ total_debit|money }}</h6>
+            <p class="text-xxs text-secondary mb-0">in period</p></div>
+          <div class="col"><p class="text-xs text-secondary mb-0">Credits</p>
+            <h6 class="mb-0">{{ total_credit|money }}</h6>
+            <p class="text-xxs text-secondary mb-0">in period</p></div>
+          {% if is_date_filtered %}
+          <div class="col"><p class="text-xs text-secondary mb-0">Period movement</p>
+            <h6 class="mb-0">{{ period_movement|money }}</h6></div>
+          {% endif %}
+          <div class="col"><p class="text-xs text-secondary mb-0">Closing balance</p>
+            <h6 class="mb-0">{{ closing_balance|money }}</h6>
+            <p class="text-xxs text-secondary mb-0">{% if is_date_filtered %}opening + period{% else %}all dates{% endif %}</p></div>
+        </div>
+
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Date</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Entry</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Name</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Description</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Debit</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Credit</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if is_date_filtered %}
+              <tr class="text-secondary">
+                <td class="text-sm">{{ date_from }}</td>
+                <td class="text-sm" colspan="3"><em>Opening balance brought forward</em></td>
+                <td class="text-sm text-end">—</td>
+                <td class="text-sm text-end">—</td>
+                <td class="text-sm text-end font-weight-bold">{{ opening_balance|money }}</td>
+              </tr>
+              {% endif %}
+              {% for line in lines %}
+              <tr>
+                <td class="text-sm">{{ line.entry.entry_date|date:"Y-m-d" }}</td>
+                <td class="text-sm"><a href="{% url 'erp-accounting-entry-detail' line.entry.pk %}{% if q_company %}?{{ q_company }}{% endif %}">{{ line.entry.entry_number|default:line.entry.source_reference|default:"—" }}</a></td>
+                <td class="text-xs text-secondary">{{ line.entity_name|default:"—" }}</td>
+                <td class="text-xs text-secondary">{{ line.description|truncatechars:70|default:"—" }}</td>
+                <td class="text-sm text-end">{% if line.debit_amount %}{{ line.debit_amount|money }}{% else %}—{% endif %}</td>
+                <td class="text-sm text-end">{% if line.credit_amount %}{{ line.credit_amount|money }}{% else %}—{% endif %}</td>
+                <td class="text-sm text-end font-weight-bold">{{ line.running_balance|money }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="7" class="text-sm text-secondary text-center py-4">No lines in this range.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {% if is_paginated %}
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <p class="text-sm text-secondary mb-0">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }}</p>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&amp;date_from={{ date_from }}&amp;date_to={{ date_to }}{% if q_company %}&amp;{{ q_company }}{% endif %}"><i class="fas fa-angle-left"></i></a></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+              {% if num == page_obj.number %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+              <li class="page-item"><a class="page-link" href="?page={{ num }}&amp;date_from={{ date_from }}&amp;date_to={{ date_to }}{% if q_company %}&amp;{{ q_company }}{% endif %}">{{ num }}</a></li>
+              {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&amp;date_from={{ date_from }}&amp;date_to={{ date_to }}{% if q_company %}&amp;{{ q_company }}{% endif %}"><i class="fas fa-angle-right"></i></a></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

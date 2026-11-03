@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "provider": "hubspot",
+  "request": {
+    "method": "GET",
+    "path": "/crm/v3/pipelines/deals",
+    "query": {},
+    "body": null
+  },
+  "payload": {
+    "results": [
+      {
+        "id": "default",
+        "label": "Sales Pipeline",
+        "displayOrder": 0,
+        "archived": false,
+        "createdAt": "2020-01-06T09:00:00.000Z",
+        "updatedAt": "2024-01-02T09:00:00.000Z",
+        "stages": [
+          {
+            "id": "appointmentscheduled",
+            "label": "Appointment Scheduled",
+            "displayOrder": 0,
+            "metadata": {
+              "isClosed": "false",
+              "probability": "0.2"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          },
+          {
+            "id": "qualifiedtobuy",
+            "label": "Qualified To Buy",
+            "displayOrder": 1,
+            "metadata": {
+              "isClosed": "false",
+              "probability": "0.4"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          },
+          {
+            "id": "contractsent",
+            "label": "Contract Sent",
+            "displayOrder": 2,
+            "metadata": {
+              "isClosed": "false",
+              "probability": "0.9"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          },
+          {
+            "id": "closedwon",
+            "label": "Closed Won",
+            "displayOrder": 3,
+            "metadata": {
+              "isClosed": "true",
+              "probability": "1.0"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          },
+          {
+            "id": "closedlost",
+            "label": "Closed Lost",
+            "displayOrder": 4,
+            "metadata": {
+              "isClosed": "true",
+              "probability": "0.0"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          }
+        ]
+      },
+      {
+        "id": "12345678",
+        "label": "Partner Referrals",
+        "displayOrder": 1,
+        "archived": false,
+        "createdAt": "2022-03-01T09:00:00.000Z",
+        "updatedAt": "2024-01-02T09:00:00.000Z",
+        "stages": [
+          {
+            "id": "12345679",
+            "label": "Referred",
+            "displayOrder": 0,
+            "metadata": {
+              "isClosed": "false",
+              "probability": "0.1"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          },
+          {
+            "id": "12345680",
+            "label": "Closed - referred out",
+            "displayOrder": 1,
+            "metadata": {
+              "isClosed": "true",
+              "probability": "0.5"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          },
+          {
+            "id": "12345681",
+            "label": "Closed Won",
+            "displayOrder": 2,
+            "metadata": {
+              "isClosed": "true",
+              "probability": "1.0"
+            },
+            "archived": false,
+            "createdAt": "2020-01-06T09:00:00.000Z",
+            "updatedAt": "2020-01-06T09:00:00.000Z"
+          }
+        ]
+      }
+    ]
+  }
+}

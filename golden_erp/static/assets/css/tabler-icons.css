@@ -1,0 +1,126 @@
+/*!
+ * Tabler Icons 3.46.0 (subset: 25 glyphs) by tabler - https://tabler.io
+ * MIT License - https://github.com/tabler/tabler-icons/blob/main/LICENSE
+ * Subset: only these 25 glyphs render in the back office; use Font Awesome for any other icon.
+ */
+@font-face {
+  font-family: "tabler-icons";
+  font-style: normal;
+  font-weight: 400;
+  src:
+    url("../fonts/tabler-icons-subset.woff2") format("woff2"),
+    url("../fonts/tabler-icons-subset.woff") format("woff"),
+    url("../fonts/tabler-icons-subset.ttf") format("truetype");
+}
+
+.ti {
+  font-family: "tabler-icons" !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.ti-settings:before {
+  content: "\eb20";
+}
+
+.ti-shopping-cart:before {
+  content: "\eb25";
+}
+
+.ti-coins:before {
+  content: "\f65d";
+}
+
+.ti-file-text:before {
+  content: "\eaa2";
+}
+
+.ti-package:before {
+  content: "\eaff";
+}
+
+.ti-photo:before {
+  content: "\eb0a";
+}
+
+.ti-stack:before {
+  content: "\eb2d";
+}
+
+.ti-clock:before {
+  content: "\ea70";
+}
+
+.ti-cloud-download:before {
+  content: "\ea71";
+}
+
+.ti-world:before {
+  content: "\eb54";
+}
+
+.ti-check:before {
+  content: "\ea5e";
+}
+
+.ti-thumb-up:before {
+  content: "\eb3c";
+}
+
+.ti-layout-dashboard:before {
+  content: "\f02c";
+}
+
+.ti-credit-card:before {
+  content: "\ea84";
+}
+
+.ti-user:before {
+  content: "\eb4d";
+}
+
+.ti-badge:before {
+  content: "\efc2";
+}
+
+.ti-category:before {
+  content: "\f1f6";
+}
+
+.ti-building-warehouse:before {
+  content: "\ebe3";
+}
+
+.ti-tag:before {
+  content: "\10096";
+}
+
+.ti-shopping-bag:before {
+  content: "\f5f8";
+}
+
+.ti-building:before {
+  content: "\ea4f";
+}
+
+.ti-folder:before {
+  content: "\eaad";
+}
+
+.ti-chart-bar:before {
+  content: "\ea59";
+}
+
+.ti-atom:before {
+  content: "\eb79";
+}
+
+.ti-users:before {
+  content: "\ebf2";
+}

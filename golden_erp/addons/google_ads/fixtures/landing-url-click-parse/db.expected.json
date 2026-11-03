@@ -1,0 +1,17 @@
+{
+  "communications": [],
+  "consents": [],
+  "external_refs": [],
+  "outbox": [],
+  "suppressions": [],
+  "tasks": [],
+  "touchpoints": [
+    {
+      "channel": "paid_search",
+      "occurred_at": "2026-02-25T09:00:00Z",
+      "party": "party:ada",
+      "utm_campaign": "ios",
+      "utm_source": "google"
+    }
+  ]
+}

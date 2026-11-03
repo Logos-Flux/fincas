@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Integrations{% endblock %}
+
+{% block content %}
+{% comment %}
+External-service inventory (core.integration_registry). Credentials appear by
+NAME with a set / not-set flag only; values never reach this template.
+{% endcomment %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header pb-0">
+        <h1 class="h6 mb-1">Integrations</h1>
+        <p class="text-sm text-secondary mb-2">
+          {{ summary.total }} service{{ summary.total|pluralize }} in the inventory.
+          {% for status, count in summary.by_status.items %}{% if count %}<span class="badge badge-sm bg-gradient-secondary me-1">{{ status }}: {{ count }}</span>{% endif %}{% endfor %}
+        </p>
+        <p class="text-xs text-secondary mb-2">{{ key_rotation }}. Credential presence is checked on this server ({{ local_app }}) only.</p>
+      </div>
+      <div class="card-body px-0 pt-0 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-start mb-0">
+            <thead>
+              <tr>
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Service</th>
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Owner</th>
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Credentials</th>
+                <th scope="col" class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Connection test</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr id="integration-{{ row.key }}" data-integration="{{ row.key }}">
+                <td class="ps-3">
+                  <div class="text-sm font-weight-bold">{{ row.service }}</div>
+                  <div class="text-xs text-secondary">{{ row.category }} · {{ row.apps|join:", " }}</div>
+                  {% for c in row.consumers %}<div class="text-xs">{{ c.app }}: {{ c.purpose }} <code>{{ c.source }}</code></div>{% endfor %}
+                  {% if row.notes %}<div class="text-xs text-secondary">{{ row.notes }}</div>{% endif %}
+                </td>
+                <td><span class="badge badge-sm bg-gradient-info" title="{{ row.status_label }}">{{ row.status }}</span></td>
+                <td>
+                  <span class="text-sm">{{ row.owner }}</span>
+                  {% if row.owner_basis %}<div class="text-xs text-secondary">{{ row.owner_basis }}</div>{% endif %}
+                </td>
+                <td>
+                  {% for c in row.credentials %}
+                  <div class="text-xs" data-credential="{{ c.name }}">
+                    <code>{{ c.name }}</code> <span class="text-secondary">({{ c.app }}, {{ c.role }})</span>
+                    {% if c.present is None %}<span class="badge badge-sm bg-gradient-secondary">other app</span>
+                    {% elif c.present %}<span class="badge badge-sm bg-gradient-success">set</span>
+                    {% else %}<span class="badge badge-sm bg-gradient-warning">not set</span>{% endif %}
+                    {% if c.note %}<span class="text-secondary">{{ c.note }}</span>{% endif %}
+                  </div>
+                  {% empty %}<span class="text-xs text-secondary">No credential</span>
+                  {% endfor %}
+                </td>
+                <td>
+                  {% for t in row.tests %}
+                  <div id="{{ t.anchor }}" class="mb-2" data-test="{{ t.name }}">
+                    <div class="text-xs font-weight-bold">{{ t.label }}</div>
+                    {% if t.registered %}
+                    <form method="post" action="{% url 'erp-integration-test' t.name %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-outline-primary btn-sm mb-1">Run test</button>
+                    </form>
+                    {% else %}
+                    <span class="badge badge-sm bg-gradient-danger">not registered</span>
+                    {% endif %}
+                    <div class="text-xs" data-last-check>
+                    {% if t.last %}
+                      {% if t.last.ok %}<span class="badge badge-sm bg-gradient-success">Passed</span>{% else %}<span class="badge badge-sm bg-gradient-danger">Failed</span> <code>{{ t.last.error_class }}</code>{% endif %}
+                      <div>{{ t.last.what }}</div>
+                      <div class="text-secondary">{{ t.last.created_at|date:"Y-m-d H:i" }}{% if t.last.tested_by %} by {{ t.last.tested_by.get_username }}{% endif %}{% if t.last.http_status %} · HTTP {{ t.last.http_status }}{% endif %}{% if t.last.latency_ms is not None %} · {{ t.last.latency_ms }} ms{% endif %}</div>
+                    {% else %}
+                      <span class="text-secondary">Not tested yet</span>
+                    {% endif %}
+                    </div>
+                  </div>
+                  {% empty %}<span class="text-xs text-secondary">None</span>
+                  {% endfor %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-4 text-sm text-secondary">No services configured in ERP_INTEGRATIONS.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4" id="connected-accounts">
+      <div class="card-header pb-0">
+        <h2 class="h6 mb-1">Connected accounts</h2>
+        {% comment %}
+        This company's provider accounts (core.IntegrationAccount). Secrets are
+        write-only: a credential shows its kind, subject and dates, never a value.
+        {% endcomment %}
+        <p class="text-xs text-secondary mb-2">Provider accounts of {{ connected.company|default:"your company" }}. Credentials are stored encrypted and never shown again.</p>
+      </div>
+      <div class="card-body pt-0">
+        {% if not connected.company %}
+        <p class="text-sm text-secondary mb-0">Your user has no company, so there are no accounts to show.</p>
+        {% else %}
+        {% for row in connected.accounts %}
+        <div class="border rounded p-3 mb-3" id="account-{{ row.account.pk }}" data-account="{{ row.account.provider }}">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <h3 class="h6 mb-0">{{ row.account.provider }}</h3>
+            {% if row.account.enabled %}<span class="badge badge-sm bg-gradient-success">enabled</span>{% else %}<span class="badge badge-sm bg-gradient-secondary">disabled</span>{% endif %}
+            {% if row.paused %}<span class="badge badge-sm bg-gradient-warning">paused until {{ row.account.paused_until|date:"Y-m-d H:i" }}</span>{% endif %}
+            {% if not row.installed %}<span class="badge badge-sm bg-gradient-danger">adapter not installed</span>{% endif %}
+            {% if row.account.last_error %}<code class="text-xs">{{ row.account.last_error }}</code>{% endif %}
+          </div>
+          {% if row.capabilities %}<div class="text-xs text-secondary mb-2">Capabilities: {{ row.capabilities|join:", " }} · webhook URL <code>{{ row.webhook_path }}</code></div>{% endif %}
+          <div class="text-xs mb-2" data-credentials>
+            {% for c in row.company_credentials %}
+            <div data-credential-kind="{{ c.kind }}"><code>{{ c.kind }}</code> set {{ c.updated_at|date:"Y-m-d H:i" }}{% if c.subject %} · {{ c.subject }}{% endif %}</div>
+            {% empty %}<span class="text-secondary">No credentials yet.</span>
+            {% endfor %}
+          </div>
+          {% if row.oauth %}
+          <div class="text-xs mb-2" data-grants>
+            {% for g in row.grants %}<div>{{ g.subject|default:"(no subject)" }} — {{ g.owner }}</div>{% empty %}<span class="text-secondary">No user has connected yet.</span>{% endfor %}
+            {% if row.my_grant %}
+            <form method="post" action="{% url 'erp-integration-oauth-disconnect' row.account.pk %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm mt-1 mb-0">Disconnect my account</button></form>
+            {% elif row.account.enabled %}
+            <a class="btn btn-outline-primary btn-sm mt-1 mb-0" href="{% url 'erp-integration-oauth-connect' row.account.pk %}">Connect my account</a>
+            {% endif %}
+          </div>
+          {% endif %}
+          <div class="d-flex flex-wrap gap-2 align-items-start">
+            <form method="post" action="{% url 'erp-integration-account-test' row.account.pk %}">{% csrf_token %}<button type="submit" class="btn btn-outline-primary btn-sm mb-0">Test connection</button></form>
+            {% if connected.can_change %}
+            <form method="post" action="{% url 'erp-integration-account-update' row.account.pk %}">{% csrf_token %}
+              {% if row.account.enabled %}<input type="hidden" name="enabled" value="0"><button type="submit" class="btn btn-outline-secondary btn-sm mb-0">Disable</button>
+              {% else %}<input type="hidden" name="enabled" value="1"><button type="submit" class="btn btn-outline-success btn-sm mb-0">Enable</button>{% endif %}
+            </form>
+            {% if row.paused %}<form method="post" action="{% url 'erp-integration-account-update' row.account.pk %}">{% csrf_token %}<input type="hidden" name="resume" value="1"><button type="submit" class="btn btn-outline-warning btn-sm mb-0">Resume now</button></form>{% endif %}
+            {% endif %}
+          </div>
+          <div class="text-xs mt-2" data-last-check>
+            {% if row.last_check %}
+              {% if row.last_check.ok %}<span class="badge badge-sm bg-gradient-success">Passed</span>{% else %}<span class="badge badge-sm bg-gradient-danger">Failed</span> <code>{{ row.last_check.error_class }}</code>{% endif %}
+              {{ row.last_check.what }} <span class="text-secondary">{{ row.last_check.created_at|date:"Y-m-d H:i" }}</span>
+            {% else %}<span class="text-secondary">Not tested yet</span>{% endif %}
+          </div>
+          {% if connected.can_change %}
+          <details class="mt-2">
+            <summary class="text-xs">Settings and credentials</summary>
+            <form method="post" action="{% url 'erp-integration-account-update' row.account.pk %}" class="mt-2">{% csrf_token %}
+              <label class="form-label text-xs" for="settings-{{ row.account.pk }}">Settings (JSON, no secrets)</label>
+              <textarea class="form-control form-control-sm font-monospace" rows="4" name="settings" id="settings-{{ row.account.pk }}">{{ row.settings_json }}</textarea>
+              <button type="submit" class="btn btn-primary btn-sm mt-1 mb-0">Save settings</button>
+            </form>
+            <form method="post" action="{% url 'erp-integration-account-credential' row.account.pk %}" class="mt-2" autocomplete="off">{% csrf_token %}
+              <label class="form-label text-xs" for="kind-{{ row.account.pk }}">Credential</label>
+              <select class="form-select form-select-sm" name="kind" id="kind-{{ row.account.pk }}">{% for k in row.credential_kinds %}<option value="{{ k }}">{{ k }}</option>{% endfor %}</select>
+              <label class="form-label text-xs" for="secret-{{ row.account.pk }}">Secret (write-only)</label>
+              <input type="password" class="form-control form-control-sm" name="secret" id="secret-{{ row.account.pk }}" autocomplete="new-password" required>
+              <label class="form-label text-xs" for="subject-{{ row.account.pk }}">Label (optional, shown)</label>
+              <input type="text" class="form-control form-control-sm" name="subject" id="subject-{{ row.account.pk }}" maxlength="255">
+              <button type="submit" class="btn btn-primary btn-sm mt-1 mb-0">Store credential</button>
+            </form>
+          </details>
+          {% endif %}
+        </div>
+        {% empty %}
+        <p class="text-sm text-secondary">No connected accounts.</p>
+        {% endfor %}
+        {% if connected.can_change and connected.available %}
+        <form method="post" action="{% url 'erp-integration-account-create' %}" class="d-flex gap-2 align-items-end">{% csrf_token %}
+          <div><label class="form-label text-xs" for="new-provider">Add an account</label>
+          <select class="form-select form-select-sm" name="provider" id="new-provider">{% for p in connected.available %}<option value="{{ p }}">{{ p }}</option>{% endfor %}</select></div>
+          <button type="submit" class="btn btn-outline-primary btn-sm mb-0">Add</button>
+        </form>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-4" id="webhooks">
+      <div class="card-header pb-0">
+        <h2 class="h6 mb-1">Webhook subscriptions</h2>
+        <p class="text-xs text-secondary mb-0">Outbound: Fincas POSTs each subscribed event to the URL, signed with the subscription's secret (<code>X-Golden-Signature</code>) and numbered with <code>X-Golden-Delivery-Id</code>. A test delivery sends <code>webhook.ping</code> once.</p>
+      </div>
+      <div class="card-body">
+        {% if webhooks.company is None %}
+        <p class="text-sm text-secondary">Your account resolves to no company, so there are no subscriptions to show.</p>
+        {% else %}
+        {% for row in webhooks.subscriptions %}
+        <div class="border rounded p-3 mb-3" id="webhook-{{ row.subscription.pk }}">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div class="text-break" style="min-width: 0">
+              <h3 class="h6 mb-0">{{ row.subscription.target_url }}</h3>
+              <p class="text-xs text-secondary mb-1">{{ row.subscription.description|default:"No description" }} · events: {{ row.subscription.subscribed_events|join:", "|default:"none" }}</p>
+              <p class="text-xs mb-0">
+                {% if row.subscription.is_active %}<span class="badge badge-sm bg-gradient-success">Active</span>{% else %}<span class="badge badge-sm bg-gradient-secondary">Disabled</span>{% endif %}
+                {% if row.last %}<span class="text-secondary ms-1">Last delivery: {{ row.last.event_type }} {% if row.last.success %}ok{% else %}failed{% endif %} ({{ row.last.response_status_code|default:"no answer" }}) {{ row.last.created_at|date:"M j, Y H:i" }}{% if row.last.delivery_id %} · id {{ row.last.delivery_id }}{% endif %}</span>{% else %}<span class="text-secondary ms-1">No deliveries yet.</span>{% endif %}
+              </p>
+            </div>
+            {% if webhooks.can_change %}
+            <div class="d-flex flex-wrap gap-2">
+              <form method="post" action="{% url 'erp-webhook-subscription-ping' row.subscription.pk %}">{% csrf_token %}<button type="submit" class="btn btn-outline-primary btn-sm mb-0">Send test delivery</button></form>
+              <form method="post" action="{% url 'erp-webhook-subscription-toggle' row.subscription.pk %}">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm mb-0">{% if row.subscription.is_active %}Disable{% else %}Enable{% endif %}</button></form>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-sm text-secondary">No webhook subscriptions.</p>
+        {% endfor %}
+        {% if webhooks.can_change %}
+        <details class="mt-2" id="webhook-add">
+          <summary class="text-sm">Add a webhook subscription</summary>
+          <form method="post" action="{% url 'erp-webhook-subscription-create' %}" class="mt-2" autocomplete="off" id="webhook-create-form">{% csrf_token %}
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label text-xs" for="webhook-target-url">Target URL</label>
+                <input type="url" class="form-control form-control-sm" name="target_url" id="webhook-target-url" required placeholder="https://receiver.example.com/golden">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-xs" for="webhook-description">Description</label>
+                <input type="text" class="form-control form-control-sm" name="description" id="webhook-description" maxlength="255">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-xs" for="webhook-secret">Signing secret <span class="text-secondary">(generated when empty; shown once)</span></label>
+                <input type="text" class="form-control form-control-sm" name="secret" id="webhook-secret" maxlength="128">
+              </div>
+              <div class="col-12">
+                <fieldset>
+                  <legend class="form-label text-xs mb-1">Events</legend>
+                  <div class="d-flex flex-wrap gap-2">
+                    <div class="form-check"><input class="form-check-input" type="checkbox" name="events" value="*" id="webhook-event-all"><label class="form-check-label text-sm" for="webhook-event-all">all (<code>*</code>)</label></div>
+                    {% for event in webhooks.events %}
+                    <div class="form-check"><input class="form-check-input" type="checkbox" name="events" value="{{ event }}" id="webhook-event-{{ forloop.counter }}"><label class="form-check-label text-sm" for="webhook-event-{{ forloop.counter }}">{{ event }}</label></div>
+                    {% endfor %}
+                  </div>
+                </fieldset>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-outline-primary btn-sm mt-2 mb-0">Add subscription</button>
+          </form>
+        </details>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

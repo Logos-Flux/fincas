@@ -1,0 +1,24 @@
+{
+  "payload": {
+    "event": "taskCreated",
+    "history_items": [
+      {
+        "date": "1772463600000",
+        "id": "hi_0001",
+        "user": {
+          "email": "sam@example.com",
+          "id": 81000001
+        }
+      }
+    ],
+    "task_id": "86a0fx02",
+    "webhook_id": "wh_fixture_0001"
+  },
+  "provider": "clickup",
+  "request": {
+    "headers": {
+      "x-signature": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "schema_version": 1
+}

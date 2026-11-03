@@ -1,9 +1,10 @@
 # Fincas
 
-[![CI](https://github.com/Logos-Flux/fincas/actions/workflows/ci.yml/badge.svg)](https://github.com/Logos-Flux/fincas/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/fincas.svg)](https://pypi.org/project/fincas/)
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
-[![Django 6.0](https://img.shields.io/badge/django-6.0-green.svg)](https://www.djangoproject.com/)
+[![CI](https://github.com/Logos-Flux/fincas/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/Logos-Flux/fincas/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/fincas.svg?cacheSeconds=3600)](https://pypi.org/project/fincas/)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Django 6.0](https://img.shields.io/badge/django-6.0-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![Qwik City 1.20](https://img.shields.io/badge/qwik_city-1.20-18B6F6?logo=qwik&logoColor=white)](https://qwik.dev/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
 Fincas is an open-source ERP **and a headless Qwik storefront that runs on
@@ -13,6 +14,11 @@ storefront (Qwik City) reads that same data live through the REST API and
 places orders into it. There is no product feed, no sync job and no second
 database to reconcile. You install the ERP as a Python package and run it as
 your own Django project, extended with plugins instead of forks.
+
+**Try it:** the live demo runs the current release. Back office at
+[demo.fincas.dev](https://demo.fincas.dev/erp/) (sign in as `demo` /
+`golden-demo`), storefront at [shop.demo.fincas.dev](https://shop.demo.fincas.dev/),
+both on the same ERP. The demo is shared and its data is reset from time to time.
 
 **Status:** actively maintained, beta. One company per instance. Python 3.12,
 PostgreSQL 17, Django 6.0.

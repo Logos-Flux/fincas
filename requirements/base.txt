@@ -9,7 +9,7 @@ requests>=2.32,<3
 django-anymail[mailgun]>=13.0,<14
 weasyprint>=70.0,<71
 openpyxl>=3.1,<4
-easypost>=9.0,<10
+easypost>=9.0,<11
 # Floors below the natural range are security fixes (F-050, pip-audit):
 # PyJWT 2.15 (PYSEC-2026-4140..4152, -4183), pypdf 6.19 (PYSEC-2026-4154..4160),
 # urllib3 2.8 (PYSEC-2026-4175..4177; transitive via requests and botocore, so

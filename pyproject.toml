@@ -42,7 +42,7 @@ dependencies = [
     "django-anymail[mailgun]>=13.0,<14",
     "weasyprint>=70.0,<71",
     "openpyxl>=3.1,<4",
-    "easypost>=9.0,<10",
+    "easypost>=9.0,<11",
     # Security floors (F-050): PyJWT 2.15, pypdf 6.19, urllib3 2.8 (transitive).
     "PyJWT>=2.15,<3",
     "cryptography>=50.0,<51",

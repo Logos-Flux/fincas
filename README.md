@@ -2,8 +2,9 @@
 
 [![CI](https://github.com/Logos-Flux/fincas/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/Logos-Flux/fincas/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/fincas.svg?cacheSeconds=3600)](https://pypi.org/project/fincas/)
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
-[![Django 6.0](https://img.shields.io/badge/django-6.0-green.svg)](https://www.djangoproject.com/)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Django 6.0](https://img.shields.io/badge/django-6.0-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![Qwik City 1.20](https://img.shields.io/badge/qwik_city-1.20-18B6F6?logo=qwik&logoColor=white)](https://qwik.dev/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
 Fincas is an open-source ERP **and a headless Qwik storefront that runs on

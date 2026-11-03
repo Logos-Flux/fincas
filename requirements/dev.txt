@@ -5,4 +5,4 @@ pytest-django>=4.8,<5
 coverage>=7.0,<8
 # Lets the parallel test runner report errors (it pickles tracebacks).
 tblib>=3.0,<4
-pip-audit>=2.7,<3
+pip-audit>=2.10.1,<3

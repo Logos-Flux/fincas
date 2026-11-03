@@ -6,11 +6,13 @@
 [![Django 6.0](https://img.shields.io/badge/django-6.0-green.svg)](https://www.djangoproject.com/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
-Fincas is an open-source commerce and back-office platform built on Django:
-quotes and orders, invoicing and a double-entry ledger, inventory and
-purchasing, a CRM, and a REST API for a headless storefront. You install it as
-a Python package and run it as your own Django project, extended with plugins
-instead of forks.
+Fincas is an open-source ERP **and a headless Qwik storefront that runs on
+it**, in one repository. The back office (Django) holds quotes and orders,
+invoicing and a double-entry ledger, inventory and purchasing, and a CRM; the
+storefront (Qwik City) reads that same data live through the REST API and
+places orders into it. There is no product feed, no sync job and no second
+database to reconcile. You install the ERP as a Python package and run it as
+your own Django project, extended with plugins instead of forks.
 
 **Status:** actively maintained, beta. One company per instance. Python 3.12,
 PostgreSQL 17, Django 6.0.
@@ -32,6 +34,41 @@ PostgreSQL 17, Django 6.0.
 </table>
 
 <sub>Back office: a local install with `make seed` demo data. Storefront: its built-in demo catalog.</sub>
+
+## One ERP, one storefront, one source of truth
+
+Most shops run an ERP and a storefront as two systems and spend their time
+keeping them in step. In Fincas the storefront has no catalog of its own: it
+is a [Qwik City](https://qwik.dev/) app in [`storefront/`](storefront/) that
+asks the ERP for everything, on every request.
+
+- **The catalog is the ERP's catalog.** Products, variants, categories,
+  brands, prices with quantity breaks, stock levels and SEO titles and
+  descriptions come straight from the API. Edit a product in the back office
+  and the storefront shows it on the next page load.
+- **Checkout lands in the back office.** A guest checkout creates a real sales
+  order with an ERP order number, ready for staff in the order list.
+- **Customer accounts read the ERP.** Signed-in customers see their profile,
+  their orders and each order's detail through the customer portal API, from
+  the same records your staff work with.
+- **Nothing secret ships to the browser.** The storefront holds no API key. A
+  visitor's browser gets a short-lived, least-privilege token that can read
+  the catalog and public prices and create a guest order, and nothing else
+  ([the storefront contract](docs/architecture.md#4-the-storefront-contract)).
+- **Fast and themeable.** Qwik resumes instead of hydrating, so pages ship
+  almost no JavaScript up front. 75 themes switch at runtime, landing-page
+  templates are included, and Playwright journeys with axe accessibility
+  checks run in CI.
+- **Headless means replaceable.** Every endpoint is described by the OpenAPI 3
+  schema. Use the included storefront as it is, restyle it, or build your own
+  on the same contract.
+
+Run both locally: `make run` for the ERP, then `make storefront-install` and
+`make storefront-dev` (it talks to `http://localhost:8000/api`).
+
+**Current limit:** a guest order arrives with the buyer's details and the
+order header; its cart lines are not yet copied onto the order, so staff add
+them in the back office. Copying the lines is the next storefront milestone.
 
 ## Install
 
@@ -86,9 +123,10 @@ Docker Compose and the storefront.
   erasure), leads, pipelines and engagements with stage history, tasks,
   communications, custom fields, imports from another CRM's export, and
   adapters for Aircall, Gmail, ClickUp, Klaviyo and Google Ads.
-- **API and storefront:** a REST API with an OpenAPI 3 schema (Swagger UI and
-  Redoc included), a least-privilege storefront identity, a customer portal,
-  and a Qwik City storefront in `storefront/`.
+- **Storefront and API:** a Qwik City storefront in `storefront/` that runs
+  on the live ERP (see above), a REST API with an OpenAPI 3 schema (Swagger UI
+  and Redoc included), a least-privilege storefront identity, and a customer
+  portal.
 - **Extending it:** plugins add navigation, dashboard widgets, payment
   gateways, carriers, CRM adapters, outbox consumers and URLs; HMAC-signed
   outbound webhooks; a label layer to rename nouns in the staff UI; generated,

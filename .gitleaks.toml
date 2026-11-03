@@ -7,9 +7,17 @@
 [extend]
 useDefault = true
 
+#
+# Vendored third-party JavaScript (minified bundles shipped as-is) is also
+# allow-listed: identifiers such as Quill's `SHORTKEY` trip `generic-api-key`.
+# Dev CI scans only each PR's new commits, so these files were never rescanned;
+# the public repository's first CI run scans its one squashed commit whole and
+# flagged them (2026-11-03). .gitleaksignore cannot cover that: a fingerprint
+# names the commit, and the public commit's sha is new.
 [allowlist]
-description = "Invented fixture data (recorded provider payloads and canonical import samples)"
+description = "Invented fixture data and vendored third-party JavaScript"
 paths = [
   '''^golden_erp/addons/[^/]+/fixtures/.*''',
   '''^crm_import/tests/fixtures/.*''',
+  '''^golden_erp/static/assets/js/plugins/.*''',
 ]

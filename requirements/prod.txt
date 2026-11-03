@@ -1,4 +1,4 @@
 -r base.txt
 uvicorn>=0.51,<1
-gunicorn>=25.1,<26
+gunicorn>=26.2.0,<27
 sentry-sdk[django]>=2.0,<3

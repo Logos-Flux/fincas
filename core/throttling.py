@@ -215,6 +215,26 @@ class PortalSignupThrottle(CacheTolerantThrottle):
         return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
 
 
+class GuestOrderThrottle(CacheTolerantThrottle):
+    """Per client IP on guest checkout (the storefront identity's order create).
+
+    Every shopper shares the one storefront identity, so the key is the
+    client's address past the deployment's proxies (``core.client_ip``), never
+    the user or ``REMOTE_ADDR`` (behind Caddy that is the proxy).
+    ``GOLDEN_GUEST_ORDER_RATE``, default ``"10/minute"``; ``None`` disables it.
+    """
+
+    scope = "guest_order"
+
+    def get_rate(self):
+        from django.conf import settings
+
+        return getattr(settings, "GOLDEN_GUEST_ORDER_RATE", "10/minute")
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {"scope": self.scope, "ident": f"ip-{client_ip(request)}"}
+
+
 def is_service_request(request) -> bool:
     """True when the caller is a service identity rather than a person.
 

@@ -29,19 +29,11 @@ docs/visual-baselines/
 # The first downstream's adoption lineage (rehearsals, baseline, its cutover
 # runbook). check_schema_parity is documented in docs/deployment.md.
 docs/pin/
-# Our own deployment of the public demo (docs/deploy-fly.md stays, as the
-# generic Fly chapter).
-fly.toml
-deploy/
-storefront/fly.toml
 # Estate-specific leak fingerprints; the public tree starts a fresh file.
 .gitleaksignore
 # The tripwire's downstream and estate patterns (scripts/tripwire.sh reads any
 # scripts/release/tripwire-*.txt; the public tree ships none of ours).
 scripts/release/tripwire-private.txt
-# Our staging demo host: provisioning, demo setup and its nightly reset.
-scripts/provision-staging.sh
-scripts/staging-demo-*.sh
 # Visual-baseline capture scripts; they write docs/visual-baselines/.
 storefront/vb-shots*.mjs
 # Agent files with estate detail. The public tree keeps the short CLAUDE.md
@@ -49,3 +41,6 @@ storefront/vb-shots*.mjs
 CLAUDE.md
 .agents/
 .claude/
+
+# Dependabot runs in the dev repo only; the public repo is published from releases.
+.github/dependabot.yml

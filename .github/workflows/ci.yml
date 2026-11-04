@@ -210,7 +210,8 @@ jobs:
       # migrate with HEAD. A fresh database never reaches the data migrations'
       # row-dependent paths (e.g. communications.0003 with EmailLog rows), so
       # the step above cannot catch a data migration that uses live models.
-      # PREVIOUS_TAGS: the previous release candidate (v0.4.0-rc.7), the
+      # PREVIOUS_TAGS: the previous release (v0.4.1, what the downstream
+      # runs), the
       # candidate that still exercises communications.0003's row path on
       # upgrade (v0.4.0-rc.1) and the oldest release a downstream still
       # upgrades from in one jump (v0.3.0-rc.1). Move them forward deliberately
@@ -222,7 +223,7 @@ jobs:
       # when every tag ran (on the dev repo, always).
       - name: Upgrade path from the previous releases
         env:
-          PREVIOUS_TAGS: v0.3.0-rc.1 v0.4.0-rc.1 v0.4.0-rc.7
+          PREVIOUS_TAGS: v0.3.0-rc.1 v0.4.0-rc.1 v0.4.1
           PGPASSWORD: golden_secret
         run: |
           # The default shell has no pipefail: without it a failing

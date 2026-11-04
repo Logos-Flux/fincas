@@ -1,24 +1,43 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, OperationalError, transaction
 from django.http import Http404
 from django.utils import timezone
+from drf_spectacular.utils import OpenApiResponse, PolymorphicProxySerializer, extend_schema
 from rest_framework import status as http_status
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import Throttled
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
+from core.client_ip import client_ip
 from core.managers import scope_to_company
 from core.models import Company
 from core.permissions import PrincipalPermission
+from core.plugins import signals
+from core.plugins.dispatch import emit, suppressed
 from core.storefront import is_storefront_user
+from core.throttling import GuestOrderThrottle
 from core.views import CompanyScopedViewSet
 
+from . import guest_checkout
 from .convert import convert_order_to_invoice, convert_quote_to_order
 from .duplicate import duplicate_order, duplicate_quote
-from .models import Order, OrderLineItem, Quote, QuoteLineItem, SalesInvoice, SubOrder, sales_stage_q
+from .models import (
+    Order,
+    OrderLineItem,
+    Quote,
+    QuoteLineItem,
+    SalesInvoice,
+    ShipmentGroup,
+    SubOrder,
+    sales_stage_q,
+)
 from .serializers import (
     ENGAGEMENT_DOCS,
+    GuestCheckoutErrorSerializer,
+    GuestCheckoutSerializer,
+    GuestOrderConfirmationSerializer,
     OrderDetailSerializer,
     OrderLineItemSerializer,
     OrderListSerializer,
@@ -29,6 +48,9 @@ from .serializers import (
     SalesInvoiceSerializer,
     SubOrderSerializer,
 )
+
+#: Longest buyer field (name, address, ...) a guest checkout stores.
+GUEST_FIELD_MAX_CHARS = 1000
 
 
 class QuoteViewSet(CompanyScopedViewSet):
@@ -147,6 +169,64 @@ class OrderViewSet(CompanyScopedViewSet):
             return OrderListSerializer
         return OrderDetailSerializer
 
+    @extend_schema(
+        description=(
+            "Create an order. Staff and integrations post the full order "
+            "(`OrderDetail`). The storefront identity (guest checkout) posts "
+            "`GuestCheckoutRequest`: the server prices each line from the "
+            "variant's public price, computes the totals, checks stock without "
+            "reserving it, and answers `GuestOrderConfirmation`. A refused "
+            "guest checkout answers 400 `GuestCheckoutError` and creates "
+            "nothing; branch on `code` (and each line's `code`), never on "
+            "`detail`."
+        ),
+        request=PolymorphicProxySerializer(
+            component_name="OrderCreate",
+            serializers=[OrderDetailSerializer, GuestCheckoutSerializer],
+            resource_type_field_name=None,
+        ),
+        responses={
+            201: PolymorphicProxySerializer(
+                component_name="OrderCreateResponse",
+                serializers=[OrderDetailSerializer, GuestOrderConfirmationSerializer],
+                resource_type_field_name=None,
+            ),
+            200: OpenApiResponse(
+                OrderDetailSerializer,
+                description=(
+                    "An Idempotency-Key or Stripe PaymentIntent already made this order. "
+                    "Guest checkout answers its narrow confirmation instead."
+                ),
+            ),
+            409: OpenApiResponse(
+                GuestCheckoutErrorSerializer,
+                description=(
+                    "Guest checkout: this Idempotency-Key already made an order for a "
+                    "different email or cart (`code: idempotency_key_reused`)."
+                ),
+            ),
+            400: OpenApiResponse(
+                GuestCheckoutErrorSerializer,
+                description=(
+                    "Guest checkout refused (storefront identity); a missing email "
+                    "answers `{\"guest_email\": [...]}`. Staff creates answer DRF's "
+                    "field-error envelope."
+                ),
+            ),
+            429: OpenApiResponse(
+                description=(
+                    "Guest checkout rate limit (per client IP, `GOLDEN_GUEST_ORDER_RATE`); "
+                    "nothing was created."
+                ),
+            ),
+            503: OpenApiResponse(
+                description=(
+                    "Guest checkout unavailable (`code: guest_checkout_unavailable`): "
+                    "the instance does not have exactly one Company."
+                ),
+            ),
+        },
+    )
     def create(self, request, *args, **kwargs):
         # Idempotent creation (F-033): the Idempotency-Key header carries
         # the dedup key, falling back to body external_id. A blank key
@@ -154,6 +234,16 @@ class OrderViewSet(CompanyScopedViewSet):
         # payments.charge_with_idempotency. The lookup is company-scoped
         # under select_for_update and held through creation, so retried
         # POSTs get the original order with 200 instead of a duplicate.
+        if is_storefront_user(request.user):
+            # Guest checkout is anonymous: rate-limit it per client IP, before
+            # any lookup or write (replays count too).
+            throttle = GuestOrderThrottle()
+            if not throttle.allow_request(request, self):
+                raise Throttled(wait=throttle.wait())
+            # Guest checkout keeps its own key handling (OP #3431): the generic
+            # lookup below is company-scoped to a profile the storefront
+            # identity doesn't have, so it never found a guest order.
+            return self._storefront_guest_create(request)
         body = request.data if hasattr(request.data, "get") else {}
         header_key = (request.headers.get("Idempotency-Key") or "").strip()
         body_key = str(body.get("external_id") or "").strip()
@@ -167,22 +257,15 @@ class OrderViewSet(CompanyScopedViewSet):
                 .first()
             )
             if existing is not None:
-                return Response(
-                    self.get_serializer(existing).data,
-                    status=http_status.HTTP_200_OK,
-                )
+                return Response(self._replay(existing), status=http_status.HTTP_200_OK)
             if header_key and not body_key and isinstance(request.data, dict):
                 # Persist the header key so the retried POST finds this order.
                 request.data["external_id"] = header_key
             return self._create(request, *args, **kwargs)
 
     def _create(self, request, *args, **kwargs):
-        # Guest checkout (F-037): requests bearing the low-privilege
-        # storefront identity follow a narrow contract — order header only,
-        # guest email required, no Customer FK link. Everything else uses
-        # the standard staff/company-scoped path.
-        if is_storefront_user(request.user):
-            return self._storefront_guest_create(request)
+        # Guest checkout (storefront identity) never gets here: create()
+        # hands it to _storefront_guest_create before the generic key block.
         return self._create_once_per_intent(request, *args, **kwargs)
 
     def _create_once_per_intent(self, request, *args, **kwargs):
@@ -203,7 +286,7 @@ class OrderViewSet(CompanyScopedViewSet):
         if intent_id:
             existing = self._order_for_intent(intent_id)
             if existing is not None:
-                return Response(self.get_serializer(existing).data, status=http_status.HTTP_200_OK)
+                return Response(self._replay(existing), status=http_status.HTTP_200_OK)
         try:
             # A savepoint, so the failed INSERT leaves the caller's transaction
             # usable for the recovery SELECT (create() may already be inside
@@ -218,45 +301,104 @@ class OrderViewSet(CompanyScopedViewSet):
             existing = self._order_for_intent(intent_id) if intent_id and on_intent_index else None
             if existing is None:
                 raise
-            return Response(self.get_serializer(existing).data, status=http_status.HTTP_200_OK)
+            return Response(self._replay(existing), status=http_status.HTTP_200_OK)
+
+    def _replay(self, order):
+        """An already-created order, answered to a repeated POST.
+
+        The storefront identity only ever sees the guest confirmation, never
+        the staff serializer (costs, metadata, IP), whichever path replays.
+        """
+        if is_storefront_user(self.request.user):
+            return GuestOrderConfirmationSerializer(order).data
+        return self.get_serializer(order).data
 
     def _order_for_intent(self, intent_id):
         return self.get_queryset().filter(stripe_payment_intent_id=intent_id).first()
 
     def _storefront_guest_create(self, request):
-        """Create a guest order under the storefront identity.
+        """Create a guest order, with its cart lines, under the storefront identity.
 
-        Accepts the storefront CheckoutPayload shape (email, customer_name,
+        Accepts the storefront checkout shape (email, customer_name,
         company_name, shipping_address, payment_method, po_number, notes,
-        items, coupon_code) but persists ONLY a whitelisted order-header
-        subset: client-supplied financial/status fields are never trusted.
-        The full payload snapshot lands in ``metadata`` for staff review.
-        Guest orders require exactly one Company in the database — with
-        multiple tenants there is no unambiguous owner for an anonymous
-        order, so guest checkout fails closed (503) instead of guessing.
+        coupon_code, ``lines``) and persists a whitelisted order header plus
+        one line per posted variant (OP #3426, ``orders.guest_checkout``).
+        The server prices every line and computes the totals; client-supplied
+        prices, totals, status, discounts, company and customer are never
+        read. Lines are checked against stock but never reserve it.
+
+        Header, shipment group and lines land in one transaction, and every
+        line is validated before anything is written, so a refused checkout
+        creates nothing and burns no order number. Guest orders require
+        exactly one Company in the database: with several tenants there is no
+        unambiguous owner for an anonymous order, so guest checkout fails
+        closed (503) instead of guessing.
         """
-        if Company.objects.count() != 1:
+        companies = list(Company.objects.all()[:2])
+        if len(companies) != 1:
             return Response(
-                {"error": "guest checkout is not available"},
+                {
+                    "code": "guest_checkout_unavailable",
+                    "error": "guest checkout is not available",
+                },
                 status=http_status.HTTP_503_SERVICE_UNAVAILABLE,
             )
-        company = Company.objects.get()
+        company = companies[0]
 
         body = request.data if hasattr(request.data, "get") else {}
-        email = (body.get("guest_email") or body.get("email") or "").strip()
+        email = body.get("guest_email") or body.get("email") or ""
+        email = email.strip() if isinstance(email, str) else ""
         if not email:
             raise DRFValidationError(
                 {"guest_email": ["This field is required for guest checkout."]}
             )
+        try:
+            ref = guest_checkout.idempotency_ref(request.headers.get("Idempotency-Key"))
+        except guest_checkout.CheckoutRefused as refused:
+            return Response(refused.body, status=http_status.HTTP_400_BAD_REQUEST)
+        fingerprint = guest_checkout.checkout_fingerprint(email, body)
+        with transaction.atomic():
+            if ref:
+                # Held until this transaction ends, so a concurrent submit with
+                # the same key waits here and then finds this order.
+                try:
+                    guest_checkout.lock_idempotency_ref(ref)
+                except OperationalError as exc:
+                    if getattr(getattr(exc, "__cause__", None), "pgcode", None) != "55P03":
+                        raise
+                    # lock_not_available: the first submit is still running.
+                    # 503, not a refusal: the order may be about to exist.
+                    return Response(
+                        {"code": guest_checkout.CHECKOUT_IN_PROGRESS,
+                         "detail": "This checkout is still being placed. Try again shortly."},
+                        status=http_status.HTTP_503_SERVICE_UNAVAILABLE,
+                    )
+                existing = guest_checkout.order_for_ref(company, ref)
+                if existing is not None:
+                    if existing.external_id == ref + fingerprint:
+                        return Response(GuestOrderConfirmationSerializer(existing).data,
+                                        status=http_status.HTTP_200_OK)
+                    return Response(guest_checkout.key_reused(),
+                                    status=http_status.HTTP_409_CONFLICT)
+            return self._storefront_guest_insert(request, company, body, email,
+                                                 ref + fingerprint if ref else "")
 
-        metadata = body.get("metadata") if isinstance(body.get("metadata"), dict) else {}
-        metadata = dict(metadata)
-        for key in ("customer_name", "company_name", "shipping_address", "payment_method"):
+    def _storefront_guest_insert(self, request, company, body, email, external_id):
+        """Price the lines and write the guest order; the caller holds the atomic."""
+        try:
+            priced = guest_checkout.price_lines(body.get("lines"))
+        except guest_checkout.CheckoutRefused as refused:
+            return Response(refused.body, status=http_status.HTTP_400_BAD_REQUEST)
+
+        # Only the whitelisted buyer fields, as short strings. A client
+        # ``metadata`` object is never read: an anonymous caller must not plant
+        # keys golden code owns, or park a large blob on the order.
+        metadata = {}
+        for key in ("customer_name", "company_name", "shipping_address", "payment_method",
+                    "coupon_code"):
             value = body.get(key)
-            if value:
-                metadata[key] = value
-        if body.get("coupon_code"):
-            metadata["coupon_code"] = body["coupon_code"]
+            if isinstance(value, str) and value.strip():
+                metadata[key] = value.strip()[:GUEST_FIELD_MAX_CHARS]
 
         data = {
             "company": company.pk,
@@ -268,16 +410,51 @@ class OrderViewSet(CompanyScopedViewSet):
             "customer_po_number": body.get("customer_po_number") or body.get("po_number") or "",
             "payment_terms": body.get("payment_method") or "",
             "metadata": metadata,
+            "external_id": external_id,
         }
-        ip_address = request.META.get("REMOTE_ADDR")
+        # The client past the deployment's proxies, not the proxy itself.
+        ip_address = client_ip(request)
         if ip_address:
             data["ip_address"] = ip_address
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=http_status.HTTP_201_CREATED, headers=headers)
+        with transaction.atomic():
+            # order_placed is emitted below, once the lines and totals exist:
+            # durable outbox consumers build their rows at emit time, and the
+            # INSERT's own emit would hand them an order with no lines and $0.
+            with suppressed():
+                self.perform_create(serializer)
+            order = serializer.instance
+            # The order editor's default: one "Shipment 1" group, model defaults.
+            group = ShipmentGroup.objects.create(order=order, name="Shipment 1", sort_order=0)
+            # bulk_create, then one recalculation (as convert_quote_to_order):
+            # a per-line save() would recalculate the order once per line.
+            OrderLineItem.objects.bulk_create([
+                OrderLineItem(
+                    order=order,
+                    shipment_group=group,
+                    sort_order=position,
+                    variant=line.variant,
+                    item_name=guest_checkout.item_name(line.variant),
+                    sku=line.variant.sku,
+                    quantity=line.quantity,
+                    selling_uom=line.variant.selling_uom or "each",
+                    unit_price_ex_tax=line.unit_price,
+                    unit_price_inc_tax=line.unit_price,
+                    list_price=line.variant.retail_price or line.unit_price,
+                    line_total_ex_tax=line.line_total,
+                    line_total_inc_tax=line.line_total,
+                    lead_time_days=line.variant.lead_time_days,
+                )
+                for position, line in enumerate(priced)
+            ])
+            order.recalculate_totals()
+            emit(signals.order_placed, Order, order, order=order)
+        return Response(
+            GuestOrderConfirmationSerializer(order).data,
+            status=http_status.HTTP_201_CREATED,
+        )
 
     @action(detail=True, methods=["post"], url_path="duplicate")
     def duplicate(self, request, pk=None):

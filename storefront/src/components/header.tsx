@@ -24,11 +24,11 @@ export const Header = component$(() => {
             class="flex items-center gap-2.5 text-lg font-black tracking-tight group"
           >
             <img
-              src="/favicon.svg"
+              src="/fincas-mark.svg"
               alt="Fincas Store"
               width={32}
               height={32}
-              class="w-8 h-8 rounded-lg shadow-lg transition-transform group-hover:scale-105 shrink-0"
+              class="w-8 h-8 transition-transform group-hover:scale-105 shrink-0"
             />
             <span
               style={{ color: "var(--color-t-bright, #ffffff)" }}

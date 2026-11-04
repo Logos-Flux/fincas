@@ -25,6 +25,7 @@ from __future__ import annotations
 import datetime as dt
 import logging
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 from typing import Any, Iterable
 
 from django.conf import settings
@@ -209,11 +210,22 @@ def _id(value) -> str | None:
     return None if value is None else str(value)
 
 
+def _money(value) -> str:
+    """Two decimal places, always: an unsaved order holds the int default 0."""
+    try:
+        return f"{Decimal(str(value if value is not None else 0)):.2f}"
+    except (InvalidOperation, ValueError):
+        return "0.00"
+
+
 def order_placed_payload(order) -> dict[str, Any]:
     return {
         "order_id": str(getattr(order, "id", "")),
         "order_number": getattr(order, "order_number", ""),
-        "total_amount": str(getattr(order, "total_amount", "0.00")),
+        # Order has no ``total_amount`` field: the key is the order's
+        # grand_total (as in the storefront serializer). Reading the missing
+        # attribute sent "0.00" for every order until 2026-11-04 (OP #3435).
+        "total_amount": _money(getattr(order, "grand_total", None)),
         "status": getattr(order, "status", "pending"),
     }
 

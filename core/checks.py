@@ -150,6 +150,37 @@ def trusted_proxies_check(app_configs, **kwargs):
     return []
 
 
+@register(Tags.security)
+def cors_idempotency_header_check(app_configs, **kwargs):
+    """A cross-origin storefront can send ``Idempotency-Key`` (OP #3431).
+
+    golden's storefront sends it on every checkout. A deployment that sets its
+    own ``CORS_ALLOW_HEADERS`` without it fails the browser's preflight, so no
+    cross-origin checkout can be placed at all, and the shopper is told the
+    order may have gone through.
+    """
+    from django.conf import settings
+
+    if "corsheaders" not in settings.INSTALLED_APPS:
+        return []
+    if not (getattr(settings, "CORS_ALLOWED_ORIGINS", None)
+            or getattr(settings, "CORS_ALLOWED_ORIGIN_REGEXES", None)
+            or getattr(settings, "CORS_ALLOW_ALL_ORIGINS", False)):
+        return []
+    from corsheaders.defaults import default_headers
+
+    allowed = {h.lower() for h in getattr(settings, "CORS_ALLOW_HEADERS", default_headers)}
+    if "idempotency-key" in allowed:
+        return []
+    return [Warning(
+        "CORS_ALLOW_HEADERS does not include 'idempotency-key': the storefront's "
+        "checkout preflight fails and no cross-origin order can be placed.",
+        hint="Add it: CORS_ALLOW_HEADERS = (*corsheaders.defaults.default_headers, "
+             "\"idempotency-key\", ...).",
+        id="core.W115",
+    )]
+
+
 #: Secrets a production deployment must set itself (docs/deployment.md,
 #: "Required secrets"). Each would otherwise derive from SECRET_KEY or, for
 #: GOLDEN_SECRET_KEYS, leave connected accounts unable to store a credential.

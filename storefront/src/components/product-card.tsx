@@ -153,8 +153,8 @@ export const ProductCard = component$<ProductCardProps>(({ product }) => {
                 orderable
                   ? `Add ${product.title} to cart`
                   : product.base_price == null
-                    ? `${product.title} has no listed price`
-                    : `${product.title} is out of stock`
+                    ? `Ask about ${product.title}: no listed price`
+                    : `Sold out: ${product.title}`
               }
               class={`px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-md transition-all active:scale-95 ${orderable ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}
               style={{

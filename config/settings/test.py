@@ -55,6 +55,10 @@ LLMHUB_CACHE_TTL_S = 0
 # Portal self-registration throttle off: suites create many accounts from one
 # test IP. core.tests.test_portal_auth re-enables it to test it.
 GOLDEN_PORTAL_SIGNUP_RATE = None
+# Guest-checkout throttle off for the same reason: contract tests post many
+# guest orders from one test IP. orders.tests.test_guest_checkout_lines
+# re-enables it to test it.
+GOLDEN_GUEST_ORDER_RATE = None
 
 # A party-sync error fails the test that hit it instead of being logged
 # (parties.sync.run_guarded).
@@ -70,3 +74,9 @@ TEST_RUNNER = "core.testing.no_network.NoNetworkRunner"
 # Connected accounts (docs/crm/phase6-adapters.md 5.1): one fixed, test-only
 # Fernet key, so fixture credentials encrypt and decrypt. Never a real key.
 GOLDEN_SECRET_KEYS = ["Z29sZGVuLXRlc3Qtb25seS1mZXJuZXQta2V5LTAwMDE="]
+
+# A fast hasher, as Django recommends for tests. With the default PBKDF2 each
+# failed login costs about a second on the loaded CI runner, so the 20-attempt
+# login-throttle loops outlasted the throttle's 60 s window and never reached
+# their 429 (#237, 2026-11-04).
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]

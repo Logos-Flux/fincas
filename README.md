@@ -53,7 +53,8 @@ asks the ERP for everything, on every request.
   descriptions come straight from the API. Edit a product in the back office
   and the storefront shows it on the next page load.
 - **Checkout lands in the back office.** A guest checkout creates a real sales
-  order with an ERP order number, ready for staff in the order list.
+  order with an ERP order number and its cart lines, priced by the server from
+  the catalog (never from the browser), ready for staff in the order list.
 - **Customer accounts read the ERP.** Signed-in customers see their profile,
   their orders and each order's detail through the customer portal API, from
   the same records your staff work with.
@@ -71,10 +72,6 @@ asks the ERP for everything, on every request.
 
 Run both locally: `make run` for the ERP, then `make storefront-install` and
 `make storefront-dev` (it talks to `http://localhost:8000/api`).
-
-**Current limit:** a guest order arrives with the buyer's details and the
-order header; its cart lines are not yet copied onto the order, so staff add
-them in the back office. Copying the lines is the next storefront milestone.
 
 ## Install
 
@@ -103,7 +100,7 @@ cd fincas
 python3.12 -m venv .venv && . .venv/bin/activate
 pip install -r requirements/dev.txt
 make migrate          # SQLite in the working directory
-make seed             # demo company, catalog, customers, chart of accounts
+make seed             # demo company, catalog, customers, 90 days of orders and books
 make run              # http://localhost:8000/erp/
 ```
 

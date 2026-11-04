@@ -17,7 +17,7 @@ Commands:
   logs        Follow web container logs
   test        Run local Django test suite
   migrate     Run database migrations
-  seed        Seed database with demo products, prices, warehouse stock & accounts
+  seed        Seed database with demo products, prices, stock, accounts and 90 days of orders
   shell       Open interactive Django shell
   tripwire    Run repository isolation check
   check       Run Django health and migration checks
@@ -42,6 +42,7 @@ case "$COMMAND" in
         ;;
     seed)
         $PYTHON manage.py seed_demo_data "${@:2}"
+        $PYTHON manage.py seed_demo_commerce --force
         ;;
     shell)
         $PYTHON manage.py shell

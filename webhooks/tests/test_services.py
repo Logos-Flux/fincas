@@ -154,7 +154,7 @@ class TestWebhookDelivery(TestCase):
         order_mock = mock.MagicMock()
         order_mock.id = "6ba0fa6a-ef74-4044-bf25-be36e6908c7b"
         order_mock.order_number = "SO-1001"
-        order_mock.total_amount = "250.00"
+        order_mock.grand_total = "250.00"
         order_mock.status = "confirmed"
         order_mock.company = None
 

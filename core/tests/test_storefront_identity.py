@@ -10,7 +10,8 @@ dedicated least-privilege identity (``storefront-api`` user /
    /api/v1/core/auth/storefront-token/ endpoint + the Api-Key-gated
    token endpoint's optional ``subject`` body field.
 3. Positive contract: the storefront token reads the catalog and creates
-   guest orders carrying ``guest_email`` with no Customer FK link.
+   guest orders carrying ``guest_email`` with no Customer FK link, and
+   the cart lines priced by the server (orders/tests/test_guest_checkout_lines.py).
 4. Negative contract (the point of the decision): a leaked storefront
    token is near-powerless — no order reads/writes beyond create, no
    catalog writes, no ERP endpoints, no admin/company access, and it
@@ -50,7 +51,7 @@ def _service_token() -> str:
     return issue_api_jwt()
 
 
-def _checkout_payload(**overrides):
+def _checkout_payload(variant=None, **overrides):
     payload = {
         "customer_name": "Guest Shopper",
         "company_name": "GuestCo",
@@ -59,7 +60,7 @@ def _checkout_payload(**overrides):
         "payment_method": "net_30",
         "po_number": "PO-123",
         "notes": "Leave at the dock",
-        "items": [{"product_id": 1, "quantity": 2, "unit_price": "10.00"}],
+        "lines": [{"variant": str(variant.pk), "quantity": 2}] if variant else [],
     }
     payload.update(overrides)
     return payload
@@ -172,12 +173,18 @@ class StorefrontGuestContractPositiveTests(TestCase):
     """What the storefront token legitimately CAN do."""
 
     def setUp(self):
+        from products.models import Product, ProductVariant
+
         self.company = Company.objects.create(name="SoloCo")
         self.client = APIClient(HTTP_AUTHORIZATION=f"Bearer {_storefront_token()}")
+        product = Product.objects.create(title="Widget", part_number="W-1", slug="w-1")
+        self.variant = ProductVariant.objects.create(
+            product=product, sku="W-1-A", retail_price="10.00", stock=5,
+        )
 
     def _create_guest_order(self, **overrides):
         return self.client.post(
-            "/api/v1/orders/orders/", _checkout_payload(**overrides), format="json"
+            "/api/v1/orders/orders/", _checkout_payload(self.variant, **overrides), format="json"
         )
 
     def test_catalog_read(self):
@@ -207,16 +214,22 @@ class StorefrontGuestContractPositiveTests(TestCase):
         self.assertEqual(order.payment_terms, "net_30")
 
     def test_guest_order_never_trusts_client_financials(self):
-        payload = _checkout_payload()
+        payload = _checkout_payload(self.variant)
         payload["grand_total"] = "0.01"
         payload["status"] = Order.Status.COMPLETED
         payload["discount_amount"] = "999.00"
         response = self.client.post("/api/v1/orders/orders/", payload, format="json")
         self.assertEqual(response.status_code, 201, response.json())
         order = Order.objects.get(pk=response.json()["id"])
-        self.assertEqual(order.grand_total, 0)
+        self.assertEqual(order.grand_total, 20)  # 2 x the server's 10.00
         self.assertEqual(order.status, Order.Status.PENDING)
         self.assertEqual(order.discount_amount, 0)
+
+    def test_guest_order_requires_lines(self):
+        response = self._create_guest_order(lines=[])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "lines_required")
+        self.assertFalse(Order.objects.exists())
 
     def test_guest_order_requires_email(self):
         response = self._create_guest_order(email="")
@@ -227,6 +240,7 @@ class StorefrontGuestContractPositiveTests(TestCase):
         Company.objects.create(name="SecondCo")
         response = self._create_guest_order()
         self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()["code"], "guest_checkout_unavailable")
         self.assertFalse(Order.objects.exists())
 
 

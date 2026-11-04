@@ -205,6 +205,107 @@ class OrderDetailSerializer(GuardedDocumentSerializer):
         return attrs
 
 
+def _money(source=None):
+    kwargs = {"source": source} if source else {}
+    return serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True, **kwargs)
+
+
+class GuestOrderLineSerializer(serializers.ModelSerializer):
+    """A priced guest-checkout line as the storefront shows it (no costs)."""
+
+    quantity = serializers.IntegerField(read_only=True)
+    unit_price = _money("unit_price_ex_tax")
+    line_total = _money("line_total_ex_tax")
+    line_tax = _money()
+
+    class Meta:
+        model = OrderLineItem
+        fields = ["variant", "sku", "item_name", "quantity", "unit_price", "line_total", "line_tax"]
+        read_only_fields = fields
+
+
+class GuestOrderConfirmationSerializer(serializers.ModelSerializer):
+    """The storefront's guest-checkout confirmation (OP #3426).
+
+    Only what the buyer needs to see: the server's priced lines and totals.
+    No costs, margins, internal notes, metadata or IP address, which the full
+    ``OrderDetailSerializer`` would hand to a browser. ``total_amount`` is
+    ``grand_total`` under the name the storefront reads.
+    """
+
+    lines = GuestOrderLineSerializer(source="line_items", many=True, read_only=True)
+    subtotal = _money("subtotal_ex_tax")
+    tax_total = _money()
+    shipping_total = _money("shipping_cost_ex_tax")
+    discount_total = _money("discount_amount")
+    grand_total = _money()
+    total_amount = _money("grand_total")
+
+    class Meta:
+        model = Order
+        fields = [
+            "id", "order_number", "status", "payment_status", "currency", "guest_email",
+            "lines", "subtotal", "tax_total", "shipping_total", "discount_total",
+            "grand_total", "total_amount", "created_at",
+        ]
+        read_only_fields = fields
+
+
+class GuestCheckoutLineSerializer(serializers.Serializer):
+    """OpenAPI only: one posted cart line. Send ``variant`` or ``product``."""
+
+    variant = serializers.UUIDField(required=False, help_text="A sellable variant's id.")
+    product = serializers.UUIDField(
+        required=False,
+        help_text="A product with exactly one sellable variant (else `variant_required`).",
+    )
+    quantity = serializers.IntegerField(min_value=1, help_text="Whole units, 1 to 9999 per variant.")
+
+
+class GuestCheckoutSerializer(serializers.Serializer):
+    """OpenAPI only: the storefront identity's guest-checkout body.
+
+    Anything else in the body (prices, totals, status, discounts, company,
+    customer) is ignored. Lines naming the same variant are merged.
+    """
+
+    email = serializers.EmailField(help_text="Also accepted as `guest_email`.")
+    lines = GuestCheckoutLineSerializer(many=True, help_text="1 to 50 lines.")
+    customer_name = serializers.CharField(required=False)
+    company_name = serializers.CharField(required=False)
+    shipping_address = serializers.CharField(required=False)
+    payment_method = serializers.CharField(required=False, help_text="Stored as the order's payment terms.")
+    po_number = serializers.CharField(required=False)
+    notes = serializers.CharField(required=False)
+    coupon_code = serializers.CharField(required=False, help_text="Recorded for staff; not applied.")
+
+
+class GuestCheckoutLineErrorSerializer(serializers.Serializer):
+    """OpenAPI only: why one posted line was refused."""
+
+    index = serializers.IntegerField(help_text="Position of the line in the posted `lines`.")
+    code = serializers.ChoiceField(choices=[
+        "invalid_line", "invalid_quantity", "not_available", "variant_required",
+        "price_unavailable", "out_of_stock", "insufficient_stock", "order_too_large",
+    ])
+    detail = serializers.CharField()
+    variant = serializers.CharField(allow_null=True)
+    product = serializers.CharField(allow_null=True)
+    available = serializers.IntegerField(
+        required=False, help_text="Units in stock (`out_of_stock`, `insufficient_stock`).",
+    )
+
+
+class GuestCheckoutErrorSerializer(serializers.Serializer):
+    """OpenAPI only: a refused guest checkout (400). Nothing was created."""
+
+    code = serializers.ChoiceField(
+        choices=["lines_required", "too_many_lines", "invalid_lines", "order_too_large"],
+    )
+    detail = serializers.CharField()
+    lines = GuestCheckoutLineErrorSerializer(many=True, required=False)
+
+
 class SalesInvoiceSerializer(serializers.ModelSerializer):
     """Staff-facing serializer — full field set behind auth."""
 

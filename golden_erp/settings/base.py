@@ -276,6 +276,11 @@ SPECTACULAR_SETTINGS = {
 
 # CORS
 CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if os.environ.get("CORS_ALLOWED_ORIGINS") else []
+# The storefront's checkout sends Idempotency-Key (OP #3431); without it here
+# the browser's preflight fails and no cross-origin checkout can be placed.
+from corsheaders.defaults import default_headers as _cors_default_headers  # noqa: E402
+
+CORS_ALLOW_HEADERS = (*_cors_default_headers, "idempotency-key")
 
 # Logging
 LOGGING = {
@@ -372,6 +377,9 @@ GOLDEN_IDENTITY_PROVIDERS = [
 ]
 # Per-IP limit on portal self-registration (the resolver's create branch).
 GOLDEN_PORTAL_SIGNUP_RATE = os.environ.get("GOLDEN_PORTAL_SIGNUP_RATE", "20/hour") or None
+# Per-IP limit on storefront guest checkout (orders created by the storefront
+# identity). DRF rate syntax ("10/minute"); empty disables it.
+GOLDEN_GUEST_ORDER_RATE = os.environ.get("GOLDEN_GUEST_ORDER_RATE", "10/minute") or None
 # Clock-skew allowance for provider tokens (`exp`, `iat`), in seconds.
 GOLDEN_IDENTITY_JWT_LEEWAY_S = int(os.environ.get("GOLDEN_IDENTITY_JWT_LEEWAY_S", "30"))
 

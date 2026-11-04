@@ -2,6 +2,7 @@ import {
   component$,
   Slot,
   useContextProvider,
+  useSignal,
   useStore,
   useVisibleTask$,
 } from "@builder.io/qwik";
@@ -19,22 +20,27 @@ export default component$(() => {
 
   useContextProvider(CartContext, cart);
 
-  // Restore cart from localStorage if exists
+  // Restore the saved cart once, on the first run; after that every change,
+  // including an emptied cart, is written back. Restoring whenever the cart
+  // was empty brought the last removed line (and a just-placed order's cart)
+  // back from storage.
+  const cartRestored = useSignal(false);
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => cart.items);
     try {
-      if (cart.items.length === 0) {
-        const saved = localStorage.getItem("golden_cart");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+      if (!cartRestored.value) {
+        cartRestored.value = true;
+        if (cart.items.length === 0) {
+          const saved = localStorage.getItem("golden_cart");
+          const parsed = saved ? JSON.parse(saved) : null;
+          if (Array.isArray(parsed) && parsed.length > 0) {
             cart.items = parsed;
           }
+          return;
         }
-      } else {
-        localStorage.setItem("golden_cart", JSON.stringify(cart.items));
       }
+      localStorage.setItem("golden_cart", JSON.stringify(cart.items));
     } catch {
       // ignore
     }

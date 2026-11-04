@@ -23,6 +23,7 @@ compose-migrate: ## Run migrations inside docker container
 
 compose-seed: ## Seed demo data inside docker container
 	docker compose exec web python manage.py seed_demo_data
+	docker compose exec web python manage.py seed_demo_commerce --force
 
 compose-shell: ## Open Django shell inside docker container
 	docker compose exec web python manage.py shell
@@ -56,8 +57,9 @@ findings-check: ## Validate docs/findings-log.md (dev repo only; skipped where t
 test: ## Run full test suite with test settings
 	$(PYTHON) manage.py test --settings=config.settings.test
 
-seed: ## Seed rich generic demonstration data
+seed: ## Seed rich generic demonstration data (catalog, customers, 90 days of orders and books)
 	$(PYTHON) manage.py seed_demo_data
+	$(PYTHON) manage.py seed_demo_commerce --force
 
 shell: ## Open interactive Django shell
 	$(PYTHON) manage.py shell

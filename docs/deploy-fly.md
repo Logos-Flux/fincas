@@ -191,6 +191,15 @@ bare:
   "python manage.py shell -c 'import sys; from django.core.management import call_command; call_command(\"seed_demo_data\", admin_password=sys.stdin.readline().strip())'"
 ```
 
+`seed_demo_commerce` then adds a full catalog, customers, suppliers and 90
+days of quotes, orders, invoices, payments and purchase orders, dated relative
+to the demo clock so the nightly date roll keeps them current. It only runs on
+a demo deployment (`DEMO_USERNAMES` set) and adds nothing when run again:
+
+```sh
+fly ssh console -a <app> --process-group web -C "python manage.py seed_demo_commerce"
+```
+
 Add the due-task job from [deployment.md](deployment.md#crm_emit_due-every-5-minutes)
 as a scheduled machine (`fly machine run … --schedule hourly` is the finest
 schedule Fly offers, so for a five-minute cadence run a small cron process
@@ -237,9 +246,12 @@ primary_region = "<region>"
 
 ```sh
 fly apps create <shop-app> --org <org>
-fly deploy storefront -c storefront/fly.toml -a <shop-app> --remote-only --ha=false
+(cd storefront && fly deploy -c fly.toml -a <shop-app> --remote-only --ha=false)
 fly certs add shop.example.com -a <shop-app>
 ```
+
+Run the deploy from inside `storefront/`: `fly deploy storefront -c storefront/fly.toml`
+from the repository root fails with "config file not found" (flyctl 0.5.3).
 
 - `VITE_API_BASE_URL` is a **build arg**. Vite bakes it into the browser
   bundle, so changing it means rebuilding. The same value goes in `[env]` for

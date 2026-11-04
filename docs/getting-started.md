@@ -149,6 +149,20 @@ superuser's credentials at the end: `admin` / `admin` unless you pass
 `--admin-password`. Change that password before anyone else can reach the
 server (`python manage.py changepassword admin`).
 
+For a fuller demo, add a trading history on top (optional):
+
+```sh
+python manage.py seed_demo_commerce --force
+```
+
+It adds a 41-product catalog (brands, nested categories, variants, price
+breaks, SEO copy, stock in two warehouses), 20 business customers, 6
+suppliers, and 90 days of quotes, orders, pick tickets, invoices, payments and
+purchase orders, posted to the books by the normal posting rules. Everything
+is invented. It refuses to run without `--force` unless `DEMO_USERNAMES` is
+set (a demo deployment), because it writes fake orders and books into the
+company. Running it again adds nothing.
+
 ## 6. Run it and sign in
 
 ```bash r12:background

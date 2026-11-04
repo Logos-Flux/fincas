@@ -356,8 +356,9 @@ The sender is the model class. Rules:
   not be lost, and **anything that does I/O**, is an outbox consumer
   (section 5c), not a receiver.
 - Duplicated orders start `incomplete`, so they announce `order_placed` only
-  when moved on. A storefront guest order is placed header-first: its totals
-  can be 0 until staff build the lines.
+  when moved on. A storefront guest order announces `order_placed` once its
+  lines and totals are written (the view emits it itself, after the INSERT's
+  own emit is suppressed), so receivers and outbox builds see the priced order.
 - Golden's own outbound webhooks are an outbox consumer
   (`webhooks/outbox.py`): they hear these signals but stay **off** unless
   `WEBHOOKS_DELIVER_ON_SIGNALS = True`. With it on, a dead endpoint costs a

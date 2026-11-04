@@ -16,11 +16,11 @@ export const Footer = component$(() => {
           <div class="md:col-span-2 space-y-3">
             <div class="flex items-center gap-2.5">
               <img
-                src="/favicon.svg"
+                src="/fincas-mark.svg"
                 alt="Fincas Store"
                 width={24}
                 height={24}
-                class="w-6 h-6 rounded-md shadow shrink-0"
+                class="w-6 h-6 shrink-0"
               />
               <span
                 class="font-black tracking-tight text-base"

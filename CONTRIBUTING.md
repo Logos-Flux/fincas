@@ -33,7 +33,7 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements/dev.txt
 make migrate          # creates db.sqlite3 in the working directory
-make seed             # demo company, catalog, customers, chart of accounts
+make seed             # demo company, catalog, customers, 90 days of orders and books
 make run              # http://localhost:8000/erp/
 ```
 

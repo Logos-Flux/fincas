@@ -1,8 +1,8 @@
 -r base.txt
-ruff==0.14.5
-pytest>=9.0,<10
-pytest-django>=4.8,<5
-coverage>=7.0,<8
+ruff==0.17.3
+pytest>=9.2.0,<10
+pytest-django>=4.14.0,<5
+coverage>=7.17.0,<8
 # Lets the parallel test runner report errors (it pickles tracebacks).
-tblib>=3.0,<4
-pip-audit>=2.7,<3
+tblib>=3.2.2,<4
+pip-audit>=2.10.1,<3

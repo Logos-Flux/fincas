@@ -179,11 +179,56 @@ least-privilege `storefront-api` service identity (`core/storefront.py`).
    (`orders.add_order`, honored only on the order `create` action). Nothing
    else: it cannot read orders, customers, suppliers or invoices, and it is not
    staff.
-3. A guest order is created from a whitelisted header (guest email, PO number,
-   notes, payment terms); client-supplied totals and status are never trusted.
-   Guest checkout needs exactly one Company and answers 503 otherwise.
-   Cart lines are not yet copied onto the order: staff see the header and the
-   buyer's details, and add lines in the back office.
+3. A guest order is a whitelisted header (guest email, PO number, notes,
+   payment terms) plus the cart lines, posted as
+   `lines: [{"variant": <id>, "quantity": <int>}]` (or `{"product": <id>}`
+   for a product with a single sellable variant). The server does all the
+   money: each line is priced from the variant's public price (the one the
+   catalog shows: a non-zero sale price, else retail), the order is totalled
+   with `Order.recalculate_totals()`, and lines go into one "Shipment 1"
+   group. Client-supplied prices, totals, status, discounts, company and
+   customer are never read. Lines naming the same variant are merged.
+   Guest checkout needs exactly one Company and answers 503
+   (`guest_checkout_unavailable`) otherwise.
+4. Stock is checked, never reserved: a line is refused when the variant is
+   out of stock or the quantity exceeds `ProductVariant.stock`, unless the
+   variant is on preorder or backorder. Stock is committed through the normal
+   back-office flow.
+5. A refused checkout answers 400 with a stable `code` (`lines_required`,
+   `too_many_lines`, `invalid_lines`) and, for `invalid_lines`, one entry per
+   refused line: `{index, code, variant, product, available?}` with `code` one
+   of `invalid_line`, `invalid_quantity`, `not_available`, `variant_required`,
+   `price_unavailable` (no price, or a price of zero or less),
+   `out_of_stock`, `insufficient_stock`, `order_too_large` (past what the
+   money columns hold; also a request-level code when only the sum is). Every line is
+   validated before anything is written, so a refusal creates nothing and
+   burns no order number. Clients branch on codes, never on `detail`.
+6. Success answers 201 with the priced confirmation (`order_number`,
+   `status`, `lines`, `subtotal`, `tax_total`, `shipping_total`,
+   `total_amount`, `currency`), never the staff order serializer.
+   Golden has no tax engine and a guest order has no structured address, so
+   lines carry no tax and the order no shipping; staff add both in the order
+   editor. A client `metadata` object is never stored: only the whitelisted
+   buyer fields, as strings of at most 1,000 characters. Guest checkout is
+   rate-limited per client IP (`core.client_ip`, `GOLDEN_GUEST_ORDER_RATE`,
+   default `10/minute`, 429), and the order's `ip_address` is that client IP.
+   Price lists and quantity breaks are not applied (the catalog does
+   not show them either). Code: `orders/guest_checkout.py`.
+7. A retry can't order twice. The storefront sends one `Idempotency-Key`
+   header per checkout (16-200 characters of `A-Za-z0-9._:-`; it uses a
+   random UUID, reused while the email and lines are unchanged). The order
+   stores a hash of the key with a fingerprint of the email and lines. A
+   repeat with the same key within 24 hours and the same email, lines and
+   stored header fields answers the original confirmation with 200; the same
+   key with any difference answers 409 `idempotency_key_reused` (so a
+   corrected address is never silently dropped); a malformed key answers 400
+   `idempotency_key_invalid`. Concurrent submits with one key are serialised
+   (a Postgres advisory lock), so they make one order; a submit that waits
+   more than 5 s answers 503 `checkout_in_progress`. SQLite gets no such
+   guarantee. A body `external_id`
+   is ignored on guest checkout. A cross-origin storefront needs the API to
+   allow the header, which golden's `CORS_ALLOW_HEADERS` does (`core.W115`
+   warns when a deployment's own setting leaves it out).
 
 `core.permissions.PrincipalPermission` is pinned on every API viewset and
 enforces this contract, so a leaked storefront token is near-powerless.

@@ -31,7 +31,7 @@ body:
     attributes:
       label: Fincas version
       description: "`pip show fincas`, or the git commit if you run from source."
-      placeholder: "0.4.1"
+      placeholder: "0.4.2"
     validations:
       required: true
   - type: input

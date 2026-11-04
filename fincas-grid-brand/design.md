@@ -4,6 +4,24 @@
 **Selected direction:** Grid  
 **Brand line:** One system. Built your way.
 
+## 0. Domains and file locations
+
+Asset paths below are relative to this kit's directory. On the website they are served
+from the same paths under `/` (for example `/assets/svg/fincas-grid-logo-light.svg`).
+
+| Domain | Role | Registered | Renews |
+|---|---|---|---|
+| **fincas.dev** | Primary public website: product, documentation, open-source project | 2026-10-21 | 2027-10-21, auto-renew |
+| tufincas.com | Reserved; redirect to fincas.dev | 2026-10-21 | 2027-10-21, auto-renew |
+| tusfincas.com | Reserved; redirect to fincas.dev | 2026-10-21 | 2027-10-21, auto-renew |
+
+Canonical origin is `https://fincas.dev` (apex, no `www`); `www.fincas.dev` and the two `.com`
+names redirect to it permanently. `.dev` is on the HSTS preload list, so it only ever works over
+HTTPS.
+
+Related names: the PyPI distribution is `fincas`, the public source repository is
+`Logos-Flux/fincas` on GitHub.
+
 ## 1. Brand idea
 
 Fincas is a modular business software platform: capable without feeling complicated, structured without feeling rigid. The Grid identity turns six simple tiles into an unmistakable **F**. Five violet tiles represent the connected system; the single lime tile represents the customer's ability to make it their own.
@@ -360,13 +378,13 @@ App icons and social artwork have intentional pale-lavender backgrounds and safe
 <meta name="theme-color" content="#121017" media="(prefers-color-scheme: dark)" />
 
 <meta property="og:title" content="Fincas — One system. Built your way." />
-<meta property="og:image" content="https://www.example.com/assets/social/fincas-grid-og-image.png" />
+<meta property="og:image" content="https://fincas.dev/assets/social/fincas-grid-og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 ```
 
-Replace `https://www.example.com` with the production origin; social sharing images should use absolute URLs.
+The production origin is `https://fincas.dev` (see §0); social sharing images use absolute URLs.
 
 ## 12. Delivery checklist
 

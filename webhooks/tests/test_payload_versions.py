@@ -315,3 +315,21 @@ class PartyEventTests(_Base):
         with self.captureOnCommitCallbacks(execute=True):
             emit(signals.party_erased, Party, party, party_id=party.pk)
         self.assertEqual(self.data_for(sub, "party.erased")["company_id"], str(self.company.pk))
+
+
+class OrderPlacedTotalTests(TestCase):
+    """OP #3435: total_amount is the order's grand_total, never a "0.00" default."""
+
+    def test_total_amount_reads_grand_total_from_a_real_order(self):
+        from decimal import Decimal
+
+        from orders.models import Order
+
+        order = Order(order_number="SO-3435", grand_total=Decimal("529.97"))
+        self.assertEqual(events.order_placed_payload(order)["total_amount"], "529.97")
+
+    def test_total_amount_always_has_two_decimals(self):
+        from orders.models import Order
+
+        self.assertEqual(events.order_placed_payload(Order())["total_amount"], "0.00")
+        self.assertEqual(events.order_placed_payload(Order(grand_total=12))["total_amount"], "12.00")

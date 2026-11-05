@@ -1,7 +1,7 @@
 // R7 "Import and undo" (docs/release-hardening-plan.md section 4, R7 row;
 // decision 8: through the UI).
 //
-// The HubSpot fixture export (addons/hubspot_export/fixtures/crawl-small) ->
+// The HubSpot fixture export (golden_erp/addons/hubspot_export/fixtures/crawl-small) ->
 // review the proposed rows in the CRM import screens -> apply -> spot check
 // (an imported person and an imported engagement exist and are reachable)
 // -> undo the whole job leaves no trace (every count back to its baseline).
@@ -20,7 +20,7 @@ import { journey, expect, type Ctx } from "../lib/harness";
 import { ROOT, RUN_DIR, clickNav, count, manage, searchList, str } from "../lib/erp-ui";
 import path from "node:path";
 
-const FIXTURE = path.join(ROOT, "addons", "hubspot_export", "fixtures", "crawl-small");
+const FIXTURE = path.join(ROOT, "golden_erp", "addons", "hubspot_export", "fixtures", "crawl-small");
 const SOURCE = "hubspot:1234567"; // the fixture's invented portal (mapping.toml)
 const COMPANY = process.env.HARNESS_COMPANY ?? "0c0ffee0-4e1e-4a5e-9a11-0000000d0001";
 
@@ -59,6 +59,10 @@ async function snapshot(ctx: Ctx): Promise<Record<string, number>> {
 
 async function openJob(ctx: Ctx) {
   const { page, state } = ctx;
+  // Step 1 is a known finding, so any error in it (staging included) is
+  // recorded as that finding; without a job id every later step would only
+  // time out on a link to /erp/imports/crm/undefined/.
+  if (!state.jobId) throw new Error("no staged import job: R7.01 failed to stage the fixture (see its verdict)");
   await clickNav(page, "CRM Imports");
   await page.locator(`a[href='/erp/imports/crm/${state.jobId}/']`).first().click();
   await expect(page).toHaveURL(new RegExp(`/erp/imports/crm/${state.jobId}/$`));

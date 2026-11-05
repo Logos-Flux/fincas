@@ -92,11 +92,20 @@ async function doubleSubmit(
 /** Click a sidebar link, opening the collapsed sidebar first on narrow viewports. */
 async function clickNav(page: Page, title: string) {
   const link = nav(page, title);
-  if (!(await link.isVisible())) {
-    await page.locator('button[aria-label="Toggle navigation"]').first().click();
+  // Open the sidebar only when the toggler is showing (narrow viewport). A
+  // link that is merely not rendered yet is not a reason to: it used to send
+  // the desktop run to the hidden toggler and a 15 s timeout.
+  const toggler = page.locator('button[aria-label="Toggle navigation"]').first();
+  if (!(await link.isVisible()) && (await toggler.isVisible())) {
+    await toggler.click();
     await expect(link).toBeVisible();
   }
+  // Wait for the page the link opens. Without this, a second clickNav right
+  // after (Accounting, then Trial Balance) looked at the page mid-load (R2.08,
+  // R5.04 on GitHub-hosted runners, 2026-11-04/05).
+  const href = await link.locator("xpath=ancestor::a[1]").getAttribute("href");
   await link.click();
+  if (href) await page.waitForURL((u) => u.pathname === new URL(href, u).pathname);
 }
 
 async function openOrderEditor(ctx: Ctx) {

@@ -7,6 +7,18 @@ All notable changes to Fincas are listed here. The format follows
 [docs/releases/](docs/releases/): what to do before upgrading, behavior
 changes, known limitations and the migration list.
 
+## 0.4.3
+
+Release harness fixes only; the package behaves as 0.4.2. Full notes:
+[docs/releases/v0.4.3.md](docs/releases/v0.4.3.md).
+
+### Fixed
+
+- The back-office journeys (`scripts/harness/run.sh`) pass on GitHub-hosted
+  runners again: the sidebar helper waits for each page to load before the
+  next click (R2.08, R5.04), and R7 reads the HubSpot fixture export from
+  `golden_erp/addons/` (#242, #243).
+
 ## 0.4.2
 
 Guest checkout end to end. Full notes: [docs/releases/v0.4.2.md](docs/releases/v0.4.2.md).

@@ -64,8 +64,8 @@ To see deprecations in your own code before they bite, run your tests with
 
 ## How to upgrade
 
-1. **Pin an exact version** in your requirements: `fincas==0.4.1` (or
-   `fincas[prod]==0.4.1`). Never let a resolver pick up a new Fincas on its
+1. **Pin an exact version** in your requirements: `fincas==0.4.3` (or
+   `fincas[prod]==0.4.3`). Never let a resolver pick up a new Fincas on its
    own.
 2. **Read the release notes** for every version between yours and the target
    (the GitHub release, or `docs/releases/` in the repository): "Before you

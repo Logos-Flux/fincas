@@ -8,6 +8,7 @@ from core.views import CompanyScopedViewSet
 
 from .models import Payment
 from .serializers import PaymentDetailSerializer, PaymentListSerializer
+from .services import settle_payment_documents
 
 
 class PaymentViewSet(CompanyScopedViewSet):
@@ -23,6 +24,35 @@ class PaymentViewSet(CompanyScopedViewSet):
         if self.action == "list":
             return PaymentListSerializer
         return PaymentDetailSerializer
+
+    def perform_create(self, serializer):
+        # The order (and invoice) are paid by this row: recompute their
+        # amount_paid / balance_due / payment status from the settled ledger,
+        # as record_payment and the Stripe reconcile do. Before 0.4.4 the API
+        # stored the row and left both documents unpaid.
+        with transaction.atomic():
+            payment = serializer.save()
+            settle_payment_documents(payment)
+
+    def perform_update(self, serializer):
+        previous_invoice = serializer.instance.invoice if serializer.instance.invoice_id else None
+        with transaction.atomic():
+            payment = serializer.save()
+            moved_off = (
+                previous_invoice
+                if previous_invoice is not None and previous_invoice.pk != payment.invoice_id
+                else None
+            )
+            settle_payment_documents(payment, previous_invoice=moved_off)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            return super().update(request, *args, **kwargs)
+        except NoPostingRule as exc:
+            return Response(
+                {"code": "no_posting_rule", "detail": str(exc)},
+                status=http_status.HTTP_409_CONFLICT,
+            )
 
     def create(self, request, *args, **kwargs):
         # A settled payment posts to the ledger on save; with no payment

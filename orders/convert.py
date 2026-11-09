@@ -64,7 +64,11 @@ def convert_order_to_invoice(order: Order) -> tuple[SalesInvoice, bool]:
     If the order already has at least one invoice, the most recent one is
     returned with `created=False` — callers should treat this as a benign
     idempotent hit and surface the existing record. Otherwise, a fresh
-    DRAFT invoice is built from the order's snapshot fields.
+    DRAFT invoice is built from the order's snapshot fields, and the order's
+    unapplied customer deposits (settled payments with no invoice, posted to
+    the payment rule's deposit account) are linked to it
+    (``payments.services.attach_order_deposits``); they move to A/R when the
+    invoice is issued.
     """
     existing = order.invoices.order_by("-invoice_date", "-created_at").first()
     if existing is not None:
@@ -74,7 +78,16 @@ def convert_order_to_invoice(order: Order) -> tuple[SalesInvoice, bool]:
     payment_terms = _map_payment_terms(order.payment_terms)
     grand_total = order.grand_total or Decimal("0")
 
-    invoice = SalesInvoice.objects.create(
+    with transaction.atomic():
+        invoice = _create_invoice(order, invoice_date, payment_terms, grand_total)
+        from payments.services import attach_order_deposits
+
+        attach_order_deposits(invoice)  # re-settles this same object when it links any
+    return invoice, True
+
+
+def _create_invoice(order, invoice_date, payment_terms, grand_total):
+    return SalesInvoice.objects.create(
         order=order,
         company=order.company,
         status=SalesInvoice.Status.DRAFT,
@@ -90,7 +103,6 @@ def convert_order_to_invoice(order: Order) -> tuple[SalesInvoice, bool]:
         notes=order.customer_message or "",
         internal_notes=order.internal_notes or "",
     )
-    return invoice, True
 
 
 # ── Quote → Order ─────────────────────────────────────────

@@ -3,7 +3,7 @@
     manage.py posting_rules show [--company <uuid>]
     manage.py posting_rules set --doc-type payment \\
         --receivable "Accounts receivable (A/R)" --cash "Undeposited Funds" \\
-        --fee "Stripe processing fees" [--company <uuid>]
+        --fee "Stripe processing fees" [--deposit "Customer deposits"] [--company <uuid>]
     manage.py posting_rules set-provider --provider paypal \\
         --cash "PayPal Account" [--fee "Channel selling fees:PayPal fees"]
     manage.py posting_rules set-provider --provider ebay --cash "Undeposited Funds" --no-fee
@@ -13,6 +13,8 @@ Accounts are named by ``account_number``, exact ``full_name``, or bare
 ``name``, tried in that order. A reference that matches several accounts
 ("Insurance" under two parents) is refused, never resolved by order; an
 unknown one is refused too.
+``--deposit`` (payment rule only, optional) names the liability a payment with
+no invoice credits instead of A/R; it moves to A/R when the invoice is issued.
 ``set`` creates the rule or replaces the named accounts on it, leaving the
 others as they were, then ``full_clean``s it, so a rule missing a required
 account is refused before anything is written (AD-13: postings never guess
@@ -30,7 +32,7 @@ from core.models import Company
 
 RULE_FIELDS = (
     "receivable", "revenue", "tax", "discount", "shipping_income",
-    "cash", "fee", "inventory", "payable",
+    "cash", "fee", "inventory", "payable", "deposit",
 )
 
 
@@ -50,6 +52,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--no-fee", action="store_true",
             help="set-provider: clear the override's fee account (use the rule's).",
+        )
+        parser.add_argument(
+            "--no-deposit", action="store_true",
+            help="set: clear the payment rule's deposit account (payments credit A/R again).",
         )
         for field in RULE_FIELDS:
             parser.add_argument(
@@ -83,6 +89,10 @@ class Command(BaseCommand):
             for field in DocumentPostingRule.REQUIRED[doc_type]:
                 account = getattr(rule, field)
                 self.stdout.write(f"    {field:<24} {self._label(account)}")
+            for field in DocumentPostingRule.OPTIONAL.get(doc_type, ()):
+                account = getattr(rule, field)
+                label = self._label(account) if account is not None else "(none: optional)"
+                self.stdout.write(f"    {field:<24} {label}")
         overrides = PaymentProviderPostingOverride.objects.filter(company=company).order_by("provider")
         self.stdout.write("  provider overrides:" + ("" if overrides else " none"))
         for o in overrides:
@@ -95,7 +105,10 @@ class Command(BaseCommand):
             raise CommandError("set needs --doc-type.")
         self._refuse_flags(options, ("provider", "no_fee"), "set")
         given = {f: options[f] for f in RULE_FIELDS if options.get(f)}
-        if not given:
+        clear_deposit = bool(options.get("no_deposit"))
+        if clear_deposit and "deposit" in given:
+            raise CommandError("Pass --deposit ACCOUNT or --no-deposit, not both.")
+        if not given and not clear_deposit:
             raise CommandError("set needs at least one --<field> ACCOUNT.")
         with transaction.atomic():
             rule, created = DocumentPostingRule.objects.get_or_create(
@@ -103,6 +116,9 @@ class Command(BaseCommand):
             )
             for field, ref in given.items():
                 setattr(rule, f"{field}_account", self._account(company, ref))
+            if clear_deposit:
+                rule.deposit_account = None
+                given["deposit"] = None
             self._clean(rule)
             rule.save()
         self.stdout.write(
@@ -117,7 +133,8 @@ class Command(BaseCommand):
         if not options.get("cash"):
             raise CommandError("set-provider needs --cash ACCOUNT.")
         self._refuse_flags(
-            options, tuple(f for f in RULE_FIELDS if f not in ("cash", "fee")) + ("doc_type",),
+            options,
+            tuple(f for f in RULE_FIELDS if f not in ("cash", "fee")) + ("doc_type", "no_deposit"),
             "set-provider",
         )
         if options.get("fee") and options.get("no_fee"):

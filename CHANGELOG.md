@@ -7,6 +7,38 @@ All notable changes to Fincas are listed here. The format follows
 [docs/releases/](docs/releases/): what to do before upgrading, behavior
 changes, known limitations and the migration list.
 
+## 0.4.4
+
+Customer-deposit posting and order settlement for payments recorded through
+the API. One migration (`accounting.0004_deposit_account`). Full notes:
+[docs/releases/v0.4.4.md](docs/releases/v0.4.4.md).
+
+### Added
+
+- Optional customer deposits: `DocumentPostingRule.deposit_account` on the
+  payment rule (a liability). A payment with no invoice credits it instead of
+  A/R; when the invoice the payment is linked to is issued, a
+  `deposit_application` entry moves the amount to A/R (DR deposits, CR A/R),
+  reversed again if the invoice or the payment is voided or the payment is
+  moved. A refund of a deposit not yet applied debits deposits. Converting an
+  order to its invoice links the order's held deposits to it. Set it with
+  `manage.py posting_rules set --doc-type payment --deposit ACCOUNT`
+  (`--no-deposit` clears it). Without it, postings are unchanged.
+- `check_money` reports `deposit_overapplied` when a deposit account has a
+  debit balance.
+- `seed_demo_data` adds a "Customer Deposits" liability (2050) and names it on
+  the demo payment rule.
+
+### Fixed
+
+- A payment created or updated through the REST API
+  (`/api/v1/payments/payments/`) now recomputes its order's `amount_paid`,
+  `balance_due` and `payment_status` (and its invoice's, when it has one) from
+  the settled payments. Before, an API prepayment against an order left the
+  order unpaid. A draft, void or canceled invoice keeps its status.
+- A gateway charge with no invoice (`charge_with_idempotency`) settles the
+  order the same way.
+
 ## 0.4.3
 
 Release harness fixes only; the package behaves as 0.4.2. Full notes:

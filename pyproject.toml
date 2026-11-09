@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fincas"
-version = "0.4.3"
+version = "0.4.4"
 description = "Open-source Django ERP with a headless Qwik storefront that runs on it: orders, invoicing, accounting, inventory and CRM"
 readme = "README.md"
 requires-python = ">=3.12"

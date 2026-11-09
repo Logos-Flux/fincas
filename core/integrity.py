@@ -130,6 +130,12 @@ CAUSES: dict[str, Cause] = {
             "amount_paid is set but no Payment row is linked to the invoice (a manual or "
             "imported settlement).",
         ),
+        Cause(
+            "deposit_overapplied", False, False,
+            "A customer-deposit account (a payment rule's deposit_account) has a debit "
+            "balance: more was applied to invoices or refunded out of it than payments "
+            "put in.",
+        ),
     )
 }
 
@@ -513,6 +519,32 @@ def _invoice_balances(result: MoneyResult, *, samples) -> None:
                 checks["no_payment_rows"].add(number, {"amount_paid": paid}, posted=posted,
                                               limit=samples)
     result.invoice_balances = {key: b for key, b in checks.items() if b.count}
+    deposits = _deposit_balances(samples=samples)
+    if deposits.count:
+        result.invoice_balances["deposit_overapplied"] = deposits
+
+
+def _deposit_balances(*, samples) -> Bucket:
+    """Deposits applied (or refunded) never exceed deposits received: every
+    account a payment rule names as ``deposit_account`` keeps a credit (or
+    zero) balance over posted entries."""
+    from accounting.models import DocumentPostingRule, JournalEntry, JournalLine
+
+    bucket = Bucket("deposit", "deposit_overapplied")
+    accounts = (
+        DocumentPostingRule.objects.filter(deposit_account__isnull=False)
+        .values_list("deposit_account_id", "deposit_account__account_number",
+                     "deposit_account__name")
+        .distinct()
+    )
+    for pk, number, name in accounts:
+        totals = JournalLine.objects.filter(
+            account_id=pk, entry__status=JournalEntry.Status.POSTED,
+        ).aggregate(debit=Sum("debit_amount"), credit=Sum("credit_amount"))
+        over = _dec(totals["debit"]) - _dec(totals["credit"])
+        if over > 0:
+            bucket.add(f"{number} {name}".strip(), {"balance": over}, posted=True, limit=samples)
+    return bucket
 
 
 def compare_totals(*, limit: int | None = None, samples: int = 5) -> MoneyResult:

@@ -398,6 +398,9 @@ class JournalEntry(BaseModel):
         PAYROLL = "payroll", "Payroll"
         PURCHASE = "purchase", "Purchase"
         SYSTEM = "system", "System"
+        #: Customer deposit moved to A/R once its invoice is issued
+        #: (``payments.posting.sync_deposit_application``).
+        DEPOSIT_APPLICATION = "deposit_application", "Deposit Application"
 
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
@@ -706,6 +709,16 @@ class DocumentPostingRule(BaseModel):
         Account, on_delete=models.PROTECT, null=True, blank=True,
         related_name="posting_rules_payable",
     )
+    #: Payment rule only, optional: a liability ("Customer deposits") that a
+    #: payment with no invoice credits instead of ``receivable_account``. The
+    #: deposit moves to A/R when the payment's invoice is issued. Unset keeps
+    #: every payment on A/R (the pre-0.4.4 behaviour).
+    deposit_account = models.ForeignKey(
+        Account, on_delete=models.PROTECT, null=True, blank=True,
+        related_name="posting_rules_deposit",
+        help_text="Payment rule only: liability credited by a payment that has no "
+                  "invoice yet (customer deposits). Blank: such payments credit A/R.",
+    )
 
     objects = CompanyScopedManager()
 
@@ -717,6 +730,10 @@ class DocumentPostingRule(BaseModel):
         DocType.PAYMENT: ("receivable_account", "cash_account", "fee_account"),
         DocType.REFUND: ("receivable_account", "cash_account"),
         DocType.PURCHASE_RECEIPT: ("inventory_account", "payable_account"),
+    }
+    #: Accounts a rule may name but need not.
+    OPTIONAL = {
+        DocType.PAYMENT: ("deposit_account",),
     }
 
     class Meta:
@@ -741,11 +758,21 @@ class DocumentPostingRule(BaseModel):
                 f"Posting rule for {self.doc_type} is missing accounts: "
                 + ", ".join(missing)
             )
-        for f in self.REQUIRED.get(self.doc_type, ()):
+        for f in self.REQUIRED.get(self.doc_type, ()) + self.OPTIONAL.get(self.doc_type, ()):
             account = getattr(self, f, None)
             if account is not None and account.company_id != self.company_id:
                 raise ValidationError(
                     {f: "Account belongs to a different company than the rule."}
+                )
+        if self.deposit_account_id is not None:
+            if "deposit_account" not in self.OPTIONAL.get(self.doc_type, ()):
+                raise ValidationError(
+                    {"deposit_account": "Only the payment rule takes a deposit account."}
+                )
+            if self.deposit_account.account_type != Account.AccountType.LIABILITY:
+                raise ValidationError(
+                    {"deposit_account": "The deposit account must be a liability "
+                                        "(customer deposits are owed to the customer)."}
                 )
 
 

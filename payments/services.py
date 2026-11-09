@@ -91,6 +91,145 @@ def _settle_invoice_and_order(invoice, order) -> None:
     )
 
 
+_SETTLED = (Payment.Status.CAPTURED, Payment.Status.SETTLED)
+
+
+def _applied_total(payments) -> Decimal:
+    return (
+        payments.filter(status__in=_SETTLED).aggregate(
+            total=Sum(F("amount") - F("convenience_fee"))
+        )["total"]
+        or Decimal("0.00")
+    )
+
+
+def settle_invoice(invoice) -> None:
+    """Recompute an invoice's amount_paid/balance_due from its settled payments.
+
+    Like the invoice half of ``_settle_invoice_and_order``, except that a
+    draft, void or canceled invoice keeps its status: settling must never
+    issue an invoice (leaving draft posts it) or revive a voided one. An
+    issued invoice moves to ``paid`` or ``partial``; one with nothing applied
+    keeps the status it has (sent, viewed, overdue).
+    """
+    from orders.models import SalesInvoice as InvoiceModel
+
+    applied = _applied_total(invoice.payments.all())
+    invoice.amount_paid = applied
+    invoice.balance_due = invoice.grand_total - applied
+    keep = (InvoiceModel.Status.DRAFT, InvoiceModel.Status.VOID, InvoiceModel.Status.CANCELLED)
+    if invoice.status not in keep:
+        if invoice.balance_due <= 0:
+            invoice.status = InvoiceModel.Status.PAID
+            if not invoice.paid_date:
+                invoice.paid_date = date.today()
+        elif applied > 0:
+            invoice.status = InvoiceModel.Status.PARTIAL
+            invoice.paid_date = None
+    invoice.save(
+        update_fields=["status", "amount_paid", "balance_due", "paid_date", "updated_at"]
+    )
+
+
+def settle_order(order) -> None:
+    """Recompute an order's amount_paid/balance_due/payment_status from its
+    settled payments, invoice-linked or not.
+
+    ``balance_due`` uses ``Order.recalculate_totals``'s formula (store credit
+    and the non-mirrored coupon excess deducted), so ``check_money`` agrees
+    with it. A refunded or void payment status is left alone: refunds are
+    ``refund_payment``'s business.
+    """
+    from orders.models import Order as OrderModel
+
+    applied = _applied_total(order.payments.all())
+    order.amount_paid = applied
+    excess = max(
+        Decimal(order.coupon_discount or 0) - Decimal(order.discount_amount or 0), Decimal("0")
+    )
+    order.balance_due = (
+        Decimal(order.grand_total or 0) - applied
+        - Decimal(order.store_credit_amount or 0) - excess
+    ).quantize(Decimal("0.01"))
+    if order.payment_status not in (OrderModel.PaymentStatus.REFUNDED, OrderModel.PaymentStatus.VOID):
+        if applied > 0 and order.balance_due <= 0:
+            order.payment_status = OrderModel.PaymentStatus.PAID
+        elif applied > 0:
+            order.payment_status = OrderModel.PaymentStatus.PARTIAL
+        else:
+            order.payment_status = OrderModel.PaymentStatus.UNPAID
+    if (
+        order.payment_status == OrderModel.PaymentStatus.PAID
+        and order.status == OrderModel.Status.AWAITING_PAYMENT
+    ):
+        order.status = OrderModel.Status.AWAITING_FULFILLMENT
+    order.save(
+        update_fields=[
+            "payment_status", "amount_paid", "balance_due", "status", "updated_at",
+        ]
+    )
+
+
+def settle_payment_documents(payment, *, previous_invoice=None) -> None:
+    """Re-settle every document ``payment`` touches: its invoice (and the one
+    it was moved off, when given) and its order. The API's create/update path."""
+    invoices = {}
+    for invoice in (payment.invoice if payment.invoice_id else None, previous_invoice):
+        if invoice is not None:
+            invoices[invoice.pk] = invoice
+    for invoice in invoices.values():
+        invoice.refresh_from_db()
+        settle_invoice(invoice)
+    order = payment.order
+    order.refresh_from_db()
+    settle_order(order)
+
+
+def attach_order_deposits(invoice) -> int:
+    """Link the order's unapplied customer deposits to ``invoice``.
+
+    Called when an order is converted to its invoice: every settled payment of
+    the order that has no invoice and was posted to a deposit account
+    (``payments.posting.deposit_account_of``) is linked to the new invoice,
+    then invoice and order are re-settled. A payment posted to A/R (no deposit
+    account on the rule) is left as it was. Linking posts nothing while the
+    invoice is a draft; issuing it applies the deposits
+    (:func:`apply_invoice_deposits`). Returns how many payments were linked.
+    """
+    from .posting import deposit_account_of
+
+    linked = 0
+    candidates = invoice.order.payments.filter(
+        invoice__isnull=True,
+        payment_type=Payment.PaymentType.PAYMENT,
+        status__in=_SETTLED,
+    ).order_by("payment_date", "created_at")
+    for payment in candidates:
+        if deposit_account_of(payment) is None:
+            continue
+        payment.invoice = invoice
+        payment.save(update_fields=["invoice", "updated_at"])
+        linked += 1
+    if linked:
+        settle_invoice(invoice)
+        settle_order(invoice.order)
+    return linked
+
+
+def apply_invoice_deposits(invoice) -> None:
+    """Bring every deposit linked to ``invoice`` in line with its status
+    (``SalesInvoice.save`` calls this when the invoice is issued or voided),
+    then re-settle the invoice when anything moved."""
+    from .posting import sync_deposit_application
+
+    wrote = False
+    for payment in invoice.payments.filter(payment_type=Payment.PaymentType.PAYMENT):
+        payment.invoice = invoice
+        wrote = sync_deposit_application(payment) or wrote
+    if wrote:
+        settle_invoice(invoice)
+
+
 def charge_with_idempotency(
     *,
     gateway_id: str,
@@ -153,6 +292,9 @@ def charge_with_idempotency(
         )
         if invoice is not None:
             _settle_invoice_and_order(invoice, order)
+        else:
+            # A prepayment on the order (no invoice yet) still pays the order.
+            settle_order(order)
         return payment
 
 

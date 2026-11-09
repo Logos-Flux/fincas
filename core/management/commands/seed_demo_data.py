@@ -331,6 +331,7 @@ class Command(BaseCommand):
             ("6010", "Freight & Shipping Expense", Account.AccountType.EXPENSE, Account.AccountSubType.SHIPPING_EXPENSE),
             ("1490", "Suspense / Clearing", Account.AccountType.ASSET, Account.AccountSubType.OTHER_CURRENT_ASSET),
             ("2040", "Sales Tax Payable", Account.AccountType.LIABILITY, Account.AccountSubType.SALES_TAX_PAYABLE),
+            ("2050", "Customer Deposits", Account.AccountType.LIABILITY, Account.AccountSubType.OTHER_CURRENT_LIABILITY),
             ("3020", "Opening Balance Equity", Account.AccountType.EQUITY, Account.AccountSubType.OPENING_BALANCE_EQUITY),
             ("4030", "Discounts Given", Account.AccountType.INCOME, Account.AccountSubType.DISCOUNTS_REFUNDS),
             ("4040", "Shipping Income", Account.AccountType.INCOME, Account.AccountSubType.SHIPPING_INCOME),
@@ -378,6 +379,9 @@ class Command(BaseCommand):
             receivable_account=by_number["1200"],
             cash_account=by_number["1010"],
             fee_account=by_number["6020"],
+            # Prepayments on orders with no invoice yet are customer deposits
+            # until the invoice is issued (0.4.4).
+            deposit_account=by_number["2050"],
         )
         _rule(
             DocumentPostingRule.DocType.REFUND,

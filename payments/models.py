@@ -170,13 +170,14 @@ class Payment(BaseModel):
             self.payment_number = DocumentSequence.get_next_number(
                 self.company or self.order.company, Payment, "payment_number", "PAY"
             )
-        previous = (
+        previous_row = (
             Payment.objects.filter(pk=self.pk)
-            .values_list("status", flat=True)
+            .values_list("status", "invoice_id")
             .first()
             if self.pk
             else None
         )
+        previous = previous_row[0] if previous_row else None
         settled = (self.Status.CAPTURED, self.Status.SETTLED)
         # Post BEFORE the doc save (see SalesInvoice.save): idempotent, so a
         # doc-save failure self-heals on retry while a post failure blocks loudly.
@@ -215,6 +216,16 @@ class Payment(BaseModel):
             except JournalEntry.DoesNotExist:
                 pass  # voided before ever settling: nothing to reverse
         super().save(*args, **kwargs)
+        # Customer deposits (0.4.4): an existing payment whose invoice link or
+        # status changed may have to move its deposit to A/R, or back. New
+        # rows need nothing: a payment that settles with no invoice stays in
+        # deposits, and one with an invoice posted to A/R directly.
+        if previous_row is not None and (
+            previous_row[1] != self.invoice_id or previous != self.status
+        ):
+            from .posting import sync_deposit_application
+
+            sync_deposit_application(self)
         self._emit_lifecycle(previous)
 
     def _emit_lifecycle(self, previous):

@@ -205,6 +205,53 @@ reconciliation page's Cash row sums the GL across every account the rule and
 the overrides name. Golden does not post the payout itself (holding account →
 bank); that is a deposit entry, recorded when the bank shows it.
 
+### Customer deposits (prepayments before the invoice), from 0.4.4
+
+A storefront card sale is paid before there is an invoice: the invoice is
+issued at shipment, and that is when revenue is recognized. Without help the
+payment credits A/R with nothing to offset it, so A/R goes negative and stays
+that way. Name a liability as the payment rule's **deposit account** and a
+payment with no invoice is a customer deposit instead:
+
+```bash
+python manage.py posting_rules set --doc-type payment --deposit "Customer Deposits"
+python manage.py posting_rules set-provider --provider stripe --cash "Stripe clearing"
+python manage.py posting_rules set --doc-type payment --no-deposit   # back to A/R
+```
+
+| Event | Debit | Credit |
+|---|---|---|
+| Payment captured, no invoice | processor clearing (the provider override's cash account, else the rule's) and the fee account | deposit account (gross) |
+| Order converted to its invoice | nothing: the order's held deposits are linked to the draft invoice | |
+| Invoice issued (leaves draft) | A/R | revenue, tax, shipping (the sales-invoice rule, unchanged) |
+| Same moment, per linked deposit | deposit account | A/R (`deposit_application` entry) |
+| Payout reaches the bank | bank | processor clearing: not posted by Fincas (bank reconciliation) |
+
+- **The deposit account must be a liability** in the rule's company, and only
+  the payment rule takes one. With none set, every payment credits A/R exactly
+  as before 0.4.4 and nothing below posts.
+- **A payment that has an invoice when it settles** (a payment link, the
+  back office's Record payment) still credits A/R directly.
+- **Application is whole-payment**: a deposit applies its gross amount, less
+  any refunds that already came out of deposits, to the one invoice it is
+  linked to. An overpayment leaves a credit on A/R, the same as a payment
+  recorded against the invoice; a payment linked to no issued invoice stays
+  in deposits. `convert_order_to_invoice` links every held deposit of the
+  order to the invoice it creates (an order has one invoice from conversion);
+  link a deposit to another invoice by setting `Payment.invoice`.
+- **Each application is its own entry**, posting key
+  `deposit_application:<payment>:<invoice>:<n>`, with `n` counting this
+  payment's applications so a payment unlinked and linked again gets a fresh,
+  still idempotent key. It is never edited: voiding the invoice, voiding the
+  payment, or moving it to another invoice reverses it
+  (`system:reversal:<key>`) and, where it still applies, posts the next one.
+- **Refunds follow the money**: a refund of a deposit that has not been applied
+  debits the deposit account; once applied, it debits A/R.
+- `check_money` reports `deposit_overapplied` when a deposit account has a
+  debit balance (more applied or refunded than received).
+- Known limit: a deposit refunded *after* it was applied and then unlinked is
+  reversed at its full applied amount, so the refund stays on A/R.
+
 ## Not in this app (yet)
 
 Auto-posting journal entries from `Order` / `Payment` / `PurchaseOrder` signals

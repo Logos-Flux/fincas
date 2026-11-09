@@ -1258,6 +1258,7 @@ class SalesInvoice(BaseModel):
         # Post BEFORE the doc save: posting is idempotent, so a doc-save
         # failure self-heals on retry, while a post failure blocks the
         # status change loudly instead of leaving a saved-but-unposted doc.
+        issued_now = voided_now = False
         if self.status not in (
             self.Status.DRAFT,
             self.Status.VOID,
@@ -1266,6 +1267,7 @@ class SalesInvoice(BaseModel):
             from .posting import post_sales_invoice
 
             post_sales_invoice(self)
+            issued_now = True
         elif self.status in (self.Status.VOID, self.Status.CANCELLED) and (
             previous not in (None, self.Status.VOID, self.Status.CANCELLED)
         ):
@@ -1277,7 +1279,14 @@ class SalesInvoice(BaseModel):
                 reverse_sales_invoice(self)
             except JournalEntry.DoesNotExist:
                 pass  # voided before ever leaving DRAFT: nothing to reverse
+            voided_now = previous != self.Status.DRAFT
         super().save(*args, **kwargs)
+        if (issued_now and previous is not None) or voided_now:
+            # Customer deposits linked to this invoice move to A/R when it is
+            # issued and back to deposits when it is voided (0.4.4).
+            from payments.services import apply_invoice_deposits
+
+            apply_invoice_deposits(self)
 
     def recalculate_totals(self):
         """Re-snapshot financials from the parent Order.

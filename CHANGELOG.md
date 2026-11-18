@@ -7,6 +7,51 @@ All notable changes to Fincas are listed here. The format follows
 [docs/releases/](docs/releases/): what to do before upgrading, behavior
 changes, known limitations and the migration list.
 
+## 0.4.6
+
+The assistant can work an order's fulfilment: default vendors, split
+shipments, a drop-ship purchase order for one shipment, and pick tickets. No
+migration. v0.4.5 plus this change; the dependency ranges are unchanged
+(Django 6.0, mcp 1). Full notes: [docs/releases/v0.4.6.md](docs/releases/v0.4.6.md).
+
+### Added
+
+- **The assistant can work an order's fulfilment.** New `erp_assist` tools
+  for the default vendor of an item (`get_default_supplier`,
+  `set_default_supplier`, `list_supplier_products`, `update_supplier_product`),
+  split shipments (`list_shipment_groups`, `create_shipment_group`,
+  `update_shipment_group`, `move_order_lines`), a draft drop-ship purchase
+  order for one shipment (`create_purchase_order_for_shipment`, which refuses
+  a second PO for the same shipment) and pick tickets (`list_pick_tickets`,
+  `get_pick_ticket`, `create_pick_ticket`, `update_pick_ticket`).
+- `GET/POST/PATCH /api/v1/orders/shipment-groups/`: the shipments an order is
+  split into. An order's detail now lists them (`shipment_groups`). There is
+  no DELETE. `POST .../shipment-groups/<id>/move-lines/` moves order lines
+  into a shipment, all or none.
+- `POST /api/v1/fulfillment/pick-tickets/for-shipment/` finds or creates the
+  pick ticket for one shipment of an order, with its lines and bin locations:
+  the same ticket the order editor's button makes. In a service account's
+  contract it needs `view_pickticket`, `add_pickticket`, `add_pickticketline`,
+  `view_order` and `view_warehousestock`. The ticket's warehouse always
+  belongs to the order's company.
+- Filters: `shipment_group` on order lines; `order` and `shipment_group` on
+  purchase orders and pick tickets.
+- A service account holding `parties.view_party` and `customers.view_customer`
+  may call `parties/match/` (free-text customer and party lookup). It was
+  refused for every service account, so a restricted assistant key could not
+  resolve a customer by name.
+
+### Fixed
+
+- `POST /api/v1/fulfillment/pick-tickets/` no longer requires `ticket_number`:
+  it is assigned by the server when omitted.
+- The API refuses to move an order line into a shipment of another order, or
+  to move a line whose fulfilment has started (on a purchase order or pick
+  ticket, or shipped): the rules the order editor already applied.
+- An order line can no longer be moved to another order through the API.
+- A purchase order created or edited through the API can no longer point at
+  another company's sales order, shipment, supplier or warehouse.
+
 ## 0.4.5
 
 The assistant can create every document, and a service account's contract can

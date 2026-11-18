@@ -35,7 +35,13 @@ class SupplierViewSet(CompanyScopedViewSet):
 
 class PurchaseOrderViewSet(CompanyScopedViewSet):
     queryset = PurchaseOrder.objects.select_related("supplier", "company").prefetch_related("line_items")
-    filterset_fields = ["status", "po_type", "supplier", "company", "receiving_status"]
+    filterset_fields = ["status", "po_type", "supplier", "company", "receiving_status", "order", "shipment_group"]
+    # What a PO points at is its own company's (the company FK itself is
+    # policed by the base class).
+    parent_links = [
+        ("supplier", "company"), ("warehouse", "company"),
+        ("order", "company"), ("shipment_group", "order__company"),
+    ]
     search_fields = ["po_number", "supplier__company_name", "tracking_number"]
     ordering_fields = ["po_date", "grand_total"]
     # What each @action means for a service account's contract
@@ -140,7 +146,7 @@ class PurchaseOrderViewSet(CompanyScopedViewSet):
 class POLineItemViewSet(CompanyScopedViewSet):
     queryset = POLineItem.objects.select_related("purchase_order", "variant")
     serializer_class = POLineItemSerializer
-    filterset_fields = ["purchase_order", "receiving_status"]
+    filterset_fields = ["purchase_order", "receiving_status", "order_line_item"]
     search_fields = ["our_sku", "supplier_sku"]
     company_field = None
     parent_links = [("purchase_order", "company")]

@@ -40,6 +40,7 @@ QUOTE_LINES_URL = "/api/v1/orders/quote-lines/"
 ORDERS_URL = "/api/v1/orders/orders/"
 ORDER_LINES_URL = "/api/v1/orders/order-lines/"
 SUB_ORDERS_URL = "/api/v1/orders/sub-orders/"
+SHIPMENT_GROUPS_URL = "/api/v1/orders/shipment-groups/"
 SALES_INVOICES_URL = "/api/v1/orders/sales-invoices/"
 CUSTOMERS_URL = "/api/v1/customers/customers/"
 VARIANTS_URL = "/api/v1/products/variants/"
@@ -463,6 +464,109 @@ async def delete_order_line(client: ERPClient, line_id: str) -> dict[str, Any]:
     line = await get_order_line(client, line_id)
     await client.delete(f"{ORDER_LINES_URL}{line_id}/")
     return await client.post(f"{ORDERS_URL}{line['order']}/recalculate/", json={})
+
+
+# ---- Shipment groups (how an order is split to ship) -----------------------
+
+
+SHIPMENT_GROUP_WRITABLE = frozenset({
+    "name", "fulfillment_type", "warehouse", "supplier", "sort_order",
+})
+
+
+async def list_shipment_groups(client: ERPClient, order: str) -> list[dict[str, Any]]:
+    """An order's shipments, each with the order lines in it (``lines``)."""
+    groups = await client.list(SHIPMENT_GROUPS_URL, params={"order": order, "page_size": 100})
+    lines = await client.list(ORDER_LINES_URL, params={"order": order, "page_size": 100})
+    for group in groups:
+        group["lines"] = [
+            {
+                "id": line["id"], "sku": line.get("sku"), "item_name": line.get("item_name"),
+                "quantity": line.get("quantity"), "variant": line.get("variant"),
+                "fulfillment_status": line.get("fulfillment_status"),
+            }
+            for line in lines if str(line.get("shipment_group")) == str(group["id"])
+        ]
+    return groups
+
+
+async def move_order_lines(
+    client: ERPClient, shipment_group_id: str, line_ids: list[str]
+) -> list[dict[str, Any]]:
+    """Put order lines into a shipment of their order. Returns the order's shipments.
+
+    All or none, decided by the server in one step: a line on another order,
+    or one already on a purchase order or pick ticket (or shipped), stops the
+    whole move with the reason for each such line.
+    """
+    group = await client.post(
+        f"{SHIPMENT_GROUPS_URL}{shipment_group_id}/move-lines/", json={"lines": line_ids}
+    )
+    return await list_shipment_groups(client, str(group["order"]))
+
+
+async def create_shipment_group(
+    client: ERPClient,
+    *,
+    order: str,
+    fulfillment_type: str,
+    name: str | None = None,
+    warehouse: str | None = None,
+    supplier: str | None = None,
+    line_ids: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Split an order: add a shipment and move ``line_ids`` into it.
+
+    The lines move all or none. When a line cannot move (it is already on a
+    purchase order or pick ticket), the new shipment stays, empty, and the
+    error says so: shipments are never deleted.
+
+    ``fulfillment_type`` is ``internal`` (ships from ``warehouse`` on a pick
+    ticket) or ``drop_ship`` (bought from ``supplier`` on a purchase order).
+    Returns the order's shipments with their lines.
+    """
+    if fulfillment_type not in ("internal", "drop_ship"):
+        raise ERPValidationError(
+            "fulfillment_type is 'internal' (from our warehouse) or 'drop_ship' (from a supplier).",
+            details={"fulfillment_type": ["Not a valid choice."]},
+        )
+    existing = await client.list(SHIPMENT_GROUPS_URL, params={"order": order, "page_size": 100})
+    for line_id in line_ids or []:
+        line = await get_order_line(client, line_id)
+        if str(line.get("order")) != str(order):
+            raise ERPValidationError(
+                f"Line {line_id} is not on this order.",
+                details={"line_ids": ["Lines must belong to the order."]},
+            )
+    payload: dict[str, Any] = {
+        "order": order,
+        "fulfillment_type": fulfillment_type,
+        "name": name or f"Shipment {len(existing) + 1}",
+        "sort_order": len(existing),
+    }
+    if warehouse:
+        payload["warehouse"] = warehouse
+    if supplier:
+        payload["supplier"] = supplier
+    group = await client.post(SHIPMENT_GROUPS_URL, json=payload)
+    if line_ids:
+        try:
+            return await move_order_lines(client, group["id"], line_ids)
+        except ERPValidationError as exc:
+            raise ERPValidationError(
+                f"Shipment '{group['name']}' ({group['id']}) was added, but no line moved "
+                f"into it: {exc}",
+                details=exc.details,
+            ) from exc
+    return await list_shipment_groups(client, order)
+
+
+async def update_shipment_group(
+    client: ERPClient, shipment_group_id: str, fields: dict[str, Any]
+) -> dict[str, Any]:
+    """Patch a shipment (name, fulfillment_type, warehouse, supplier). Unknown fields raise."""
+    validate_fields(fields, SHIPMENT_GROUP_WRITABLE, "shipment")
+    return await client.patch(f"{SHIPMENT_GROUPS_URL}{shipment_group_id}/", json=fields)
 
 
 # ---- Sub-orders (shipments) ------------------------------------------------

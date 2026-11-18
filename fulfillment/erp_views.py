@@ -11,7 +11,7 @@ from core.views.list_view import ERPListView
 from core.views.mixins import ERPViewMixin
 
 from .forms import PickTicketForm, PickTicketLineFormSet
-from .models import PickTicket, PickTicketLine
+from .models import PickTicket
 
 # -- Pick Ticket List ------------------------------------------------------
 
@@ -234,93 +234,32 @@ class CreatePickTicketAjaxView(LoginRequiredMixin, View):
                 status=400,
             )
 
-        from inventory.models import WarehouseStock
-        from orders.models import Order, OrderLineItem
+        from inventory.models import Warehouse
+        from orders.models import Order, ShipmentGroup
+
+        from .services import PickTicketRefused, pick_ticket_for_shipment
 
         try:
             order = Order.objects.select_related("shipping_address").get(pk=order_id)
         except Order.DoesNotExist:
             return JsonResponse({"success": False, "error": "Order not found"}, status=404)
-
-        # If no warehouse provided, try to find a default
-        if not wh_id:
-            from inventory.models import Warehouse as WH
-            default_wh = WH.objects.filter(is_active=True).first()
-            if default_wh:
-                wh_id = default_wh.pk
-
-        # Find existing pick ticket for this combination
-        filter_kwargs = {"order_id": order_id, "shipment_group_id": sg_id}
+        group = ShipmentGroup.objects.filter(pk=sg_id).first()
+        if group is None:
+            return JsonResponse({"success": False, "error": "Shipment not found"}, status=404)
+        warehouse = None
         if wh_id:
-            filter_kwargs["warehouse_id"] = wh_id
-        existing = PickTicket.objects.filter(**filter_kwargs).first()
+            warehouse = Warehouse.objects.filter(pk=wh_id).first()
+            if warehouse is None:
+                return JsonResponse({"success": False, "error": "Warehouse not found"}, status=404)
 
-        if existing:
-            return JsonResponse({
-                "success": True,
-                "print_url": reverse("erp-pickticket-print", args=[existing.pk]),
-            })
-
-        # Build ship-to from order's shipping address
-        ship_to_address = ""
-        ship_to_label = ""
-        ship_to_attention = ""
-        if order.shipping_address:
-            a = order.shipping_address
-            ship_to_label = a.label or ""
-            ship_to_attention = " ".join(filter(None, [a.first_name, a.last_name]))
-            ship_to_address = "\n".join(filter(None, [
-                a.company_name,
-                a.address_line_1,
-                a.address_line_2,
-                f"{a.city}, {a.state_province} {a.postal_code}",
-            ]))
-
-        pt = PickTicket.objects.create(
-            order_id=order_id,
-            shipment_group_id=sg_id,
-            warehouse_id=wh_id or None,
-            ship_to_address=ship_to_address,
-            ship_to_label=ship_to_label,
-            ship_to_attention=ship_to_attention,
-        )
-
-        # Create line items from order lines in this shipment group
-        order_lines = list(
-            OrderLineItem.objects.filter(
-                order_id=order_id, shipment_group_id=sg_id,
-            ).select_related("variant")
-        )
-
-        # Look up bin locations for all variants in this warehouse
-        variant_ids = [li.variant_id for li in order_lines if li.variant_id]
-        bin_map = {}
-        if variant_ids and wh_id:
-            bin_map = dict(
-                WarehouseStock.objects.filter(
-                    warehouse_id=wh_id, variant_id__in=variant_ids,
-                ).values_list("variant_id", "bin_location")
-            )
-
-        pick_lines = []
-        for i, li in enumerate(order_lines):
-            pick_lines.append(PickTicketLine(
-                pick_ticket=pt,
-                order_line_item=li,
-                variant=li.variant,
-                item_name=li.item_name,
-                sku=li.sku,
-                quantity=li.quantity,
-                unit_cost=li.unit_cost or 0,
-                bin_location=bin_map.get(li.variant_id, ""),
-                sort_order=i,
-            ))
-        if pick_lines:
-            PickTicketLine.objects.bulk_create(pick_lines)
-
+        try:
+            # No warehouse named: the shipment's own, else the company's first active one.
+            ticket, _created = pick_ticket_for_shipment(order, group, warehouse)
+        except PickTicketRefused as exc:
+            return JsonResponse({"success": False, "error": exc.message}, status=400)
         return JsonResponse({
             "success": True,
-            "print_url": reverse("erp-pickticket-print", args=[pt.pk]),
+            "print_url": reverse("erp-pickticket-print", args=[ticket.pk]),
         })
 
 

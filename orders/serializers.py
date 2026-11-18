@@ -4,7 +4,16 @@ from rest_framework.exceptions import APIException
 from core.serializers import GuardedDocumentSerializer
 from crm.api_serializers import ScopedEngagement
 
-from .models import Order, OrderLineItem, Quote, QuoteLineItem, SalesInvoice, SubOrder
+from .line_locks import order_line_move_locks
+from .models import (
+    Order,
+    OrderLineItem,
+    Quote,
+    QuoteLineItem,
+    SalesInvoice,
+    ShipmentGroup,
+    SubOrder,
+)
 
 
 class QuoteLineItemSerializer(serializers.ModelSerializer):
@@ -142,6 +151,80 @@ class OrderLineItemSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ["id", "created_at", "updated_at"]
 
+    def validate(self, attrs):
+        """A line stays on its order, in one of that order's shipments, and a
+        started line stays in its shipment.
+
+        The rules the order editor applies (``orders.line_locks``): a purchase
+        order or pick ticket was built from the shipment the line was in, so
+        moving the line would leave them describing another one.
+        """
+        attrs = super().validate(attrs)
+        line = self.instance
+        if line is not None and "order" in attrs and attrs["order"].pk != line.order_id:
+            raise serializers.ValidationError({"order": "A line cannot move to another order."})
+        if "shipment_group" not in attrs:
+            return attrs
+        group = attrs["shipment_group"]
+        order = attrs.get("order") or getattr(line, "order", None)
+        if group is not None and (order is None or group.order_id != order.pk):
+            raise serializers.ValidationError(
+                {"shipment_group": "This shipment belongs to another order."}
+            )
+        if line is not None and line.shipment_group_id != getattr(group, "pk", None):
+            lock = order_line_move_locks(line.order).get(line.pk)
+            if lock:
+                raise serializers.ValidationError(
+                    {"shipment_group": f"This line cannot change shipment. {lock['reason']}"}
+                )
+        return attrs
+
+
+class ShipmentGroupSerializer(serializers.ModelSerializer):
+    """One shipment of an order: where its lines ship from.
+
+    ``fulfillment_type`` says how: ``internal`` ships from ``warehouse`` on a
+    pick ticket, ``drop_ship`` is bought from ``supplier`` on a purchase
+    order. The API covers an order's shipments; a quote's are planned in the
+    quote editor and copied to the order on conversion.
+    """
+
+    class Meta:
+        model = ShipmentGroup
+        fields = [
+            "id", "order", "name", "fulfillment_type", "warehouse", "supplier",
+            "sort_order", "created_at", "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+        extra_kwargs = {"order": {"required": True, "allow_null": False}}
+
+    def validate_order(self, order):
+        if self.instance is not None and self.instance.order_id != order.pk:
+            raise serializers.ValidationError("A shipment cannot move to another order.")
+        return order
+
+    def validate(self, attrs):
+        """A shipment's warehouse and supplier are the order's company's own.
+
+        Stricter than the viewset's parent check, which lets a company-less
+        row through: one with no company belongs to nobody (the order editor
+        drops such a supplier on save).
+        """
+        attrs = super().validate(attrs)
+        order = attrs.get("order") or getattr(self.instance, "order", None)
+        errors = {}
+        for field in ("warehouse", "supplier"):
+            source = attrs.get(field)
+            if source is not None and (order is None or source.company_id != order.company_id):
+                errors[field] = "Belongs to another company than the order."
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
+
+
+class MoveLinesSerializer(serializers.Serializer):
+    lines = serializers.ListField(child=serializers.UUIDField(), allow_empty=False)
+
 
 class SubOrderSerializer(GuardedDocumentSerializer):
     class Meta:
@@ -170,6 +253,7 @@ class OrderListSerializer(serializers.ModelSerializer):
 class OrderDetailSerializer(GuardedDocumentSerializer):
     line_items = OrderLineItemSerializer(many=True, read_only=True)
     sub_orders = SubOrderSerializer(many=True, read_only=True)
+    shipment_groups = ShipmentGroupSerializer(many=True, read_only=True)
     order_number = serializers.CharField(required=False, allow_blank=True, max_length=20)
 
     # Computed by Order.recalculate_totals() / the payment ledger — never

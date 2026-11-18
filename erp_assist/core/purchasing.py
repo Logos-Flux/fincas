@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from ._writable_fields import (
@@ -17,6 +18,9 @@ SUPPLIERS_URL = "/api/v1/purchasing/suppliers/"
 PURCHASE_ORDERS_URL = "/api/v1/purchasing/purchase-orders/"
 PO_LINES_URL = "/api/v1/purchasing/po-lines/"
 RECEIPTS_URL = "/api/v1/purchasing/receipts/"
+SUPPLIER_PRODUCTS_URL = "/api/v1/products/supplier-products/"
+ORDER_LINES_URL = "/api/v1/orders/order-lines/"
+SHIPMENT_GROUPS_URL = "/api/v1/orders/shipment-groups/"
 
 
 # ---- Suppliers -------------------------------------------------------------
@@ -129,13 +133,16 @@ async def list_purchase_orders(
     po_type: str | None = None,
     receiving_status: str | None = None,
     company: str | None = None,
+    order: str | None = None,
+    shipment_group: str | None = None,
     ordering: str | None = None,
     limit: int | None = 20,
 ) -> list[dict[str, Any]]:
     """List purchase orders.
 
     `search` matches po_number, supplier company_name, and tracking_number.
-    `ordering` examples: "-po_date", "-grand_total".
+    `order` / `shipment_group` find the POs raised for a sales order or one of
+    its shipments. `ordering` examples: "-po_date", "-grand_total".
     """
     params: dict[str, Any] = {"page_size": 100 if limit is None else min(limit, 100)}
     if search:
@@ -150,6 +157,10 @@ async def list_purchase_orders(
         params["receiving_status"] = receiving_status
     if company:
         params["company"] = company
+    if order:
+        params["order"] = order
+    if shipment_group:
+        params["shipment_group"] = shipment_group
     if ordering:
         params["ordering"] = ordering
     return await client.list(PURCHASE_ORDERS_URL, params=params, max_items=limit)
@@ -309,6 +320,138 @@ async def create_purchase_order(
     return po
 
 
+def _unit_cost(line_cost: Any, listing: dict[str, Any] | None) -> str:
+    """What one selling unit costs: the order line's cost, else the supplier's
+    listed cost divided by the units in its purchasing unit, else 0."""
+    try:
+        cost = Decimal(str(line_cost)) if line_cost not in (None, "") else Decimal(0)
+    except InvalidOperation:
+        cost = Decimal(0)
+    if cost == 0 and listing:
+        per = Decimal(str(listing.get("qty_per_uom") or 1))
+        cost = Decimal(str(listing.get("cost") or 0)) / (per if per > 0 else Decimal(1))
+    return str(cost.quantize(Decimal("0.0001")))
+
+
+async def create_purchase_order_for_shipment(
+    client: ERPClient,
+    *,
+    order: str,
+    shipment_group: str,
+    supplier: str | None = None,
+    requested_delivery_date: str | None = None,
+    vendor_notes: str | None = None,
+    internal_notes: str | None = None,
+) -> dict[str, Any]:
+    """Raise a draft drop-ship PO for one shipment of a sales order.
+
+    One PO line per order line in the shipment, linked back to it, at the
+    order line's unit cost (else the supplier's listed cost for the variant,
+    else 0). ``supplier`` defaults to the shipment's own. A line with no
+    catalog product cannot go on a PO: it is left off and named in
+    ``lines_not_carried``, as is a line already on another live PO. Refuses
+    when the shipment already has a PO with lines, so asking twice does not
+    order the goods twice (two calls at the very same moment still could:
+    the check is made here, not by the server).
+    """
+    group = await client.get(f"{SHIPMENT_GROUPS_URL}{shipment_group}/")
+    if str(group.get("order")) != str(order):
+        raise ERPValidationError(
+            "That shipment belongs to another order.",
+            details={"shipment_group": ["Shipment is not on this order."]},
+        )
+    supplier = supplier or group.get("supplier")
+    if not supplier:
+        raise ERPValidationError(
+            "The shipment has no supplier. Pass supplier, or set one on the shipment first.",
+            details={"supplier": ["This field is required."]},
+        )
+    if group.get("fulfillment_type") != "drop_ship":
+        raise ERPValidationError(
+            "This shipment ships from our warehouse (internal), so it gets a pick ticket, "
+            "not a purchase order. Change it to drop_ship first if a vendor ships it.",
+            details={"shipment_group": ["Shipment is not a drop ship."]},
+        )
+    reuse = None
+    for po in await list_purchase_orders(client, shipment_group=shipment_group, limit=None):
+        if po.get("status") == "cancelled":
+            continue
+        detail = await get_purchase_order(client, str(po["id"]))
+        if detail.get("line_items") or detail.get("status") != "draft":
+            raise ERPValidationError(
+                f"This shipment already has purchase order {detail.get('po_number')}. "
+                "Add lines to it instead.",
+                details={"shipment_group": ["A purchase order already exists for this shipment."]},
+            )
+        reuse = detail  # an empty draft left by an interrupted attempt
+
+    order_lines = await client.list(
+        ORDER_LINES_URL, params={"order": order, "shipment_group": shipment_group, "page_size": 100},
+    )
+    listed = {
+        str(sp["variant"]): sp
+        for sp in await list_supplier_products(client, supplier=str(supplier), is_active=True, limit=None)
+    }
+    lines, not_carried = [], []
+    for line in order_lines:
+        skipped = {"order_line": line["id"], "sku": line.get("sku"), "item_name": line.get("item_name")}
+        if not line.get("variant"):
+            not_carried.append({**skipped, "reason": "No catalog product is linked to this line."})
+            continue
+        on_po = [
+            row for row in await client.list(
+                PO_LINES_URL, params={"order_line_item": line["id"], "page_size": 100}
+            )
+        ]
+        live = []
+        for row in on_po:
+            parent = await get_purchase_order(client, str(row["purchase_order"]))
+            if parent.get("status") != "cancelled":
+                live.append(parent.get("po_number"))
+        if live:
+            not_carried.append({
+                **skipped, "reason": f"Already on purchase order {', '.join(map(str, live))}.",
+            })
+            continue
+        sp = listed.get(str(line["variant"]))
+        po_line = {
+            "variant": line["variant"],
+            "order_line_item": line["id"],
+            "item_name": (line.get("item_name") or "")[:255] or None,
+            "our_sku": line.get("sku") or None,
+            "quantity_ordered": line.get("quantity"),
+            "unit_cost": _unit_cost(line.get("unit_cost"), sp),
+        }
+        if sp:
+            po_line["supplier_product"] = sp["id"]
+            po_line["supplier_sku"] = sp.get("supplier_sku") or None
+        lines.append(po_line)
+    if not lines:
+        raise ERPValidationError(
+            "No line in this shipment can go on a new purchase order.",
+            details={"line_items": not_carried},
+        )
+    if reuse is not None:
+        for po_line in lines:
+            payload = await _po_line_payload(client, po_line)
+            await client.post(PO_LINES_URL, json={**payload, "purchase_order": reuse["id"]})
+        po = await client.post(f"{PURCHASE_ORDERS_URL}{reuse['id']}/recalculate/", json={})
+    else:
+        po = await create_purchase_order(
+            client,
+            supplier=str(supplier),
+            line_items=lines,
+            po_type="drop_ship",
+            order=order,
+            requested_delivery_date=requested_delivery_date,
+            vendor_notes=vendor_notes,
+            internal_notes=internal_notes,
+            extra_fields={"shipment_group": shipment_group},
+        )
+    po["lines_not_carried"] = not_carried
+    return po
+
+
 async def create_po_line(
     client: ERPClient, po_id: str, line: dict[str, Any]
 ) -> dict[str, Any]:
@@ -454,3 +597,131 @@ async def update_receipt(
     """Patch fields on a receipt. Unknown fields raise."""
     validate_fields(fields, PO_RECEIPT_WRITABLE, "PO receipt")
     return await client.patch(f"{RECEIPTS_URL}{receipt_id}/", json=fields)
+
+
+# ---- Supplier products (who we buy a variant from) -------------------------
+
+
+SUPPLIER_PRODUCT_WRITABLE = frozenset({
+    "supplier_sku", "cost", "lead_time_days", "minimum_order_qty", "purchasing_uom",
+    "qty_per_uom", "shipping_location", "is_primary", "is_active", "last_quoted_at", "notes",
+})
+
+
+async def list_supplier_products(
+    client: ERPClient,
+    *,
+    variant: str | None = None,
+    supplier: str | None = None,
+    is_primary: bool | None = None,
+    is_active: bool | None = None,
+    search: str | None = None,
+    limit: int | None = 50,
+) -> list[dict[str, Any]]:
+    """List supplier products: which supplier sells which variant, and at what cost.
+
+    `search` matches our SKU and the supplier's SKU. `is_primary=True` keeps
+    the default vendor of each variant.
+    """
+    params: dict[str, Any] = {"page_size": 100 if limit is None else min(limit, 100)}
+    if variant:
+        params["variant"] = variant
+    if supplier:
+        params["supplier"] = supplier
+    if is_primary is not None:
+        params["is_primary"] = str(is_primary).lower()
+    if is_active is not None:
+        params["is_active"] = str(is_active).lower()
+    if search:
+        params["search"] = search
+    return await client.list(SUPPLIER_PRODUCTS_URL, params=params, max_items=limit)
+
+
+async def _with_supplier_names(client: ERPClient, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    names: dict[str, str] = {}
+    for row in rows:
+        key = str(row["supplier"])
+        if key not in names:
+            supplier = await get_supplier(client, key)
+            names[key] = supplier.get("display_name") or supplier.get("company_name") or ""
+        row["supplier_name"] = names[key]
+    return rows
+
+
+async def get_default_supplier(client: ERPClient, variant: str) -> dict[str, Any]:
+    """The default vendor for a variant, with every other supplier that lists it.
+
+    Returns ``{variant, default, candidates, message}``. ``default`` is the
+    active supplier product marked primary, or ``None`` when no supplier, or
+    more than one, is marked: never guess from ``candidates``, ask.
+    """
+    rows = await _with_supplier_names(
+        client, await list_supplier_products(client, variant=variant, is_active=True, limit=None)
+    )
+    primary = [row for row in rows if row.get("is_primary")]
+    if len(primary) == 1:
+        default, message = primary[0], f"Default vendor: {primary[0]['supplier_name']}."
+    elif not rows:
+        default, message = None, "No supplier lists this item. Ask who to buy it from."
+    elif not primary:
+        default, message = None, (
+            "No default vendor is set for this item. Ask which of the candidates to use, "
+            "then record it with set_default_supplier."
+        )
+    else:
+        default, message = None, (
+            f"{len(primary)} suppliers are marked as the default for this item. Ask which "
+            "one is right, then record it with set_default_supplier."
+        )
+    return {"variant": variant, "default": default, "candidates": rows, "message": message}
+
+
+async def set_default_supplier(
+    client: ERPClient,
+    *,
+    variant: str,
+    supplier: str,
+    cost: str | None = None,
+    supplier_sku: str | None = None,
+    lead_time_days: int | None = None,
+) -> dict[str, Any]:
+    """Record ``supplier`` as the default vendor for ``variant``.
+
+    Marks the supplier's listing for the variant as primary (creating it when
+    the supplier does not list the variant yet, which needs ``cost``) and
+    clears the mark on every other supplier's listing. Returns the same shape
+    as ``get_default_supplier``.
+    """
+    rows = await list_supplier_products(client, variant=variant, limit=None)
+    mine = next((row for row in rows if str(row["supplier"]) == str(supplier)), None)
+    fields = {
+        "cost": cost, "supplier_sku": supplier_sku, "lead_time_days": lead_time_days,
+    }
+    fields = {k: v for k, v in fields.items() if v is not None}
+    if mine is None:
+        if cost is None:
+            raise ERPValidationError(
+                "This supplier does not list the item yet: pass cost (what we pay per "
+                "purchasing unit) to add the listing.",
+                details={"cost": ["This field is required."]},
+            )
+        await client.post(SUPPLIER_PRODUCTS_URL, json={
+            "variant": variant, "supplier": supplier, "is_primary": True, "is_active": True, **fields,
+        })
+    else:
+        await client.patch(
+            f"{SUPPLIER_PRODUCTS_URL}{mine['id']}/",
+            json={"is_primary": True, "is_active": True, **fields},
+        )
+    for row in rows:
+        if row.get("is_primary") and str(row["supplier"]) != str(supplier):
+            await client.patch(f"{SUPPLIER_PRODUCTS_URL}{row['id']}/", json={"is_primary": False})
+    return await get_default_supplier(client, variant)
+
+
+async def update_supplier_product(
+    client: ERPClient, supplier_product_id: str, fields: dict[str, Any]
+) -> dict[str, Any]:
+    """Patch a supplier product (cost, supplier_sku, lead time). Unknown fields raise."""
+    validate_fields(fields, SUPPLIER_PRODUCT_WRITABLE, "supplier product")
+    return await client.patch(f"{SUPPLIER_PRODUCTS_URL}{supplier_product_id}/", json=fields)

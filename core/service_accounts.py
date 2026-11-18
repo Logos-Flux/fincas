@@ -274,14 +274,14 @@ def service_contract_allows(request, view) -> bool:
     ``update``/``partial_update`` / ``destroy`` need ``add_`` / ``change_`` /
     ``delete_``. A custom action needs the permissions its viewset declares
     for it (``action_permissions``) and is refused when it declares none;
-    views without a model are refused. Writes need a pinned company
+    views without a model are refused. A view that only ever reads, whatever
+    the method (a lookup that takes its query as a POST body), says so with
+    ``service_read_perms``: full ``app_label.view_<model>`` names, all of
+    which the account must hold. Writes need a pinned company
     (``--company``), except for the storefront, whose only write is the
     ``create`` of a guest order whatever its group holds: the old storefront
     contract, unchanged (it never reaches a custom action).
     """
-    model = _view_model(view)
-    if model is None:
-        return False
     user = request.user
     # has_perm() is True for everything on an active superuser, so a flagged
     # service account would escape its contract: refuse it instead (staff
@@ -291,6 +291,12 @@ def service_contract_allows(request, view) -> bool:
         or getattr(user, "is_superuser", False)
         or getattr(user, "is_staff", False)
     ):
+        return False
+    read_perms = getattr(view, "service_read_perms", None)
+    if read_perms:
+        return all(user.has_perm(perm) for perm in read_perms)
+    model = _view_model(view)
+    if model is None:
         return False
     app_label = model._meta.app_label
     model_name = model._meta.model_name

@@ -358,6 +358,10 @@ class PartyMatchViewSet(viewsets.ViewSet):
     """
 
     permission_classes = [PrincipalPermission]
+    # POST is a read here too (the query travels in the body, out of the access
+    # log). The envelope answers with party and customer data, in the caller's
+    # own tenant: an account with no company matches nothing.
+    service_read_perms = ("parties.view_party", "customers.view_customer")
 
     @extend_schema(parameters=[MatchQuerySerializer], responses=MatchEnvelopeSerializer)
     def list(self, request):

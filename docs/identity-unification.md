@@ -310,6 +310,13 @@ admin lists keys read-only with a revoke action.
     `orders.add_salesinvoice`, `orders.view_salesinvoice` and
     `payments.change_payment` (it links the order's held deposits to the
     invoice and re-settles the order).
+  - a pick ticket's `for-shipment`: `fulfillment.view_pickticket`,
+    `fulfillment.add_pickticket`, `fulfillment.add_pickticketline`,
+    `orders.view_order` and `inventory.view_warehousestock` (it writes the
+    ticket and its lines from the order, and answers with the ticket, new or
+    existing, and the stock's bin locations).
+  - a shipment's `move-lines`: `orders.view_shipmentgroup`,
+    `orders.change_orderlineitem` and `orders.view_orderlineitem`.
 
   They need a pinned company like any write, and the storefront never
   reaches one. An action whose effect no model permission describes is not
@@ -320,6 +327,12 @@ admin lists keys read-only with a revoke action.
   `core/tests/test_service_action_contract.py` fails when a viewset's list
   and the matrix's copy (`CONTRACT_ACTIONS`) disagree, or when a listed
   action is reachable by GET.
+- **Reads by POST.** A view that only ever reads, whatever the method, names
+  the `view_` permissions it answers with in `service_read_perms`; an account
+  holding all of them may call it. `parties/match/` does (`parties.view_party`
+  and `customers.view_customer`): its query travels in the body, and it
+  matches inside the account's own company, so an unpinned account matches
+  nothing.
 - **Resolution.** `resolve_api_key` (shared by `APIKeyAuthentication` and
   `APIKeyMiddleware`; the middleware hands its result to the class so a
   request resolves once) refuses a revoked, expired or unknown `gk_` key

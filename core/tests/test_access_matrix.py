@@ -211,7 +211,15 @@ def seed(company, customer_a, customer_b) -> dict:
     from documents.models import ProductDocument
     from fulfillment.models import PickTicket, PickTicketLine
     from inventory.models import Warehouse, WarehouseStock
-    from orders.models import Order, OrderLineItem, Quote, QuoteLineItem, SalesInvoice, SubOrder
+    from orders.models import (
+        Order,
+        OrderLineItem,
+        Quote,
+        QuoteLineItem,
+        SalesInvoice,
+        ShipmentGroup,
+        SubOrder,
+    )
     from parties.models import (
         ConsentRecord,
         Party,
@@ -318,6 +326,7 @@ def seed(company, customer_a, customer_b) -> dict:
     rows["orders.Order"] = order
     rows["orders.OrderLineItem"] = order.line_items.first()
     rows["orders.SubOrder"] = SubOrder.objects.create(order=order)
+    rows["orders.ShipmentGroup"] = ShipmentGroup.objects.create(order=order, name="Matrix shipment")
     rows["orders.Quote"] = quote
     rows["orders.QuoteLineItem"] = quote.line_items.first()
     rows["orders.SalesInvoice"] = rows["orders.SalesInvoice:a"]

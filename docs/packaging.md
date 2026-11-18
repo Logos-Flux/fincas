@@ -9,8 +9,8 @@ are called Fincas. Proof that the wheel works on its own: `make package-check`
 ## Installing from PyPI
 
 ```bash
-pip install "fincas==0.4.5"            # runtime
-pip install "fincas[prod]==0.4.5"      # plus uvicorn, gunicorn, sentry-sdk
+pip install "fincas==0.4.6"            # runtime
+pip install "fincas[prod]==0.4.6"      # plus uvicorn, gunicorn, sentry-sdk
 ```
 
 **Pin an exact version.** Fincas ships migrations with every release, and an

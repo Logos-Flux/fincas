@@ -173,6 +173,70 @@ class ServiceActionContractTests(TestCase):
         self.assertEqual(response.status_code, 404, response.content)
 
 
+LOOKUP_ROLES = ROLES + [
+    {"name": "lookup", "label": "Lookup", "kind": "service",
+     "permissions": ["parties.view_party", "customers.view_customer"]},
+    {"name": "half-lookup", "label": "Half lookup", "kind": "service",
+     "permissions": ["parties.view_party"]},
+]
+
+
+@override_settings(API_KEY="", GOLDEN_ROLES=LOOKUP_ROLES)
+class ReadOnlyViewContractTests(TestCase):
+    """``parties/match/`` is a read by POST: ``service_read_perms`` decides it."""
+
+    URL = "/api/v1/parties/match/"
+
+    def setUp(self):
+        self.company = Company.objects.create(name="Example Supply, Inc")
+        self.other = Company.objects.create(name="Other Tenant LLC")
+        self.mine = Customer.objects.create(
+            first_name="Ada", last_name="Lovelace", email="ada-match@example.com",
+            company=self.company,
+        )
+        Customer.objects.create(
+            first_name="Eve", last_name="Elsewhere", email="eve-match@example.com",
+            company=self.other,
+        )
+
+    def _api(self, name, role, *, pinned=True):
+        svc = ensure_service_account(name, [role], company=self.company if pinned else None)
+        _, raw = issue_api_key(svc, name=name)
+        return APIClient(HTTP_AUTHORIZATION=f"Api-Key {raw}")
+
+    def _match(self, api, email, **extra):
+        return api.post(self.URL, {"target": "customer", "email": email, **extra}, format="json")
+
+    def test_a_key_with_both_view_permissions_matches_in_its_own_tenant(self):
+        api = self._api("lookup", "lookup")
+        response = self._match(api, "ada-match@example.com")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["match_quality"], "exact")
+        self.assertEqual(api.get(self.URL, {"target": "customer", "q": "Ada"}).status_code, 200)
+        # Another tenant's customer is not there, and cannot be asked for.
+        self.assertEqual(self._match(api, "eve-match@example.com").json()["match_quality"], "none")
+        response = self._match(api, "eve-match@example.com", company=str(self.other.pk))
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_every_named_permission_is_needed(self):
+        for name, role in (("half", "half-lookup"), ("reader", "order-reader")):
+            with self.subTest(role=role):
+                response = self._match(self._api(name, role), "ada-match@example.com")
+                self.assertEqual(response.status_code, 403, response.content)
+
+    def test_an_unpinned_key_matches_nothing(self):
+        response = self._match(self._api("loose", "lookup", pinned=False), "ada-match@example.com")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["match_quality"], "none")
+
+    def test_a_flagged_service_account_is_still_refused(self):
+        svc = ensure_service_account("flagged", ["lookup"], company=self.company)
+        _, raw = issue_api_key(svc, name="flagged")
+        User.objects.filter(pk=svc.pk).update(is_superuser=True)
+        response = self._match(APIClient(HTTP_AUTHORIZATION=f"Api-Key {raw}"), "ada-match@example.com")
+        self.assertIn(response.status_code, (401, 403), response.content)
+
+
 class DeclarationTests(TestCase):
     """The viewsets' declarations and the matrix's own list say the same thing."""
 

@@ -18,6 +18,7 @@ from mcp.server.fastmcp import FastMCP
 from .core import ERPAmbiguousError, ERPClient, ERPError
 from .core import crm as crm_core
 from .core import customers as customers_core
+from .core import fulfillment as fulfillment_core
 from .core import inventory as inventory_core
 from .core import orders as orders_core
 from .core import parties as parties_core
@@ -2397,13 +2398,16 @@ async def list_purchase_orders(
     status: str | None = None,
     po_type: str | None = None,
     receiving_status: str | None = None,
+    order: str | None = None,
+    shipment_group: str | None = None,
     ordering: str | None = None,
     limit: int | None = 20,
 ) -> Any:
     """List purchase orders.
 
     `search` matches po_number, supplier company_name, and tracking_number.
-    `ordering`: "-po_date", "-grand_total".
+    `order` (sales order UUID) or `shipment_group` finds the POs raised for a
+    sales order or one of its shipments. `ordering`: "-po_date", "-grand_total".
     """
     return await _run(
         purchasing_core.list_purchase_orders,
@@ -2412,6 +2416,8 @@ async def list_purchase_orders(
         status=status,
         po_type=po_type,
         receiving_status=receiving_status,
+        order=order,
+        shipment_group=shipment_group,
         ordering=ordering,
         limit=limit,
     )
@@ -2646,6 +2652,256 @@ async def update_receipt(receipt_id: str, fields: dict[str, Any]) -> Any:
     """Patch fields on an existing receipt."""
     return await _run(
         purchasing_core.update_receipt, receipt_id=receipt_id, fields=fields
+    )
+
+
+# ========== FULFILMENT: VENDORS, SHIPMENTS, PICK TICKETS ====================
+
+
+@mcp.tool()
+async def get_default_supplier(variant: str) -> Any:
+    """Who we buy an item from: the default vendor for a variant.
+
+    Args:
+        variant: ProductVariant UUID (find it with `find_product` or `get_variant`).
+
+    Returns `{variant, default, candidates, message}`. `default` is the
+    supplier listing marked primary (supplier, supplier_name, supplier_sku,
+    cost, lead_time_days), or null when none or several are marked.
+    `candidates` is every active supplier that lists the item. When `default`
+    is null, ask the user which supplier to use: never pick from `candidates`
+    yourself. Once they answer, record it with `set_default_supplier`.
+    """
+    return await _run(purchasing_core.get_default_supplier, variant=variant)
+
+
+@mcp.tool()
+async def set_default_supplier(
+    variant: str,
+    supplier: str,
+    cost: str | None = None,
+    supplier_sku: str | None = None,
+    lead_time_days: int | None = None,
+) -> Any:
+    """Record a supplier as the default vendor for an item.
+
+    Marks that supplier's listing for the variant as primary and clears the
+    mark on every other supplier's. When the supplier does not list the item
+    yet, `cost` (what we pay per purchasing unit) is required to add the
+    listing. `supplier_sku` and `lead_time_days` are optional. Only call this
+    after the user has named the vendor.
+    """
+    return await _run(
+        purchasing_core.set_default_supplier,
+        variant=variant,
+        supplier=supplier,
+        cost=cost,
+        supplier_sku=supplier_sku,
+        lead_time_days=lead_time_days,
+    )
+
+
+@mcp.tool()
+async def list_supplier_products(
+    variant: str | None = None,
+    supplier: str | None = None,
+    is_primary: bool | None = None,
+    is_active: bool | None = None,
+    search: str | None = None,
+    limit: int | None = 50,
+) -> Any:
+    """List supplier products: which supplier sells which variant, the
+    supplier's SKU, our cost and lead time. Filter by `variant` or `supplier`
+    UUID; `search` matches our SKU and the supplier's SKU."""
+    return await _run(
+        purchasing_core.list_supplier_products,
+        variant=variant,
+        supplier=supplier,
+        is_primary=is_primary,
+        is_active=is_active,
+        search=search,
+        limit=limit,
+    )
+
+
+@mcp.tool()
+async def update_supplier_product(supplier_product_id: str, fields: dict[str, Any]) -> Any:
+    """Patch a supplier product: cost, supplier_sku, lead_time_days,
+    minimum_order_qty, notes, is_active. To change the default vendor use
+    `set_default_supplier`, which keeps a single primary."""
+    return await _run(
+        purchasing_core.update_supplier_product,
+        supplier_product_id=supplier_product_id,
+        fields=fields,
+    )
+
+
+@mcp.tool()
+async def list_shipment_groups(order: str) -> Any:
+    """How an order is split to ship: its shipments, each with its lines.
+
+    Every order starts with one shipment holding all its lines. A shipment has
+    a `fulfillment_type`: "internal" (ships from `warehouse`, on a pick ticket)
+    or "drop_ship" (bought from `supplier`, on a purchase order). `lines` are
+    the order lines in it (id, sku, item_name, quantity).
+    """
+    return await _run(orders_core.list_shipment_groups, order=order)
+
+
+@mcp.tool()
+async def create_shipment_group(
+    order: str,
+    fulfillment_type: str,
+    name: str | None = None,
+    warehouse: str | None = None,
+    supplier: str | None = None,
+    line_ids: list[str] | None = None,
+) -> Any:
+    """Split an order: add a shipment and move order lines into it.
+
+    Use when an order's items ship from different places (some from our
+    warehouse, some from a vendor, or from two vendors).
+
+    Args:
+        order: Order UUID.
+        fulfillment_type: "internal" (from our warehouse) or "drop_ship"
+                (from a supplier).
+        name: Label, e.g. "Warehouse" or the vendor name. Defaults to
+                "Shipment N".
+        warehouse: Warehouse UUID, for an internal shipment.
+        supplier: Supplier UUID, for a drop ship.
+        line_ids: Order line UUIDs to move into the new shipment, all or
+                none. If one is already on a purchase order or pick ticket,
+                none moves and the new shipment is left in place, empty: say
+                so, and reuse it rather than adding another.
+
+    Returns the order's shipments with their lines.
+    """
+    return await _run(
+        orders_core.create_shipment_group,
+        order=order,
+        fulfillment_type=fulfillment_type,
+        name=name,
+        warehouse=warehouse,
+        supplier=supplier,
+        line_ids=line_ids,
+    )
+
+
+@mcp.tool()
+async def update_shipment_group(shipment_group_id: str, fields: dict[str, Any]) -> Any:
+    """Patch a shipment: name, fulfillment_type ("internal" or "drop_ship"),
+    warehouse, supplier, sort_order."""
+    return await _run(
+        orders_core.update_shipment_group,
+        shipment_group_id=shipment_group_id,
+        fields=fields,
+    )
+
+
+@mcp.tool()
+async def move_order_lines(shipment_group_id: str, line_ids: list[str]) -> Any:
+    """Move order lines into another shipment of the same order.
+
+    All or none: if any line has started fulfilment (on a purchase order or
+    pick ticket, or shipped) nothing moves and the reason for each such line
+    comes back. Returns the order's shipments with their lines.
+    """
+    return await _run(
+        orders_core.move_order_lines,
+        shipment_group_id=shipment_group_id,
+        line_ids=line_ids,
+    )
+
+
+@mcp.tool()
+async def create_purchase_order_for_shipment(
+    order: str,
+    shipment_group: str,
+    supplier: str | None = None,
+    requested_delivery_date: str | None = None,
+    vendor_notes: str | None = None,
+    internal_notes: str | None = None,
+) -> Any:
+    """Raise a draft drop-ship purchase order for one shipment of a sales order.
+
+    Carries every line of the shipment onto the PO, linked to its order line,
+    at the order line's unit cost (else the supplier's listed cost). `supplier`
+    defaults to the shipment's supplier. The shipment must be a "drop_ship".
+    Lines with no catalog product, or already on another PO, are left off and
+    come back in `lines_not_carried`: tell the user. Refuses if the shipment
+    already has a PO with lines. The PO stays in draft: a person reviews and
+    sends it.
+    """
+    return await _run(
+        purchasing_core.create_purchase_order_for_shipment,
+        order=order,
+        shipment_group=shipment_group,
+        supplier=supplier,
+        requested_delivery_date=requested_delivery_date,
+        vendor_notes=vendor_notes,
+        internal_notes=internal_notes,
+    )
+
+
+@mcp.tool()
+async def list_pick_tickets(
+    order: str | None = None,
+    shipment_group: str | None = None,
+    status: str | None = None,
+    warehouse: str | None = None,
+    search: str | None = None,
+    limit: int | None = 20,
+) -> Any:
+    """List pick tickets, newest first.
+
+    `status`: created, assigned, picking, picked, packing, packed, shipped.
+    `order` is a sales order UUID. `search` matches the ticket number (PT-00012).
+    """
+    return await _run(
+        fulfillment_core.list_pick_tickets,
+        order=order,
+        shipment_group=shipment_group,
+        status=status,
+        warehouse=warehouse,
+        search=search,
+        limit=limit,
+    )
+
+
+@mcp.tool()
+async def get_pick_ticket(pick_ticket_id: str) -> Any:
+    """Fetch a pick ticket with its lines (sku, item, quantity, bin location)."""
+    return await _run(fulfillment_core.get_pick_ticket, pick_ticket_id=pick_ticket_id)
+
+
+@mcp.tool()
+async def create_pick_ticket(
+    order: str, shipment_group: str, warehouse: str | None = None
+) -> Any:
+    """Create the pick ticket for one shipment of an order.
+
+    The ticket gets the order's ship-to address and one line per order line in
+    the shipment, with bin locations. `warehouse` defaults to the shipment's
+    own. One ticket per shipment: asking again returns the existing ticket
+    with `already_existed` true and changes nothing. The shipment must be
+    "internal" (ships from our warehouse); a drop ship gets a purchase order.
+    """
+    return await _run(
+        fulfillment_core.create_pick_ticket,
+        order=order,
+        shipment_group=shipment_group,
+        warehouse=warehouse,
+    )
+
+
+@mcp.tool()
+async def update_pick_ticket(pick_ticket_id: str, fields: dict[str, Any]) -> Any:
+    """Patch a pick ticket: notes, assigned_to, ship_to_address, ship_to_label,
+    ship_to_attention. A `status` key moves it one step along created,
+    assigned, picking, picked, packing, packed, shipped (shipped is final)."""
+    return await _run(
+        fulfillment_core.update_pick_ticket, pick_ticket_id=pick_ticket_id, fields=fields
     )
 
 

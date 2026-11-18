@@ -7,6 +7,7 @@ from .views import (
     QuoteLineItemViewSet,
     QuoteViewSet,
     SalesInvoiceViewSet,
+    ShipmentGroupViewSet,
     SubOrderViewSet,
     sales_invoice_by_token,
     sales_invoice_reconcile,
@@ -17,6 +18,7 @@ router.register("quotes", QuoteViewSet)
 router.register("quote-lines", QuoteLineItemViewSet)
 router.register("orders", OrderViewSet)
 router.register("order-lines", OrderLineItemViewSet)
+router.register("shipment-groups", ShipmentGroupViewSet)
 router.register("sub-orders", SubOrderViewSet)
 router.register("sales-invoices", SalesInvoiceViewSet)
 

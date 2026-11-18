@@ -58,6 +58,7 @@ def _all_viewsets():
         QuoteLineItemViewSet,
         QuoteViewSet,
         SalesInvoiceViewSet,
+        ShipmentGroupViewSet,
         SubOrderViewSet,
     )
     from parties.views import (
@@ -103,7 +104,7 @@ def _all_viewsets():
         ProductDocumentViewSet, PickTicketLineViewSet, PickTicketViewSet,
         WarehouseStockViewSet, WarehouseViewSet, OrderLineItemViewSet,
         OrderViewSet, QuoteLineItemViewSet, QuoteViewSet, SalesInvoiceViewSet,
-        SubOrderViewSet, PaymentViewSet, PriceListItemViewSet, PriceListViewSet,
+        SubOrderViewSet, ShipmentGroupViewSet, PaymentViewSet, PriceListItemViewSet, PriceListViewSet,
         TaxRateViewSet, BrandViewSet, CategoryViewSet, ProductOptionValueViewSet,
         ProductOptionViewSet, ProductVariantViewSet, ProductViewSet,
         SupplierProductViewSet, VariantOptionValueViewSet, POReceiptViewSet,

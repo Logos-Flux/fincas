@@ -120,11 +120,18 @@ CONTRACT_ACTIONS = {
         "orders.view_salesinvoice", "payments.change_payment",
     ),
     ("orders.SubOrder", "transition"): ("orders.change_suborder", "orders.change_order"),
+    ("orders.ShipmentGroup", "move_lines"): (
+        "orders.view_shipmentgroup", "orders.change_orderlineitem", "orders.view_orderlineitem",
+    ),
     ("orders.SalesInvoice", "recalculate"): ("orders.change_salesinvoice",),
     ("purchasing.PurchaseOrder", "transition"): ("purchasing.change_purchaseorder",),
     ("purchasing.PurchaseOrder", "recalculate"): ("purchasing.change_purchaseorder",),
     ("purchasing.PurchaseOrder", "duplicate"): ("purchasing.view_purchaseorder", "purchasing.add_purchaseorder"),
     ("fulfillment.PickTicket", "transition"): ("fulfillment.change_pickticket",),
+    ("fulfillment.PickTicket", "for_shipment"): (
+        "fulfillment.view_pickticket", "fulfillment.add_pickticket",
+        "fulfillment.add_pickticketline", "orders.view_order", "inventory.view_warehousestock",
+    ),
 }
 
 # --- 2. per-model overrides ----------------------------------------------------
@@ -170,6 +177,7 @@ MODEL_OVERRIDES = {
     "orders.Order": {"row": "seed"},
     "orders.OrderLineItem": {"row": "seed"},
     "orders.SubOrder": {"row": "seed"},
+    "orders.ShipmentGroup": {"row": "seed"},
     "orders.SalesInvoice": {"row": "seed"},
     "payments.Payment": {"row": "seed"},
     # purchasing / fulfillment / inventory / pricing

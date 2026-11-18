@@ -23,6 +23,7 @@ from core.views import CompanyScopedViewSet
 from . import guest_checkout
 from .convert import convert_order_to_invoice, convert_quote_to_order
 from .duplicate import duplicate_order, duplicate_quote
+from .line_locks import order_line_move_locks
 from .models import (
     Order,
     OrderLineItem,
@@ -38,6 +39,7 @@ from .serializers import (
     GuestCheckoutErrorSerializer,
     GuestCheckoutSerializer,
     GuestOrderConfirmationSerializer,
+    MoveLinesSerializer,
     OrderDetailSerializer,
     OrderLineItemSerializer,
     OrderListSerializer,
@@ -46,6 +48,7 @@ from .serializers import (
     QuoteListSerializer,
     SalesInvoicePublicSerializer,
     SalesInvoiceSerializer,
+    ShipmentGroupSerializer,
     SubOrderSerializer,
 )
 
@@ -169,7 +172,7 @@ class QuoteLineItemViewSet(CompanyScopedViewSet):
 
 
 class OrderViewSet(CompanyScopedViewSet):
-    queryset = Order.objects.select_related("customer", "company").prefetch_related("line_items", "sub_orders")
+    queryset = Order.objects.select_related("customer", "company").prefetch_related("line_items", "sub_orders", "shipment_groups")
     filterset_fields = [
         "status", "payment_status", "fulfillment_status",
         "order_type", "company", "customer", "sales_rep",
@@ -564,7 +567,7 @@ class OrderViewSet(CompanyScopedViewSet):
 class OrderLineItemViewSet(CompanyScopedViewSet):
     queryset = OrderLineItem.objects.select_related("order", "variant", "sub_order")
     serializer_class = OrderLineItemSerializer
-    filterset_fields = ["order", "fulfillment_status", "sub_order"]
+    filterset_fields = ["order", "fulfillment_status", "sub_order", "shipment_group"]
     search_fields = ["sku", "item_name"]
     company_field = None
     parent_links = [("order", "company")]
@@ -573,6 +576,74 @@ class OrderLineItemViewSet(CompanyScopedViewSet):
         return scope_to_company(
             super().get_queryset(), self.request, "order__company"
         )
+
+
+class ShipmentGroupViewSet(CompanyScopedViewSet):
+    """``shipment-groups/``: the shipments an order is split into.
+
+    Each names where its lines ship from (a warehouse, or a supplier for a
+    drop ship); an order line joins one through its ``shipment_group``. No
+    DELETE: purchase orders and pick tickets point at the shipment they were
+    raised for, so an emptied shipment is left in place.
+    """
+
+    queryset = ShipmentGroup.objects.filter(order__isnull=False).select_related(
+        "order", "warehouse", "supplier"
+    )
+    serializer_class = ShipmentGroupSerializer
+    filterset_fields = ["order", "fulfillment_type", "warehouse", "supplier"]
+    ordering_fields = ["sort_order", "name"]
+    http_method_names = ["get", "post", "patch", "head", "options"]
+    # move_lines changes order lines and answers with the shipment.
+    service_action_perms = {
+        "move_lines": ("view", "orders.change_orderlineitem", "orders.view_orderlineitem"),
+    }
+    company_field = None
+    parent_links = [("order", "company"), ("warehouse", "company"), ("supplier", "company")]
+
+    def get_queryset(self):
+        return scope_to_company(
+            super().get_queryset(), self.request, "order__company"
+        )
+
+    @action(detail=True, methods=["post"], url_path="move-lines")
+    def move_lines(self, request, pk=None):
+        """Move order lines into this shipment, all or none.
+
+        Body: ``{"lines": [<order line uuid>, ...]}``. Every line must be on
+        this shipment's order, and none may have started fulfilment
+        (``orders.line_locks``): otherwise 400 with the reason per line under
+        ``lines`` and nothing moves. Answers with the shipment and ``moved``,
+        the ids that changed shipment.
+        """
+        group = self.get_object()
+        body = MoveLinesSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        wanted = list(dict.fromkeys(body.validated_data["lines"]))
+        with transaction.atomic():
+            lines = {
+                line.pk: line
+                for line in OrderLineItem.objects.select_for_update().filter(
+                    pk__in=wanted, order_id=group.order_id
+                )
+            }
+            locks = order_line_move_locks(group.order)
+            errors = {}
+            for line_id in wanted:
+                line = lines.get(line_id)
+                if line is None:
+                    errors[str(line_id)] = "Not a line of this shipment's order."
+                elif line.shipment_group_id != group.pk and line_id in locks:
+                    errors[str(line_id)] = locks[line_id]["reason"]
+            if errors:
+                raise DRFValidationError({"lines": errors})
+            moving = [pk for pk, line in lines.items() if line.shipment_group_id != group.pk]
+            OrderLineItem.objects.filter(pk__in=moving).update(
+                shipment_group=group, updated_at=timezone.now()
+            )
+        data = ShipmentGroupSerializer(group).data
+        data["moved"] = [str(pk) for pk in wanted if pk in moving]
+        return Response(data)
 
 
 class SubOrderViewSet(CompanyScopedViewSet):

@@ -28,8 +28,9 @@ How to read a spec string
     back-office access: a superuser, or a member of any ``staff=True`` role.
     On the API a service account is held to its role's declared model
     permissions instead (``view_`` / ``add_`` / ``change_`` / ``delete_``;
-    custom actions and model-less views are never in a contract; writes need
-    a pinned company, except the storefront identity, which may only ``add``):
+    a custom action only where ``CONTRACT_ACTIONS`` lists it; model-less views
+    are never in a contract; writes need a pinned company, except the
+    storefront identity, which may only ``create``):
     docs/identity-unification.md section 2.6 "As built: step 5".
 ``superuser``
     break-glass only (docs/roles.md "``is_superuser`` is independent").
@@ -95,6 +96,35 @@ ROLES_MD = {
 CONTRACT_VERBS = {
     "list": "view", "retrieve": "view", "export": "view",
     "create": "add", "update": "change", "partial_update": "change", "destroy": "delete",
+}
+
+#: Custom actions a service account's contract can cover, and the model
+#: permissions each needs (docs/identity-unification.md 2.6 "Custom actions").
+#: Every other writing @action is outside any contract. Written out here, not
+#: read from the viewsets' ``service_action_perms``:
+#: ``core/tests/test_service_action_contract.py`` fails when a viewset and this
+#: list disagree. (The matrix's own service principals hold none of these
+#: permissions, so the matrix alone shows only that they are refused.)
+CONTRACT_ACTIONS = {
+    ("orders.Quote", "transition"): ("orders.change_quote",),
+    ("orders.Quote", "recalculate"): ("orders.change_quote",),
+    ("orders.Quote", "duplicate"): ("orders.view_quote", "orders.add_quote"),
+    ("orders.Quote", "convert_to_order"): (
+        "orders.change_quote", "orders.add_order", "orders.view_order", "crm.change_engagement",
+    ),
+    ("orders.Order", "transition"): ("orders.change_order",),
+    ("orders.Order", "recalculate"): ("orders.change_order",),
+    ("orders.Order", "duplicate"): ("orders.view_order", "orders.add_order"),
+    ("orders.Order", "convert_to_invoice"): (
+        "orders.view_order", "orders.change_order", "orders.add_salesinvoice",
+        "orders.view_salesinvoice", "payments.change_payment",
+    ),
+    ("orders.SubOrder", "transition"): ("orders.change_suborder", "orders.change_order"),
+    ("orders.SalesInvoice", "recalculate"): ("orders.change_salesinvoice",),
+    ("purchasing.PurchaseOrder", "transition"): ("purchasing.change_purchaseorder",),
+    ("purchasing.PurchaseOrder", "recalculate"): ("purchasing.change_purchaseorder",),
+    ("purchasing.PurchaseOrder", "duplicate"): ("purchasing.view_purchaseorder", "purchasing.add_purchaseorder"),
+    ("fulfillment.PickTicket", "transition"): ("fulfillment.change_pickticket",),
 }
 
 # --- 2. per-model overrides ----------------------------------------------------

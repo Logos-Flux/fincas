@@ -155,7 +155,10 @@ def expected_outcome(spec: Spec, principal: Principal, *, surface: str,
         return DENIED
     verb = exp.CONTRACT_VERBS.get(action or "")
     if verb is None:
-        return DENIED
+        required = exp.CONTRACT_ACTIONS.get((model, action or ""))
+        if not required or principal.storefront or not principal.pinned:
+            return DENIED
+        return ALLOWED if set(required) <= declared_permissions(principal) else DENIED
     app_label, model_name = model.split(".")
     if f"{app_label}.{verb}_{model_name.lower()}" not in declared_permissions(principal):
         return DENIED

@@ -1,19 +1,24 @@
-"""Quotes, orders, line items, and sub-orders.
+"""Quotes, orders, invoices, line items, and sub-orders.
 
-SalesInvoice isn't exposed in the DRF API, so we skip it here. Writes are
-limited to note/misc updates and order confirmation — full order creation
-usually goes through the storefront checkout or quote→order conversion flow
-and shouldn't be done via natural-language tooling. Status changes go
-through the guarded ``POST .../transition/`` action (never a bare PATCH):
-the model's transition map decides what's legal and illegal moves return
-the DRF field-error envelope.
+Every document can be created here: a quote (``create_quote``), a sales
+order (``create_order``) and an invoice (``create_invoice``). A header is
+POSTed first, its lines are written one by one to the line endpoint (the
+detail serializers treat ``line_items`` as read-only), and ``recalculate``
+then derives the totals: totals are never caller-written.
 
-Quote → Order conversion IS a custom DRF action as of 2026-08-21:
-POST /api/v1/orders/quotes/{id}/convert-to-order/. It is idempotent — a
-quote that already converted returns its existing order with
-`created: false` rather than minting a duplicate — and it copies line
-items and shipment groups, so do NOT hand-build the Order and set its
-`quote` field, which is what this docstring used to advise.
+There is no standalone invoice: ``SalesInvoice.order`` is required, so
+``create_invoice`` creates the order and converts it.
+
+Status changes go through the guarded ``POST .../transition/`` action
+(never a bare PATCH): the model's transition map decides what's legal and
+illegal moves return the DRF field-error envelope. An invoice is the
+exception (it has no transition action); see ``update_invoice``.
+
+Quote → Order conversion is POST /api/v1/orders/quotes/{id}/convert-to-order/
+(``convert_quote_to_order``). It is idempotent — a quote that already
+converted returns its existing order with `created: false` rather than
+minting a duplicate — and it copies line items and shipment groups, so do
+NOT hand-build the Order and set its `quote` field.
 """
 
 from __future__ import annotations
@@ -27,7 +32,7 @@ from ._writable_fields import (
     SUB_ORDER_WRITABLE,
     validate_fields,
 )
-from .client import ERPClient
+from .client import ERPClient, ERPValidationError
 from .parties import TARGET_CUSTOMER, resolve_ref
 
 QUOTES_URL = "/api/v1/orders/quotes/"
@@ -36,6 +41,88 @@ ORDERS_URL = "/api/v1/orders/orders/"
 ORDER_LINES_URL = "/api/v1/orders/order-lines/"
 SUB_ORDERS_URL = "/api/v1/orders/sub-orders/"
 SALES_INVOICES_URL = "/api/v1/orders/sales-invoices/"
+CUSTOMERS_URL = "/api/v1/customers/customers/"
+VARIANTS_URL = "/api/v1/products/variants/"
+
+# SKU written on a line that names no catalog item and gives no SKU of its
+# own (freight, a service, a one-off). The column is required and non-blank.
+FREE_FORM_SKU = "MISC"
+
+# What a caller may send on a new order or quote line. `order` / `quote` is
+# set by the tool; totals are derived by recalculate.
+_LINE_INPUT = frozenset({
+    "variant", "item_name", "sku", "description", "item_type", "quantity",
+    "selling_uom", "unit_price_ex_tax", "list_price", "discount_percent",
+    "discount_amount", "unit_cost", "sort_order", "tax_rate", "price_list",
+    "metadata",
+})
+_ORDER_LINE_INPUT = _LINE_INPUT | {"requested_ship_date", "shipping_origin", "lead_time_days"}
+_QUOTE_LINE_INPUT = _LINE_INPUT | {
+    "is_optional", "is_alternative", "alternative_group", "line_notes",
+    "internal_line_notes", "estimated_ship_date",
+}
+
+INVOICE_WRITABLE = frozenset({
+    "status", "invoice_date", "due_date", "paid_date", "payment_terms",
+    "payment_instructions", "notes", "internal_notes", "metadata",
+})
+
+
+async def _line_payload(
+    client: ERPClient, line: dict[str, Any], allowed: frozenset[str], what: str
+) -> dict[str, Any]:
+    """Validate one caller-supplied line and fill what the catalog can supply.
+
+    A line either names a ``variant`` (UUID) or is free-form. For a variant
+    line, ``item_name``, ``sku`` and ``unit_price_ex_tax`` default from the
+    variant (sale price, else retail price); a free-form line must give
+    ``item_name`` and ``unit_price_ex_tax`` and gets ``FREE_FORM_SKU`` when it
+    names no SKU. ``quantity`` defaults to 1. Raises ERPValidationError before
+    anything is written, so a bad line never leaves a half-built document.
+    """
+    payload = {k: v for k, v in line.items() if v is not None}
+    if "notes" in payload and "line_notes" in allowed:
+        payload["line_notes"] = payload.pop("notes")
+    unknown = sorted(set(payload) - allowed)
+    if unknown:
+        raise ERPValidationError(
+            f"Unknown field(s) on {what}: {', '.join(unknown)}. "
+            f"Allowed: {', '.join(sorted(allowed))}.",
+            details={k: ["Unknown field."] for k in unknown},
+        )
+    payload.setdefault("quantity", 1)
+    if payload.get("variant"):
+        missing = [k for k in ("item_name", "sku", "unit_price_ex_tax") if k not in payload]
+        if missing:
+            variant = await client.get(f"{VARIANTS_URL}{payload['variant']}/")
+            price = variant.get("sale_price") or variant.get("retail_price")
+            defaults = {
+                "item_name": variant.get("name") or variant.get("sku"),
+                "sku": variant.get("sku"),
+                "unit_price_ex_tax": price,
+            }
+            for key in missing:
+                if defaults[key] is not None:
+                    payload[key] = defaults[key]
+    else:
+        payload.setdefault("sku", FREE_FORM_SKU)
+    still = [k for k in ("item_name", "unit_price_ex_tax") if payload.get(k) in (None, "")]
+    if still:
+        raise ERPValidationError(
+            f"{what} needs {' and '.join(still)}"
+            + ("" if payload.get("variant") else " (a line with no variant is free-form)")
+            + ".",
+            details={k: ["This field is required."] for k in still},
+        )
+    return payload
+
+
+async def _customer_company(client: ERPClient, customer_id: str) -> str | None:
+    """The customer's company, so a caller with no company of its own (the
+    legacy API key) still creates the document in the right tenant."""
+    customer = await client.get(f"{CUSTOMERS_URL}{customer_id}/")
+    company = customer.get("company")
+    return str(company) if company else None
 
 
 # ---- Orders ----------------------------------------------------------------
@@ -199,6 +286,128 @@ async def convert_order_to_invoice(client: ERPClient, order_id: str) -> dict[str
     )
 
 
+async def create_order(
+    client: ERPClient,
+    *,
+    customer: str,
+    line_items: list[dict[str, Any]] | None = None,
+    status: str | None = None,
+    billing_address: str | None = None,
+    shipping_address: str | None = None,
+    sales_rep: str | None = None,
+    price_list: str | None = None,
+    currency: str | None = None,
+    payment_terms: str | None = None,
+    customer_po_number: str | None = None,
+    requested_ship_date: str | None = None,
+    shipping_cost_ex_tax: str | None = None,
+    customer_message: str | None = None,
+    internal_notes: str | None = None,
+    idempotency_key: str | None = None,
+    extra_fields: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Create a sales order, with its lines, and return the refreshed detail.
+
+    The header is POSTed, each line goes to /order-lines/, then /recalculate/
+    derives line and order totals (a new line reads ``line_total_ex_tax: 0``
+    until then). Every line is validated before the header is written.
+
+    ``idempotency_key`` is stored as the order's ``external_id``, the key the
+    API dedups on: a retry with the same key gets the first order back and
+    its lines are not added a second time.
+
+    ``customer`` is a UUID, or free text resolved through the match envelope:
+    only an exact match proceeds (ERPAmbiguousError otherwise, nothing
+    written). ``order_number`` is server-assigned.
+    """
+    customer = await resolve_ref(client, customer, target=TARGET_CUSTOMER, what="customer")
+    lines = [
+        await _line_payload(client, line, _ORDER_LINE_INPUT, "order line")
+        for line in (line_items or [])
+    ]
+    payload: dict[str, Any] = {"customer": customer}
+    optional = {
+        "status": status,
+        "billing_address": billing_address,
+        "shipping_address": shipping_address,
+        "sales_rep": sales_rep,
+        "price_list": price_list,
+        "currency": currency,
+        "payment_terms": payment_terms,
+        "customer_po_number": customer_po_number,
+        "requested_ship_date": requested_ship_date,
+        "shipping_cost_ex_tax": shipping_cost_ex_tax,
+        "customer_message": customer_message,
+        "internal_notes": internal_notes,
+        "external_id": idempotency_key,
+    }
+    payload.update({k: v for k, v in optional.items() if v is not None})
+    if extra_fields:
+        validate_fields(extra_fields, ORDER_WRITABLE, "order")
+        payload.update(extra_fields)
+    if "company" not in payload:
+        company = await _customer_company(client, customer)
+        if company:
+            payload["company"] = company
+
+    order = await client.post(ORDERS_URL, json=payload)
+    order_id = order["id"]
+    if lines and not order.get("line_items"):
+        # An idempotent replay returns the first order, lines and all.
+        for line in lines:
+            await client.post(ORDER_LINES_URL, json={**line, "order": order_id})
+    if lines:
+        order = await client.post(f"{ORDERS_URL}{order_id}/recalculate/", json={})
+    return order
+
+
+async def create_invoice(
+    client: ERPClient,
+    *,
+    customer: str,
+    line_items: list[dict[str, Any]],
+    payment_terms: str | None = None,
+    due_date: str | None = None,
+    notes: str | None = None,
+    internal_notes: str | None = None,
+    idempotency_key: str | None = None,
+    order_fields: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Create a draft invoice for work that has no sales order yet.
+
+    An invoice always belongs to an order, so this creates the order
+    (``create_order``), converts it (``convert_order_to_invoice``) and, when
+    ``due_date`` / ``notes`` / ``internal_notes`` are given, patches them onto
+    the invoice. Returns ``{"order": <detail>, "invoice": <detail>}``. The
+    invoice stays in draft: moving it out of draft posts it to the ledger
+    (``update_invoice``). For an order that already exists, call
+    ``convert_order_to_invoice`` instead.
+    """
+    if not line_items:
+        raise ERPValidationError(
+            "An invoice needs at least one line item.",
+            details={"line_items": ["This field is required."]},
+        )
+    order = await create_order(
+        client,
+        customer=customer,
+        line_items=line_items,
+        payment_terms=payment_terms,
+        idempotency_key=idempotency_key,
+        extra_fields=order_fields,
+    )
+    converted = await convert_order_to_invoice(client, order["id"])
+    invoice = converted.get("invoice", converted)
+    patch = {
+        k: v
+        for k, v in {"due_date": due_date, "notes": notes, "internal_notes": internal_notes}.items()
+        if v is not None
+    }
+    if patch:
+        invoice = await client.patch(f"{SALES_INVOICES_URL}{invoice['id']}/", json=patch)
+    return {"order": await get_order(client, order["id"]), "invoice": invoice}
+
+
 # ---- Order line items ------------------------------------------------------
 
 
@@ -234,6 +443,26 @@ async def update_order_line(
     """Patch fields on an order line. Unknown fields raise."""
     validate_fields(fields, ORDER_LINE_WRITABLE, "order line")
     return await client.patch(f"{ORDER_LINES_URL}{line_id}/", json=fields)
+
+
+async def create_order_line(
+    client: ERPClient, order_id: str, line: dict[str, Any]
+) -> dict[str, Any]:
+    """Add one line to an existing order and recalculate. Returns the order.
+
+    ``line`` names a ``variant`` (item_name, sku and price default from it) or
+    is free-form (``item_name`` + ``unit_price_ex_tax``; freight, a service).
+    """
+    payload = await _line_payload(client, line, _ORDER_LINE_INPUT, "order line")
+    await client.post(ORDER_LINES_URL, json={**payload, "order": order_id})
+    return await client.post(f"{ORDERS_URL}{order_id}/recalculate/", json={})
+
+
+async def delete_order_line(client: ERPClient, line_id: str) -> dict[str, Any]:
+    """Delete one order line and recalculate its order. Returns the order."""
+    line = await get_order_line(client, line_id)
+    await client.delete(f"{ORDER_LINES_URL}{line_id}/")
+    return await client.post(f"{ORDERS_URL}{line['order']}/recalculate/", json={})
 
 
 # ---- Sub-orders (shipments) ------------------------------------------------
@@ -399,18 +628,27 @@ async def create_quote(
             payload[k] = v
     if extra_fields:
         payload.update(extra_fields)
+    if "company" not in payload:
+        # A caller with no company of its own (the legacy API key) is
+        # otherwise refused: `company` is required on the quote.
+        company = await _customer_company(client, customer)
+        if company:
+            payload["company"] = company
+
+    # Validate every line (and default name / SKU / price from its variant)
+    # before the quote exists, so a bad line never leaves an empty quote.
+    # Friendly alias: callers say "notes", the model field is line_notes.
+    lines = [
+        await _line_payload(client, line, _QUOTE_LINE_INPUT, "quote line")
+        for line in (line_items or [])
+    ]
 
     quote = await client.post(QUOTES_URL, json=payload)
 
-    if line_items:
+    if lines:
         quote_id = quote["id"]
-        for line in line_items:
-            line_payload = {k: v for k, v in line.items() if v is not None}
-            # Friendly alias: callers say "notes", model field is line_notes.
-            if "notes" in line_payload:
-                line_payload["line_notes"] = line_payload.pop("notes")
-            line_payload["quote"] = quote_id
-            await client.post(QUOTE_LINES_URL, json=line_payload)
+        for line_payload in lines:
+            await client.post(QUOTE_LINES_URL, json={**line_payload, "quote": quote_id})
         # Refresh totals from the line items we just inserted.
         quote = await client.post(
             f"{QUOTES_URL}{quote_id}/recalculate/", json={}
@@ -487,6 +725,32 @@ async def delete_quote(client: ERPClient, quote_id: str) -> dict[str, Any]:
     return {"deleted": True, "resource": "quote", "id": quote_id}
 
 
+async def convert_quote_to_order(client: ERPClient, quote_id: str) -> dict[str, Any]:
+    """Convert a quote to a sales order. Idempotent.
+
+    Calls POST /api/v1/orders/quotes/{id}/convert-to-order/. Lines and
+    shipment groups are copied and the quote's engagement is won. A quote
+    that already converted returns its existing order (`"created": false`).
+    """
+    return await client.post(f"{QUOTES_URL}{quote_id}/convert-to-order/", json={})
+
+
+async def create_quote_line(
+    client: ERPClient, quote_id: str, line: dict[str, Any]
+) -> dict[str, Any]:
+    """Add one line to an existing quote and recalculate. Returns the quote."""
+    payload = await _line_payload(client, line, _QUOTE_LINE_INPUT, "quote line")
+    await client.post(QUOTE_LINES_URL, json={**payload, "quote": quote_id})
+    return await client.post(f"{QUOTES_URL}{quote_id}/recalculate/", json={})
+
+
+async def delete_quote_line(client: ERPClient, line_id: str) -> dict[str, Any]:
+    """Delete one quote line and recalculate its quote. Returns the quote."""
+    line = await get_quote_line(client, line_id)
+    await client.delete(f"{QUOTE_LINES_URL}{line_id}/")
+    return await client.post(f"{QUOTES_URL}{line['quote']}/recalculate/", json={})
+
+
 async def list_quote_lines(
     client: ERPClient,
     *,
@@ -510,6 +774,52 @@ async def get_quote_line(client: ERPClient, line_id: str) -> dict[str, Any]:
 
 
 # ---- Sales invoices --------------------------------------------------------
+
+
+async def list_invoices(
+    client: ERPClient,
+    *,
+    search: str | None = None,
+    status: str | None = None,
+    order: str | None = None,
+    payment_terms: str | None = None,
+    company: str | None = None,
+    ordering: str | None = None,
+    limit: int | None = 20,
+) -> list[dict[str, Any]]:
+    """List sales invoices.
+
+    `search` matches invoice_number and the order number. `ordering`
+    examples: "-invoice_date", "due_date", "-grand_total".
+    """
+    params: dict[str, Any] = {"page_size": 100 if limit is None else min(limit, 100)}
+    for key, value in {
+        "search": search, "status": status, "order": order,
+        "payment_terms": payment_terms, "company": company, "ordering": ordering,
+    }.items():
+        if value:
+            params[key] = value
+    return await client.list(SALES_INVOICES_URL, params=params, max_items=limit)
+
+
+async def get_invoice(client: ERPClient, invoice_id: str) -> dict[str, Any]:
+    """Fetch one sales invoice by UUID."""
+    return await client.get(f"{SALES_INVOICES_URL}{invoice_id}/")
+
+
+async def update_invoice(
+    client: ERPClient, invoice_id: str, fields: dict[str, Any]
+) -> dict[str, Any]:
+    """Patch fields on a sales invoice. Unknown fields raise.
+
+    Amounts are a snapshot of the order and are not writable: change the
+    order's lines, then ``recalculate_invoice_totals``. ``status`` IS written
+    here (an invoice has no transition action), and a move out of ``draft``
+    posts the invoice to the ledger: a closed fiscal period refuses it with
+    the period named.
+    """
+    validate_fields(fields, INVOICE_WRITABLE, "invoice")
+    return await client.patch(f"{SALES_INVOICES_URL}{invoice_id}/", json=fields)
 
 
 async def recalculate_invoice_totals(

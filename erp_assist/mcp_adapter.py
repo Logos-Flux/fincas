@@ -1244,6 +1244,100 @@ async def create_party(
     )
 
 
+@mcp.tool()
+async def add_party_email(
+    party_id: str,
+    email: str,
+    purpose: str = "work",
+    is_primary: bool = False,
+) -> Any:
+    """Add an email address to a party (a customer's `party` id).
+
+    Args:
+        party_id: Party UUID (`get_customer` returns it as `party`).
+        email: The address.
+        purpose: "personal", "work", "billing" or "other". Use "billing" for
+                the address invoices should go to.
+        is_primary: Make it the party's primary address.
+    """
+    return await _run(
+        parties_core.add_party_email,
+        party_id=party_id,
+        email=email,
+        purpose=purpose,
+        is_primary=is_primary,
+    )
+
+
+@mcp.tool()
+async def add_party_phone(
+    party_id: str,
+    number: str,
+    purpose: str = "work",
+    extension: str | None = None,
+    region: str | None = None,
+    is_primary: bool = False,
+) -> Any:
+    """Add a phone number to a party.
+
+    Args:
+        party_id: Party UUID.
+        number: The number as written; an international number starts "+".
+        purpose: "personal", "work", "billing" or "other".
+        extension: Extension, if any.
+        region: ISO 3166-1 country for a national-format number (omit for the
+                server default).
+        is_primary: Make it the party's primary number.
+    """
+    return await _run(
+        parties_core.add_party_phone,
+        party_id=party_id,
+        number=number,
+        purpose=purpose,
+        extension=extension,
+        region=region,
+        is_primary=is_primary,
+    )
+
+
+@mcp.tool()
+async def list_party_relationships(party_id: str, limit: int | None = 50) -> Any:
+    """List the relationships a party is part of (employer, contacts, ...)."""
+    return await _run(parties_core.list_party_relationships, party_id=party_id, limit=limit)
+
+
+@mcp.tool()
+async def create_party_relationship(
+    from_party: str,
+    to_party: str,
+    kind: str,
+    title: str | None = None,
+    is_primary: bool = False,
+    notes: str | None = None,
+) -> Any:
+    """Link two parties, e.g. record that a person is the CEO of a company.
+
+    Args:
+        from_party: Party UUID the relationship starts from (the person).
+        to_party: Party UUID it points to (the organization).
+        kind: "employment" (person works at organization; put the job title
+                in `title`) or "contact_for" (person is a contact for the
+                other party). The server names the reason if it refuses.
+        title: Job title or role, e.g. "CEO".
+        is_primary: Mark as the primary relationship of this kind.
+        notes: Free text.
+    """
+    return await _run(
+        parties_core.create_party_relationship,
+        from_party=from_party,
+        to_party=to_party,
+        kind=kind,
+        title=title,
+        is_primary=is_primary,
+        notes=notes,
+    )
+
+
 # ========== CRM: ENGAGEMENTS AND TASKS ======================================
 #
 # docs/crm/phase3-engagement.md 5.3. The assistant's key is shared and is not
@@ -1698,6 +1792,224 @@ async def recalculate_invoice_totals(invoice_id: str) -> Any:
 
 
 @mcp.tool()
+async def create_order(
+    customer: str,
+    line_items: list[dict[str, Any]] | None = None,
+    status: str | None = None,
+    billing_address: str | None = None,
+    shipping_address: str | None = None,
+    sales_rep: str | None = None,
+    price_list: str | None = None,
+    currency: str | None = None,
+    payment_terms: str | None = None,
+    customer_po_number: str | None = None,
+    requested_ship_date: str | None = None,
+    shipping_cost_ex_tax: str | None = None,
+    customer_message: str | None = None,
+    internal_notes: str | None = None,
+    idempotency_key: str | None = None,
+) -> Any:
+    """Create a sales order from scratch, with its line items.
+
+    Use this for an order sold without a quote. For an accepted quote use
+    `convert_quote_to_order`; to bill something that has no order yet use
+    `create_invoice` (it creates the order and the invoice together).
+
+    Args:
+        customer: Customer UUID, or an email / phone / name. Free text must
+                match exactly one customer exactly; an ambiguous or fuzzy
+                match returns `{"error": "ERPAmbiguousError", "candidates":
+                [...]}` and creates nothing. Ask the user, then call again
+                with the id.
+        line_items: List of line dicts. A line either names a catalog item
+                or is free-form:
+                - catalog: `variant` (ProductVariant UUID) and `quantity`;
+                  `item_name`, `sku` and `unit_price_ex_tax` default from the
+                  variant (sale price, else retail) and can be overridden.
+                - free-form (freight, a service, a one-off): `item_name` and
+                  `unit_price_ex_tax`; `sku` defaults to "MISC".
+                Optional on either: `description`, `discount_percent`,
+                `discount_amount`, `unit_cost`, `item_type`, `sort_order`.
+                `quantity` defaults to 1. Never send totals: they are derived.
+        status: Initial order status (e.g. "pending", "awaiting_payment").
+                Omit for the server default.
+        billing_address: CustomerAddress UUID.
+        shipping_address: CustomerAddress UUID.
+        sales_rep: UserProfile UUID.
+        price_list: PriceList UUID.
+        currency: ISO 4217 code. Omit for the server default.
+        payment_terms: Free text (e.g. "net_30", "due_on_receipt"). An
+                invoice made from the order maps it to its own terms.
+        customer_po_number: The customer's PO reference.
+        requested_ship_date: ISO date.
+        shipping_cost_ex_tax: Shipping charged on the order header. Freight
+                billed as its own line goes in `line_items` instead.
+        customer_message: Message the customer sees.
+        internal_notes: Internal-only notes.
+        idempotency_key: Any stable string for this request. A retry with the
+                same key returns the first order and adds no lines twice.
+                Stored as the order's `external_id`.
+
+    Returns the order detail with the server-assigned `order_number`, its
+    line items and computed totals.
+    """
+    return await _run(
+        orders_core.create_order,
+        customer=customer,
+        line_items=line_items,
+        status=status,
+        billing_address=billing_address,
+        shipping_address=shipping_address,
+        sales_rep=sales_rep,
+        price_list=price_list,
+        currency=currency,
+        payment_terms=payment_terms,
+        customer_po_number=customer_po_number,
+        requested_ship_date=requested_ship_date,
+        shipping_cost_ex_tax=shipping_cost_ex_tax,
+        customer_message=customer_message,
+        internal_notes=internal_notes,
+        idempotency_key=idempotency_key,
+    )
+
+
+@mcp.tool()
+async def create_invoice(
+    customer: str,
+    line_items: list[dict[str, Any]],
+    payment_terms: str | None = None,
+    due_date: str | None = None,
+    notes: str | None = None,
+    internal_notes: str | None = None,
+    idempotency_key: str | None = None,
+) -> Any:
+    """Create a draft invoice for something that has no sales order yet.
+
+    An invoice always belongs to an order, so this creates the order and
+    converts it in one call. For an order that already exists, use
+    `convert_order_to_invoice`.
+
+    Args:
+        customer: Customer UUID or exact email / phone / name (see
+                `create_order`).
+        line_items: List of line dicts. A line either names a catalog item
+                or is free-form:
+                - catalog: `variant` (ProductVariant UUID) and `quantity`;
+                  `item_name`, `sku` and `unit_price_ex_tax` default from the
+                  variant (sale price, else retail) and can be overridden.
+                - free-form (freight, a service, a one-off): `item_name` and
+                  `unit_price_ex_tax`; `sku` defaults to "MISC".
+                Optional on either: `description`, `discount_percent`,
+                `discount_amount`, `unit_cost`, `item_type`, `sort_order`.
+                `quantity` defaults to 1. Never send totals: they are derived.
+        payment_terms: Free text on the order (e.g. "net_30",
+                "due_on_receipt"); the invoice maps it to its own terms and
+                computes the due date from it.
+        due_date: ISO date. Overrides the computed one.
+        notes: Notes printed on the invoice.
+        internal_notes: Internal-only notes on the invoice.
+        idempotency_key: Any stable string; a retry returns the same order
+                and invoice instead of a second pair.
+
+    Returns `{"order": ..., "invoice": ...}`. The invoice is a DRAFT and has
+    not been sent or posted to the ledger: see `update_invoice`.
+    """
+    return await _run(
+        orders_core.create_invoice,
+        customer=customer,
+        line_items=line_items,
+        payment_terms=payment_terms,
+        due_date=due_date,
+        notes=notes,
+        internal_notes=internal_notes,
+        idempotency_key=idempotency_key,
+    )
+
+
+@mcp.tool()
+async def list_invoices(
+    search: str | None = None,
+    status: str | None = None,
+    order: str | None = None,
+    payment_terms: str | None = None,
+    company: str | None = None,
+    ordering: str | None = None,
+    limit: int | None = 20,
+) -> Any:
+    """List sales invoices.
+
+    Args:
+        search: Matches the invoice number or the order number.
+        status: e.g. "draft", "sent", "viewed", "paid", "overdue", "void".
+        order: Order UUID (an order has at most one invoice).
+        payment_terms: Invoice terms value.
+        company: Company UUID.
+        ordering: "-invoice_date", "due_date", "-grand_total".
+        limit: Max rows (default 20; null for all).
+    """
+    return await _run(
+        orders_core.list_invoices,
+        search=search,
+        status=status,
+        order=order,
+        payment_terms=payment_terms,
+        company=company,
+        ordering=ordering,
+        limit=limit,
+    )
+
+
+@mcp.tool()
+async def get_invoice(invoice_id: str) -> Any:
+    """Fetch one sales invoice by UUID (amounts, dates, status, pay token)."""
+    return await _run(orders_core.get_invoice, invoice_id=invoice_id)
+
+
+@mcp.tool()
+async def update_invoice(invoice_id: str, fields: dict[str, Any]) -> Any:
+    """Patch fields on a sales invoice.
+
+    Writable: `status`, `invoice_date`, `due_date`, `paid_date`,
+    `payment_terms`, `payment_instructions`, `notes`, `internal_notes`.
+    Amounts are a snapshot of the order: change the order's lines, then call
+    `recalculate_invoice_totals`.
+
+    **Changing `status` away from "draft" posts the invoice to the ledger and
+    cannot be undone here.** Do it only when the user has said the invoice is
+    final (e.g. it has been sent). A closed fiscal period refuses the change.
+    Record payments through the payments screen, not by setting "paid".
+    """
+    return await _run(orders_core.update_invoice, invoice_id=invoice_id, fields=fields)
+
+
+@mcp.tool()
+async def create_order_line(order_id: str, line: dict[str, Any]) -> Any:
+    """Add one line to an existing order; totals are recalculated.
+
+    Args:
+        order_id: Order UUID.
+        line: One line dict, catalog (`variant` + `quantity`) or free-form
+                (`item_name` + `unit_price_ex_tax`), as in `create_order`.
+
+    Returns the refreshed order detail.
+    """
+    return await _run(orders_core.create_order_line, order_id=order_id, line=line)
+
+
+@mcp.tool()
+async def delete_order_line(line_id: str, confirm: bool = False) -> Any:
+    """Permanently delete one order line. Requires confirm=True.
+
+    The order's totals are recalculated. The server refuses a line that has
+    shipped or is on a purchase order or pick ticket.
+    """
+    guard = _require_confirm(confirm, "delete order line")
+    if guard is not None:
+        return guard
+    return await _run(orders_core.delete_order_line, line_id=line_id)
+
+
+@mcp.tool()
 async def list_order_lines(
     order: str | None = None,
     fulfillment_status: str | None = None,
@@ -1848,10 +2160,13 @@ async def create_quote(
                 `payment_terms_proposed`.
         customer_notes: Notes the customer will see on the rendered quote.
         internal_notes: Internal-only notes. Not shown to the customer.
-        line_items: List of line item dicts. Each item supports:
-                `variant` (UUID, required), `sku`, `item_name`, `quantity`,
-                `unit_price_ex_tax`, `discount_percent`, `item_type`,
-                `sort_order`, `notes` (mapped to line_notes on the model).
+        line_items: List of line dicts. A line either names a catalog item
+                (`variant` UUID + `quantity`; `item_name`, `sku` and
+                `unit_price_ex_tax` default from the variant) or is free-form
+                (`item_name` + `unit_price_ex_tax`; `sku` defaults to
+                "MISC"). Optional: `description`, `discount_percent`,
+                `item_type`, `sort_order`, `is_optional`, `notes` (stored as
+                line_notes). Never send totals: they are derived.
 
     Returns the refreshed quote detail (same shape as get_quote), with
     the auto-generated `quote_number` and `id` populated, plus any
@@ -1949,6 +2264,50 @@ async def list_quote_lines(
 async def get_quote_line(line_id: str) -> Any:
     """Fetch a single quote line item by UUID."""
     return await _run(orders_core.get_quote_line, line_id=line_id)
+
+
+@mcp.tool()
+async def convert_quote_to_order(quote_id: str) -> Any:
+    """Convert a quote into a sales order.
+
+    Copies the quote's lines and shipment groups onto a new order and marks
+    the quote's deal won. Safe to repeat: a quote that already converted
+    returns its existing order with `"created": false`. Never build the order
+    by hand from a quote.
+
+    Args:
+        quote_id: UUID of the quote.
+    """
+    return await _run(orders_core.convert_quote_to_order, quote_id=quote_id)
+
+
+@mcp.tool()
+async def create_quote_line(quote_id: str, line: dict[str, Any]) -> Any:
+    """Add one line to an existing quote; totals are recalculated.
+
+    Args:
+        quote_id: Quote UUID.
+        line: Catalog line (`variant` + `quantity`; name, SKU and price
+                default from the variant) or free-form line (`item_name` +
+                `unit_price_ex_tax`; `sku` defaults to "MISC"). Optional:
+                `description`, `discount_percent`, `is_optional`,
+                `is_alternative`, `notes`.
+
+    Returns the refreshed quote detail.
+    """
+    return await _run(orders_core.create_quote_line, quote_id=quote_id, line=line)
+
+
+@mcp.tool()
+async def delete_quote_line(line_id: str, confirm: bool = False) -> Any:
+    """Permanently delete one quote line. Requires confirm=True.
+
+    The quote's totals are recalculated.
+    """
+    guard = _require_confirm(confirm, "delete quote line")
+    if guard is not None:
+        return guard
+    return await _run(orders_core.delete_quote_line, line_id=line_id)
 
 
 # ========== PURCHASING ======================================================
@@ -2141,6 +2500,86 @@ async def update_po_line(line_id: str, fields: dict[str, Any]) -> Any:
     receiving_status, unit_cost, landed_cost_per_unit, notes.
     """
     return await _run(purchasing_core.update_po_line, line_id=line_id, fields=fields)
+
+
+@mcp.tool()
+async def create_purchase_order(
+    supplier: str,
+    line_items: list[dict[str, Any]] | None = None,
+    po_type: str | None = None,
+    warehouse: str | None = None,
+    order: str | None = None,
+    requested_delivery_date: str | None = None,
+    vendor_payment_terms: str | None = None,
+    shipping_cost: str | None = None,
+    ship_to_address: str | None = None,
+    vendor_notes: str | None = None,
+    internal_notes: str | None = None,
+) -> Any:
+    """Create a draft purchase order from scratch, with its line items.
+
+    Args:
+        supplier: Supplier UUID. Resolve a name with `find_supplier` first and
+                confirm a fuzzy match with the user.
+        line_items: List of line dicts. Every PO line names a catalog item:
+                `variant` (ProductVariant UUID), `quantity_ordered` and
+                `unit_cost` are required; `item_name` and `our_sku` default
+                from the variant. Optional: `supplier_sku`, `description`,
+                `discount_percent`, `requested_delivery_date`, `notes`.
+                There is no free-form PO line: create the product first.
+        po_type: e.g. "stock_replenishment", "drop_ship". Omit for the default.
+        warehouse: Warehouse UUID receiving the goods.
+        order: Sales order UUID this PO fulfils, if any.
+        requested_delivery_date: ISO date.
+        vendor_payment_terms: Free text.
+        shipping_cost: Freight charged by the vendor on this PO.
+        ship_to_address: Free-text ship-to.
+        vendor_notes: Notes the vendor sees.
+        internal_notes: Internal-only notes.
+
+    Returns the PO detail with the server-assigned `po_number`, lines and
+    totals. The PO is a draft: it has not been sent to the vendor.
+    """
+    return await _run(
+        purchasing_core.create_purchase_order,
+        supplier=supplier,
+        line_items=line_items,
+        po_type=po_type,
+        warehouse=warehouse,
+        order=order,
+        requested_delivery_date=requested_delivery_date,
+        vendor_payment_terms=vendor_payment_terms,
+        shipping_cost=shipping_cost,
+        ship_to_address=ship_to_address,
+        vendor_notes=vendor_notes,
+        internal_notes=internal_notes,
+    )
+
+
+@mcp.tool()
+async def create_po_line(po_id: str, line: dict[str, Any]) -> Any:
+    """Add one line to an existing purchase order; totals are recalculated.
+
+    Args:
+        po_id: PurchaseOrder UUID.
+        line: `variant` (UUID), `quantity_ordered` and `unit_cost` are
+                required, as in `create_purchase_order`.
+
+    Returns the refreshed PO detail.
+    """
+    return await _run(purchasing_core.create_po_line, po_id=po_id, line=line)
+
+
+@mcp.tool()
+async def delete_po_line(line_id: str, confirm: bool = False) -> Any:
+    """Permanently delete one purchase-order line. Requires confirm=True.
+
+    The PO's totals are recalculated.
+    """
+    guard = _require_confirm(confirm, "delete PO line")
+    if guard is not None:
+        return guard
+    return await _run(purchasing_core.delete_po_line, line_id=line_id)
 
 
 @mcp.tool()

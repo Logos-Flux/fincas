@@ -11,7 +11,7 @@ from ._writable_fields import (
     SUPPLIER_WRITABLE,
     validate_fields,
 )
-from .client import ERPClient, ERPNotFoundError
+from .client import ERPClient, ERPNotFoundError, ERPValidationError
 
 SUPPLIERS_URL = "/api/v1/purchasing/suppliers/"
 PURCHASE_ORDERS_URL = "/api/v1/purchasing/purchase-orders/"
@@ -211,6 +211,119 @@ async def recalculate_purchase_order_totals(
     """
     return await client.post(
         f"{PURCHASE_ORDERS_URL}{po_id}/recalculate/", json={}
+    )
+
+
+_PO_LINE_INPUT = frozenset({
+    "variant", "supplier_product", "item_name", "supplier_sku", "our_sku",
+    "description", "quantity_ordered", "purchasing_uom", "qty_per_uom",
+    "unit_cost", "list_cost", "discount_percent", "discount_amount",
+    "duty_amount", "order_line_item", "customer_order_number",
+    "requested_delivery_date", "sort_order", "notes", "metadata",
+})
+
+
+async def _po_line_payload(client: ERPClient, line: dict[str, Any]) -> dict[str, Any]:
+    """Validate one PO line before anything is written.
+
+    A PO line must name a catalog ``variant`` (the column is required: there
+    is no free-form PO line), ``quantity_ordered`` and ``unit_cost``.
+    ``item_name`` and ``our_sku`` default from the variant.
+    """
+    payload = {k: v for k, v in line.items() if v is not None}
+    if "quantity" in payload and "quantity_ordered" not in payload:
+        payload["quantity_ordered"] = payload.pop("quantity")
+    unknown = sorted(set(payload) - _PO_LINE_INPUT)
+    if unknown:
+        raise ERPValidationError(
+            f"Unknown field(s) on PO line: {', '.join(unknown)}. "
+            f"Allowed: {', '.join(sorted(_PO_LINE_INPUT))}.",
+            details={k: ["Unknown field."] for k in unknown},
+        )
+    missing = [k for k in ("variant", "quantity_ordered", "unit_cost") if payload.get(k) in (None, "")]
+    if missing:
+        raise ERPValidationError(
+            f"PO line needs {', '.join(missing)}. A PO line always names a catalog "
+            "variant; create the product first if the item is new.",
+            details={k: ["This field is required."] for k in missing},
+        )
+    if not payload.get("item_name") or not payload.get("our_sku"):
+        variant = await client.get(f"/api/v1/products/variants/{payload['variant']}/")
+        payload.setdefault("item_name", variant.get("name") or variant.get("sku"))
+        payload.setdefault("our_sku", variant.get("sku"))
+    return payload
+
+
+async def create_purchase_order(
+    client: ERPClient,
+    *,
+    supplier: str,
+    line_items: list[dict[str, Any]] | None = None,
+    po_type: str | None = None,
+    warehouse: str | None = None,
+    order: str | None = None,
+    requested_delivery_date: str | None = None,
+    vendor_payment_terms: str | None = None,
+    shipping_cost: str | None = None,
+    ship_to_address: str | None = None,
+    vendor_notes: str | None = None,
+    internal_notes: str | None = None,
+    extra_fields: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Create a draft purchase order, with its lines, and return the detail.
+
+    ``supplier`` is a supplier UUID (resolve a name with ``find_supplier``
+    first). The PO is created in the supplier's company and ``po_number`` is
+    server-assigned. Every line is validated before the header is written;
+    lines go to /po-lines/ and /recalculate/ then derives the totals. The PO
+    stays in draft: sending, approving and receiving are separate steps.
+    """
+    lines = [await _po_line_payload(client, line) for line in (line_items or [])]
+    payload: dict[str, Any] = {"supplier": supplier}
+    optional = {
+        "po_type": po_type,
+        "warehouse": warehouse,
+        "order": order,
+        "requested_delivery_date": requested_delivery_date,
+        "vendor_payment_terms": vendor_payment_terms,
+        "shipping_cost": shipping_cost,
+        "ship_to_address": ship_to_address,
+        "vendor_notes": vendor_notes,
+        "internal_notes": internal_notes,
+    }
+    payload.update({k: v for k, v in optional.items() if v is not None})
+    if extra_fields:
+        validate_fields(extra_fields, PURCHASE_ORDER_WRITABLE, "purchase order")
+        payload.update(extra_fields)
+    if "company" not in payload:
+        company = (await get_supplier(client, supplier)).get("company")
+        if company:
+            payload["company"] = str(company)
+
+    po = await client.post(PURCHASE_ORDERS_URL, json=payload)
+    po_id = po["id"]
+    for line in lines:
+        await client.post(PO_LINES_URL, json={**line, "purchase_order": po_id})
+    if lines:
+        po = await client.post(f"{PURCHASE_ORDERS_URL}{po_id}/recalculate/", json={})
+    return po
+
+
+async def create_po_line(
+    client: ERPClient, po_id: str, line: dict[str, Any]
+) -> dict[str, Any]:
+    """Add one line to an existing purchase order and recalculate. Returns the PO."""
+    payload = await _po_line_payload(client, line)
+    await client.post(PO_LINES_URL, json={**payload, "purchase_order": po_id})
+    return await client.post(f"{PURCHASE_ORDERS_URL}{po_id}/recalculate/", json={})
+
+
+async def delete_po_line(client: ERPClient, line_id: str) -> dict[str, Any]:
+    """Delete one PO line and recalculate its purchase order. Returns the PO."""
+    line = await get_po_line(client, line_id)
+    await client.delete(f"{PO_LINES_URL}{line_id}/")
+    return await client.post(
+        f"{PURCHASE_ORDERS_URL}{line['purchase_order']}/recalculate/", json={}
     )
 
 

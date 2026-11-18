@@ -7,6 +7,52 @@ All notable changes to Fincas are listed here. The format follows
 [docs/releases/](docs/releases/): what to do before upgrading, behavior
 changes, known limitations and the migration list.
 
+## 0.4.5
+
+The assistant can create every document, and a service account's contract can
+cover custom actions. No migration. v0.4.4 plus these two changes; the
+dependency ranges are unchanged (Django 6.0, mcp 1). Full notes:
+[docs/releases/v0.4.5.md](docs/releases/v0.4.5.md).
+
+### Changed
+
+- **A service account's contract can cover custom actions.** A viewset now
+  names, in `service_action_perms`, the model permissions that describe each
+  writing `@action`; a service role holding all of them may call it. Until
+  now every writing custom action was refused for every service account, so
+  a role with `change_order` could edit an order but not recalculate it.
+  Listed today: `transition` and `recalculate` (`change_` on the document;
+  a sub-order's `transition` also needs `orders.change_order`) and
+  `duplicate` (`view_` and `add_`) on quotes, orders and purchase orders;
+  `transition` on pick tickets; `recalculate` on invoices;
+  `convert-to-order` and `convert-to-invoice` (the permissions for
+  everything they write: docs/identity-unification.md 2.6). An action that
+  is not listed (`send-confirmation`, a purchase order's `receive`, the CRM
+  actions) is still refused. **Check your service roles:** a role that
+  already holds these permissions gains the matching actions on upgrade,
+  including status changes, which emit the document's webhooks.
+
+### Added
+
+- **The assistant can create every document.** New `erp_assist` tools:
+  `create_order`, `create_order_line`, `delete_order_line`, `create_invoice`
+  (order plus draft invoice in one call), `list_invoices`, `get_invoice`,
+  `update_invoice`, `convert_quote_to_order`, `create_quote_line`,
+  `delete_quote_line`, `create_purchase_order`, `create_po_line`,
+  `delete_po_line`, `add_party_email`, `add_party_phone`,
+  `list_party_relationships` and `create_party_relationship`. Order and quote
+  lines may be free-form (no catalog item); a purchase-order line still names
+  a variant. Every line is validated before the header is written, and
+  `create_order` / `create_invoice` take an `idempotency_key`.
+
+### Fixed
+
+- `POST /api/v1/purchasing/purchase-orders/` no longer requires `po_number`:
+  it is assigned by the server when omitted, as order and quote numbers are.
+- The assistant's `create_quote` sends the customer's company, so it works
+  for a caller with no company of its own (the legacy API key), and it no
+  longer leaves an empty quote behind when a line is invalid.
+
 ## 0.4.4
 
 Customer-deposit posting and order settlement for payments recorded through

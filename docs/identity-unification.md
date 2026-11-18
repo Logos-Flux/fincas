@@ -283,7 +283,9 @@ admin lists keys read-only with a revoke action.
   key holder) *before* the superuser shortcut and gives it
   `service_contract_allows`: safe methods need `view_<model>`; viewset
   `create`/`update`/`partial_update`/`destroy` need `add_`/`change_`/`delete_`;
-  custom actions and model-less views are refused; a service account flagged
+  a custom action needs the permissions its viewset declares for it and is
+  refused when it declares none (below); model-less views are refused; a
+  service account flagged
   superuser or staff is refused outright (`has_perm` would otherwise pass it
   everything). Writes need a pinned company (`--company`, required by
   `create_api_key` once more than one company exists): `CompanyScopedViewSet`
@@ -291,6 +293,33 @@ admin lists keys read-only with a revoke action.
   otherwise create rows in any company. The storefront's only write verb is
   `add`, whatever its group holds: the old contract exactly.
   `backfill_tenancy` gives no service account a profile.
+- **Custom actions.** A writing `@action` is in a contract only when its
+  viewset names, in `service_action_perms`, the model permissions that
+  describe what it does (`core.service_accounts.action_permissions`): every
+  model it writes and every model whose data it answers with. A document's
+  own lines and contacts are covered by the document.
+  - `transition`, `recalculate`: `change_` on the document. A sub-order's
+    `transition` also needs `orders.change_order`, because its status rolls
+    up to the order. A status change emits the document's lifecycle signals
+    (and so its webhooks), as it does for staff.
+  - `duplicate`: `view_` and `add_` (it answers with a copy of the source).
+  - `convert-to-order`: `orders.change_quote`, `orders.add_order`,
+    `orders.view_order` and `crm.change_engagement` (it marks the quote
+    accepted, wins its deal and answers with the order).
+  - `convert-to-invoice`: `orders.view_order`, `orders.change_order`,
+    `orders.add_salesinvoice`, `orders.view_salesinvoice` and
+    `payments.change_payment` (it links the order's held deposits to the
+    invoice and re-settles the order).
+
+  They need a pinned company like any write, and the storefront never
+  reaches one. An action whose effect no model permission describes is not
+  listed and stays refused: `send-confirmation` (mail), a purchase order's
+  `receive` (stock and the ledger), the CRM stage and task actions,
+  fiscal-period `close`/`reopen`, a webhook `ping`. A read-only (GET)
+  `@action` is a safe request and needs `view_<model>`, as before.
+  `core/tests/test_service_action_contract.py` fails when a viewset's list
+  and the matrix's copy (`CONTRACT_ACTIONS`) disagree, or when a listed
+  action is reachable by GET.
 - **Resolution.** `resolve_api_key` (shared by `APIKeyAuthentication` and
   `APIKeyMiddleware`; the middleware hands its result to the class so a
   request resolves once) refuses a revoked, expired or unknown `gk_` key

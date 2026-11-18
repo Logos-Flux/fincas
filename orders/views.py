@@ -64,6 +64,20 @@ class QuoteViewSet(CompanyScopedViewSet):
                     ("amended_from", "company")]
     search_fields = ["quote_number", "customer__email"]
     ordering_fields = ["created_at", "grand_total"]
+    # What each @action means for a service account's contract
+    # (core.service_accounts.action_permissions). Unlisted actions stay refused.
+    service_action_perms = {
+        "transition": "change",
+        "recalculate": "change",
+        # duplicate answers with a copy of the source, so it needs view too.
+        "duplicate": ("view", "add"),
+        # Converting marks the quote accepted, wins its deal and answers
+        # with the order (the existing one on a repeat).
+        "convert_to_order": (
+            "orders.change_quote", "orders.add_order", "orders.view_order",
+            "crm.change_engagement",
+        ),
+    }
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -163,6 +177,21 @@ class OrderViewSet(CompanyScopedViewSet):
     ]
     search_fields = ["order_number", "customer__email", "external_id"]
     ordering_fields = ["order_date", "grand_total"]
+    # What each @action means for a service account's contract
+    # (core.service_accounts.action_permissions). Unlisted actions stay refused.
+    # send_confirmation is not listed: it sends mail.
+    service_action_perms = {
+        "transition": "change",
+        "recalculate": "change",
+        "duplicate": ("view", "add"),
+        # Converting links the order's held deposits to the invoice and
+        # re-settles the order, and answers with the invoice (the existing
+        # one on a repeat).
+        "convert_to_invoice": (
+            "orders.view_order", "orders.change_order", "orders.add_salesinvoice",
+            "orders.view_salesinvoice", "payments.change_payment",
+        ),
+    }
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -551,6 +580,8 @@ class SubOrderViewSet(CompanyScopedViewSet):
     serializer_class = SubOrderSerializer
     filterset_fields = ["order", "status", "is_drop_ship"]
     search_fields = ["sub_order_number", "tracking_number"]
+    # A sub-order's status rolls up to its order (orders/signals.py).
+    service_action_perms = {"transition": ("change", "orders.change_order")}
     company_field = None
     parent_links = [("order", "company")]
 
@@ -589,6 +620,7 @@ class SalesInvoiceViewSet(CompanyScopedViewSet):
     filterset_fields = ["status", "company", "order", "payment_terms"]
     search_fields = ["invoice_number", "order__order_number"]
     ordering_fields = ["invoice_date", "grand_total", "due_date"]
+    service_action_perms = {"recalculate": "change"}
 
     def perform_update(self, serializer):
         # A status change out of draft posts the invoice (SalesInvoice.save):

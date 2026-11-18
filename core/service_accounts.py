@@ -57,16 +57,19 @@ LAST_USED_RESOLUTION = timedelta(seconds=60)
 SERVICE_NAME_RE = re.compile(r"\A[a-z0-9][a-z0-9-]{0,59}\Z")
 _PREFIX_RE = re.compile(r"\A[0-9a-f]{8}\Z")
 
-# Default HTTP method -> model permission verb for a viewset action. Custom
-# @actions (transition, duplicate, recalculate, ...) map to nothing and are
-# refused for every service account: their side effects are not described by a
-# model permission.
+# Default HTTP method -> model permission verb for a viewset action. An
+# @action maps to nothing here. One that writes (POST and the like) is in a
+# contract only when its viewset names the model permissions that describe
+# its effect, in ``service_action_perms`` (see ``action_permissions``); every
+# other writing @action is refused for every service account. A read-only
+# (GET) @action needs ``view_<model>``, like any safe request.
 _ACTION_VERBS = {
     "create": "add",
     "update": "change",
     "partial_update": "change",
     "destroy": "delete",
 }
+_VERBS = frozenset({"view", "add", "change", "delete"})
 
 
 class ApiKeyRejected(Exception):
@@ -222,15 +225,59 @@ def _view_model(view):
     return None
 
 
+def action_permissions(view, action) -> tuple[str, ...]:
+    """The model permissions a viewset declares for one of its @actions.
+
+    A viewset opts an @action into service contracts by naming what it does in
+    model-permission terms::
+
+        service_action_perms = {
+            "recalculate": "change",                       # change_<this model>
+            "convert_to_invoice": "orders.add_salesinvoice",
+        }
+
+    A bare verb means that verb on the viewset's own model; a dotted name is a
+    full ``app_label.codename``; a tuple requires every entry. An @action that
+    is not listed returns ``()`` and stays outside every contract.
+
+    Name every model the action writes and every model whose data it answers
+    with, not just the viewset's own: a conversion that marks its source,
+    wins a deal and returns the new document names all three. The lines and
+    contacts a document carries are covered by the document. Do not list an
+    action that sends mail, moves stock or posts to the ledger: no model
+    permission describes those. A listed action must not be reachable by GET
+    (safe requests are decided by ``view_<model>`` before this is consulted);
+    ``core/tests/test_service_action_contract.py`` checks that.
+    """
+    declared = (getattr(view, "service_action_perms", None) or {}).get(action)
+    if not declared:
+        return ()
+    if isinstance(declared, str):
+        declared = (declared,)
+    model = _view_model(view)
+    perms = []
+    for entry in declared:
+        if entry in _VERBS:
+            if model is None:
+                return ()
+            entry = f"{model._meta.app_label}.{entry}_{model._meta.model_name}"
+        elif "." not in entry:
+            return ()
+        perms.append(entry)
+    return tuple(perms)
+
+
 def service_contract_allows(request, view) -> bool:
     """A service account may do exactly what its groups' model perms say.
 
     Safe methods need ``view_<model>``; a viewset's ``create`` /
     ``update``/``partial_update`` / ``destroy`` need ``add_`` / ``change_`` /
-    ``delete_``. Custom actions and views without a model are refused. Writes
-    need a pinned company (``--company``), except for the storefront, whose
-    only write verb is ``add`` (guest orders) whatever its group holds: the
-    old storefront contract, unchanged.
+    ``delete_``. A custom action needs the permissions its viewset declares
+    for it (``action_permissions``) and is refused when it declares none;
+    views without a model are refused. Writes need a pinned company
+    (``--company``), except for the storefront, whose only write is the
+    ``create`` of a guest order whatever its group holds: the old storefront
+    contract, unchanged (it never reaches a custom action).
     """
     model = _view_model(view)
     if model is None:
@@ -249,9 +296,13 @@ def service_contract_allows(request, view) -> bool:
     model_name = model._meta.model_name
     if request.method in SAFE_METHODS:
         return user.has_perm(f"{app_label}.view_{model_name}")
-    verb = _ACTION_VERBS.get(getattr(view, "action", None))
+    action = getattr(view, "action", None)
+    verb = _ACTION_VERBS.get(action)
     if verb is None:
-        return False
+        required = action_permissions(view, action)
+        if not required or is_storefront_user(user) or service_company(user) is None:
+            return False
+        return all(user.has_perm(perm) for perm in required)
     if is_storefront_user(user):
         # The public storefront identity only ever creates (guest orders),
         # whatever an admin adds to its group.

@@ -15,6 +15,7 @@ class PickTicketViewSet(CompanyScopedViewSet):
     serializer_class = PickTicketSerializer
     filterset_fields = ["status", "warehouse", "assigned_to"]
     search_fields = ["ticket_number"]
+    service_action_perms = {"transition": "change"}
     company_field = None
     parent_links = [("order", "company")]
 

@@ -398,7 +398,7 @@ the design; see `docs/deployment.md`) and the Django admin (its own auth).
 1. `ROLES_MD` encodes `docs/roles.md` once: a `staff=True` role reaches the
    back office and the staff API, a `portal=True` role the portal API, a
    `kind="service"` role exactly the model permissions it declares (view /
-   add / change / delete; custom actions never; writes need a pinned company,
+   add / change / delete; a custom action only where `CONTRACT_ACTIONS` lists it; writes need a pinned company,
    except the storefront's `add`). A superuser passes every staff gate.
 2. `MODEL_OVERRIDES` refines that per model and action where roles.md is too
    coarse (`perm:crm.manage_pipelines` on pipeline writes, public catalog

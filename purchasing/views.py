@@ -38,6 +38,14 @@ class PurchaseOrderViewSet(CompanyScopedViewSet):
     filterset_fields = ["status", "po_type", "supplier", "company", "receiving_status"]
     search_fields = ["po_number", "supplier__company_name", "tracking_number"]
     ordering_fields = ["po_date", "grand_total"]
+    # What each @action means for a service account's contract
+    # (core.service_accounts.action_permissions). Unlisted actions stay refused.
+    # receive is not listed: it moves stock and posts to the ledger.
+    service_action_perms = {
+        "transition": "change",
+        "recalculate": "change",
+        "duplicate": ("view", "add"),
+    }
 
     def get_serializer_class(self):
         if self.action == "list":

@@ -18,6 +18,9 @@ from .client import ERPAmbiguousError, ERPClient, ERPNotFoundError
 
 PARTIES_URL = "/api/v1/parties/parties/"
 MATCH_URL = "/api/v1/parties/match/"
+EMAILS_URL = "/api/v1/parties/emails/"
+PHONES_URL = "/api/v1/parties/phones/"
+RELATIONSHIPS_URL = "/api/v1/parties/relationships/"
 
 EXACT = "exact"
 AMBIGUOUS = "ambiguous"
@@ -186,3 +189,82 @@ async def create_party(
     if extra_fields:
         payload.update(extra_fields)
     return await client.post(PARTIES_URL, json=payload)
+
+
+async def add_party_email(
+    client: ERPClient,
+    party_id: str,
+    *,
+    email: str,
+    purpose: str = "work",
+    is_primary: bool = False,
+) -> dict[str, Any]:
+    """Add an email address to a party.
+
+    ``purpose`` is one of personal / work / billing / other. A customer's
+    billing address for invoices is its party's ``billing`` email.
+    """
+    return await client.post(
+        EMAILS_URL,
+        json={"party": party_id, "email": email, "purpose": purpose, "is_primary": is_primary},
+    )
+
+
+async def add_party_phone(
+    client: ERPClient,
+    party_id: str,
+    *,
+    number: str,
+    purpose: str = "work",
+    extension: str | None = None,
+    region: str | None = None,
+    is_primary: bool = False,
+) -> dict[str, Any]:
+    """Add a phone number to a party.
+
+    ``region`` is the ISO country of a national-format number (the server
+    default applies when omitted); an international ``+`` number needs none.
+    """
+    payload: dict[str, Any] = {
+        "party": party_id, "number_raw": number, "purpose": purpose, "is_primary": is_primary,
+    }
+    if extension:
+        payload["extension"] = extension
+    if region:
+        payload["region"] = region
+    return await client.post(PHONES_URL, json=payload)
+
+
+async def list_party_relationships(
+    client: ERPClient, party_id: str, *, limit: int | None = 50
+) -> list[dict[str, Any]]:
+    """Relationships a party takes part in, on either side."""
+    params: dict[str, Any] = {"party": party_id, "page_size": 100 if limit is None else min(limit, 100)}
+    return await client.list(RELATIONSHIPS_URL, params=params, max_items=limit)
+
+
+async def create_party_relationship(
+    client: ERPClient,
+    *,
+    from_party: str,
+    to_party: str,
+    kind: str,
+    title: str | None = None,
+    is_primary: bool = False,
+    notes: str | None = None,
+) -> dict[str, Any]:
+    """Link two parties, e.g. a person employed by an organisation.
+
+    ``kind`` is a registered relationship kind (``employment``: from the
+    person to the organisation, with the job ``title``; ``contact_for``: from
+    the person to the party they are the contact for). The server refuses an
+    unknown kind or a direction the kind does not allow and names the reason.
+    """
+    payload: dict[str, Any] = {
+        "from_party": from_party, "to_party": to_party, "kind": kind, "is_primary": is_primary,
+    }
+    if title:
+        payload["title"] = title
+    if notes:
+        payload["notes"] = notes
+    return await client.post(RELATIONSHIPS_URL, json=payload)

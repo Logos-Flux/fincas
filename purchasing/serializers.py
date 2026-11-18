@@ -50,6 +50,10 @@ class PurchaseOrderListSerializer(serializers.ModelSerializer):
 
 class PurchaseOrderDetailSerializer(GuardedDocumentSerializer):
     line_items = POLineItemSerializer(many=True, read_only=True)
+    # PurchaseOrder.save() assigns the next PO-nnnnn when this is blank, as
+    # orders and quotes do; without the override the model's unique, non-blank
+    # column makes the number required of every API caller.
+    po_number = serializers.CharField(required=False, allow_blank=True, max_length=20)
 
     # Computed by PurchaseOrder.recalculate_totals() / the payment ledger —
     # never caller-written. Discount inputs, shipping_cost, and other_charges

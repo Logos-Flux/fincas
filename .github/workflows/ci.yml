@@ -489,6 +489,12 @@ jobs:
       #                        DoS on an attacker-supplied glob pattern; only our own
       #                        lint/build globs reach it; fixed only in 11.0.1, out of
       #                        every range; published 2026-10-30)
+      #   GHSA-fc5q-39xc-vjpf  picomatch <=4.0.7 via vite/vitest > tinyglobby > fdir,
+      #                        sass > @parcel/watcher, vite-imagetools >
+      #                        @rollup/pluginutils and typescript-eslint (high,
+      #                        ReDoS on an attacker-supplied extglob; only our own
+      #                        build/lint globs reach it; 4.0.7 is the latest
+      #                        release, so no fix exists; published 2026-11-17)
       # Drop an id as soon as a qwik-city or typography release unpins it.
       - run: >-
           bun audit
@@ -499,6 +505,7 @@ jobs:
           --ignore=GHSA-wq5f-xc86-pv6w
           --ignore=GHSA-mrhx-c7xc-m3w5
           --ignore=GHSA-g3hv-75wg-m249
+          --ignore=GHSA-fc5q-39xc-vjpf
         working-directory: storefront
       - run: bun run lint
         working-directory: storefront
